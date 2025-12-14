@@ -1,0 +1,23 @@
+[project]
+name = "strata-fdtd"
+version = "0.1.0"
+description = "FDTD acoustic simulation toolchain for loudspeaker design and metamaterials"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "rwalters" }
+]
+
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.15.3",
+    "h5py>=3.8",
+]
+
+[project.urls]
+repository = "https://github.com/rjwalters/strata-fdtd"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
