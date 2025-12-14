@@ -1,0 +1,156 @@
+{
+  "examples": [
+    {
+      "id": "basic-pulse",
+      "title": "Basic Gaussian Pulse",
+      "description": "Learn FDTD basics with a simple Gaussian pulse propagating through air. Includes a probe to measure pressure over time.",
+      "file": "basic-pulse.py",
+      "thumbnail": "basic-pulse.svg",
+      "category": "Basics",
+      "difficulty": "Beginner",
+      "tags": ["pulse", "propagation", "fundamentals"],
+      "estimatedRuntime": "~1 min",
+      "estimatedSize": "50 MB",
+      "gridSize": "100 × 100 × 100",
+      "features": [
+        "Uniform grid setup",
+        "Single Gaussian source",
+        "Time-domain probe",
+        "PML boundaries"
+      ]
+    },
+    {
+      "id": "pzt-transducer",
+      "title": "Piezoelectric Transducer",
+      "description": "Design an ultrasonic transducer using PZT-5 material. Observe directivity pattern and near-field pressure.",
+      "file": "pzt-transducer.py",
+      "thumbnail": "pzt-transducer.svg",
+      "category": "Transducers",
+      "difficulty": "Intermediate",
+      "tags": ["piezoelectric", "transducer", "materials"],
+      "estimatedRuntime": "~3 min",
+      "estimatedSize": "120 MB",
+      "gridSize": "150 × 150 × 200",
+      "features": [
+        "PZT-5 piezoelectric material",
+        "Sinusoidal excitation",
+        "Multiple probe array",
+        "Radiation pattern analysis"
+      ]
+    },
+    {
+      "id": "resonant-cavity",
+      "title": "Resonant Cavity",
+      "description": "Observe standing waves and resonance modes in a rectangular acoustic cavity with rigid walls.",
+      "file": "resonant-cavity.py",
+      "thumbnail": "resonant-cavity.svg",
+      "category": "Basics",
+      "difficulty": "Beginner",
+      "tags": ["resonance", "standing waves", "cavity"],
+      "estimatedRuntime": "~2 min",
+      "estimatedSize": "80 MB",
+      "gridSize": "100 × 100 × 150",
+      "features": [
+        "Rigid boundary conditions",
+        "Fundamental frequency excitation",
+        "Standing wave pattern",
+        "Mode shape visualization"
+      ]
+    },
+    {
+      "id": "acoustic-lens",
+      "title": "Acoustic Lens",
+      "description": "Metamaterial focusing element using graded-index material. Demonstrates plane wave to focused beam conversion.",
+      "file": "acoustic-lens.py",
+      "thumbnail": "acoustic-lens.svg",
+      "category": "Metamaterials",
+      "difficulty": "Advanced",
+      "tags": ["lens", "strata_fdtd", "focusing"],
+      "estimatedRuntime": "~3 min",
+      "estimatedSize": "150 MB",
+      "gridSize": "200 × 200 × 150",
+      "features": [
+        "Graded-index lens",
+        "Plane wave source",
+        "Focal point analysis",
+        "Beam width measurement"
+      ]
+    },
+    {
+      "id": "doppler-effect",
+      "title": "Doppler Effect",
+      "description": "Moving source demonstration showing frequency shift for stationary observers. Classic acoustic phenomenon.",
+      "file": "doppler-effect.py",
+      "thumbnail": "doppler-effect.svg",
+      "category": "Physics",
+      "difficulty": "Intermediate",
+      "tags": ["doppler", "moving source", "frequency shift"],
+      "estimatedRuntime": "~2 min",
+      "estimatedSize": "100 MB",
+      "gridSize": "150 × 100 × 100",
+      "features": [
+        "Moving sinusoidal source",
+        "Stationary observer probes",
+        "Frequency analysis",
+        "Mach 0.15 velocity"
+      ]
+    },
+    {
+      "id": "interference",
+      "title": "Two-Source Interference",
+      "description": "Demonstrate constructive and destructive interference from two coherent sources. Classic double-slit analog.",
+      "file": "interference.py",
+      "thumbnail": "interference.svg",
+      "category": "Physics",
+      "difficulty": "Beginner",
+      "tags": ["interference", "waves", "superposition"],
+      "estimatedRuntime": "~2 min",
+      "estimatedSize": "80 MB",
+      "gridSize": "150 × 150 × 100",
+      "features": [
+        "Two coherent sources",
+        "Interference fringes",
+        "Phase relationship",
+        "Near and far-field patterns"
+      ]
+    },
+    {
+      "id": "phased-array",
+      "title": "Phased Array Beam Steering",
+      "description": "Ultrasound phased array with electronic beam steering. Medical imaging technique demonstration.",
+      "file": "phased-array.py",
+      "thumbnail": "phased-array.svg",
+      "category": "Imaging",
+      "difficulty": "Advanced",
+      "tags": ["phased array", "beam steering", "ultrasound", "imaging"],
+      "estimatedRuntime": "~4 min",
+      "estimatedSize": "180 MB",
+      "gridSize": "200 × 150 × 200",
+      "features": [
+        "16-element linear array",
+        "Time delay calculation",
+        "20° beam steering",
+        "Focal pattern analysis"
+      ]
+    },
+    {
+      "id": "nonuniform-grid",
+      "title": "Nonuniform Grid",
+      "description": "Variable resolution example with fine cells near source and coarse cells in propagation region. Demonstrates memory savings.",
+      "file": "nonuniform-grid.py",
+      "thumbnail": "nonuniform-grid.svg",
+      "category": "Advanced",
+      "difficulty": "Intermediate",
+      "tags": ["nonuniform", "adaptive", "optimization"],
+      "estimatedRuntime": "~2 min",
+      "estimatedSize": "60 MB",
+      "gridSize": "100 × 100 × 200 (variable)",
+      "features": [
+        "Geometric stretch factor",
+        "Memory optimization",
+        "Maintained accuracy",
+        "CFL stability analysis"
+      ]
+    }
+  ]
+}

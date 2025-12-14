@@ -1,0 +1,31 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad7" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3f51b5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e8eaf6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#grad7)"/>
+  <!-- Array elements -->
+  <rect x="80" y="120" width="8" height="20" fill="#1a237e" rx="2"/>
+  <rect x="95" y="120" width="8" height="20" fill="#1a237e" rx="2"/>
+  <rect x="110" y="120" width="8" height="20" fill="#1a237e" rx="2"/>
+  <rect x="125" y="120" width="8" height="20" fill="#1a237e" rx="2"/>
+  <rect x="140" y="120" width="8" height="20" fill="#1a237e" rx="2"/>
+  <rect x="155" y="120" width="8" height="20" fill="#1a237e" rx="2"/>
+  <rect x="170" y="120" width="8" height="20" fill="#1a237e" rx="2"/>
+  <rect x="185" y="120" width="8" height="20" fill="#1a237e" rx="2"/>
+  <!-- Steered beam -->
+  <path d="M 90 140 L 250 80" stroke="#283593" stroke-width="2" opacity="0.3"/>
+  <path d="M 105 140 L 260 85" stroke="#283593" stroke-width="2.5" opacity="0.4"/>
+  <path d="M 120 140 L 270 90" stroke="#283593" stroke-width="3" opacity="0.5"/>
+  <path d="M 135 140 L 280 95" stroke="#283593" stroke-width="4" opacity="0.7"/>
+  <path d="M 150 140 L 290 100" stroke="#283593" stroke-width="3" opacity="0.5"/>
+  <path d="M 165 140 L 300 105" stroke="#283593" stroke-width="2.5" opacity="0.4"/>
+  <path d="M 180 140 L 310 110" stroke="#283593" stroke-width="2" opacity="0.3"/>
+  <!-- Focal point -->
+  <circle cx="285" cy="95" r="12" fill="#1a237e" opacity="0.7"/>
+  <!-- Title -->
+  <rect x="0" y="250" width="400" height="50" fill="rgba(0,0,0,0.5)"/>
+  <text x="200" y="283" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">Phased Array</text>
+</svg>

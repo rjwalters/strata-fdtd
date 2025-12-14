@@ -1,0 +1,845 @@
+/**
+ * ViewerPage - Interactive 3D visualization for HDF5 simulation results.
+ *
+ * This page allows users to:
+ * - Upload HDF5 files via drag-drop or file picker
+ * - Load HDF5 files from URLs
+ * - Visualize 3D pressure field evolution
+ * - View probe time series and spectra
+ * - Export data and visualizations
+ */
+
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { Layout, Panel } from "@/components/Layout";
+import { FileUpload } from "@/components/FileUpload";
+import { OptimizedVoxelRenderer, type VoxelRendererHandle } from "@/components/OptimizedVoxelRenderer";
+import { PlaybackControls } from "@/components/PlaybackControls";
+import { BackgroundLoadingIndicator } from "@/components/BackgroundLoadingIndicator";
+import { TimeSeriesPlot } from "@/components/TimeSeriesPlot";
+import { SpectrumPlot } from "@/components/SpectrumPlot";
+import { ExportPanel } from "@/components/ExportPanel";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import {
+  ArrowLeft,
+  Settings,
+  Info,
+  Sparkles,
+  Repeat,
+  Gauge,
+  ChevronDown,
+  Grid3x3,
+  EyeOff,
+  FileText,
+} from "lucide-react";
+import {
+  useSimulationStore,
+  useCurrentPressure,
+  usePlaybackState,
+  useViewOptions,
+  useGridInfo,
+  useProbeData,
+  usePerformanceSettings,
+  type VoxelGeometry,
+  type GeometryMode,
+  type DownsampleMethod,
+} from "@/stores/simulationStore";
+import { useHDF5Simulation } from "@/hooks/useHDF5Simulation";
+import { useExport } from "@/hooks/useExport";
+import type { ViewState } from "@/lib/export";
+import type { DemoGeometryType } from "@/lib/demoGeometry";
+
+// =============================================================================
+// Types
+// =============================================================================
+
+interface ViewerPageProps {
+  /** Callback to navigate back to home */
+  onBack?: () => void;
+}
+
+// =============================================================================
+// Constants
+// =============================================================================
+
+const GEOMETRY_MODES: { value: GeometryMode; label: string }[] = [
+  { value: "wireframe", label: "Wireframe" },
+  { value: "solid", label: "Solid" },
+  { value: "transparent", label: "Transparent" },
+  { value: "hidden", label: "Hidden" },
+];
+
+const DOWNSAMPLE_METHODS: { value: DownsampleMethod; label: string }[] = [
+  { value: "average", label: "Average" },
+  { value: "max", label: "Max" },
+  { value: "nearest", label: "Nearest" },
+];
+
+const TARGET_VOXEL_PRESETS = [
+  { value: 32768, label: "32³ (Low)" },
+  { value: 125000, label: "50³ (Med)" },
+  { value: 262144, label: "64³ (High)" },
+  { value: 512000, label: "80³ (Ultra)" },
+];
+
+// =============================================================================
+// Main Component
+// =============================================================================
+
+export default function ViewerPage({ onBack }: ViewerPageProps) {
+  // HDF5 loading state
+  const {
+    isLoaded,
+    isLoading,
+    progress,
+    error,
+    hdf5Data,
+    loadFile,
+    loadURL,
+    loadTimestep,
+    reset,
+  } = useHDF5Simulation();
+
+  // Store selectors
+  const pressure = useCurrentPressure();
+  const { currentFrame, isPlaying, totalFrames, playbackSpeed, isLooping } = usePlaybackState();
+  const { voxelGeometry, threshold, displayFill, showAxes, showGrid, geometryMode } = useViewOptions();
+  const { shape, resolution } = useGridInfo();
+  const { probeData } = useProbeData();
+  const {
+    enableDownsampling,
+    targetVoxels,
+    downsampleMethod,
+    showPerformanceMetrics,
+  } = usePerformanceSettings();
+
+  // Local state
+  const [geometryOpacity, setGeometryOpacity] = useState(30);
+  const [viewMode, setViewMode] = useState<"time" | "spectrum">("time");
+  const [showMetadata, setShowMetadata] = useState(false);
+
+  // Derive selected probe from probe data
+  const probeNames = probeData ? Object.keys(probeData.probes) : [];
+  const [selectedProbeOverride, setSelectedProbeOverride] = useState<string | null>(null);
+  const selectedProbe = selectedProbeOverride ?? probeNames[0] ?? null;
+  const setSelectedProbe = (name: string | null) => setSelectedProbeOverride(name);
+
+  // Renderer ref for export
+  const rendererRef = useRef<VoxelRendererHandle>(null);
+
+  // Export hook
+  const [exportState, exportActions] = useExport();
+
+  // Actions
+  const setCurrentFrame = useSimulationStore((s) => s.setCurrentFrame);
+  const play = useSimulationStore((s) => s.play);
+  const pause = useSimulationStore((s) => s.pause);
+  const setVoxelGeometry = useSimulationStore((s) => s.setVoxelGeometry);
+  const setThreshold = useSimulationStore((s) => s.setThreshold);
+  const setDisplayFill = useSimulationStore((s) => s.setDisplayFill);
+  const toggleAxes = useSimulationStore((s) => s.toggleAxes);
+  const toggleGrid = useSimulationStore((s) => s.toggleGrid);
+  const setLooping = useSimulationStore((s) => s.setLooping);
+  const setPlaybackSpeed = useSimulationStore((s) => s.setPlaybackSpeed);
+  const setGeometryMode = useSimulationStore((s) => s.setGeometryMode);
+  const setEnableDownsampling = useSimulationStore((s) => s.setEnableDownsampling);
+  const setTargetVoxels = useSimulationStore((s) => s.setTargetVoxels);
+  const setDownsampleMethod = useSimulationStore((s) => s.setDownsampleMethod);
+  const setShowPerformanceMetrics = useSimulationStore((s) => s.setShowPerformanceMetrics);
+  const updatePerformanceMetrics = useSimulationStore((s) => s.updatePerformanceMetrics);
+
+  // Load snapshot when frame changes
+  useEffect(() => {
+    if (isLoaded && totalFrames > 0) {
+      loadTimestep(currentFrame);
+    }
+  }, [currentFrame, isLoaded, totalFrames, loadTimestep]);
+
+
+  // Playback animation loop
+  const animationRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!isPlaying || totalFrames === 0) {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      return;
+    }
+
+    const fps = 15 * playbackSpeed;
+    const interval = 1000 / fps;
+
+    const animate = (time: number) => {
+      if (time - lastTimeRef.current >= interval) {
+        lastTimeRef.current = time;
+        const nextFrame = currentFrame + 1;
+        if (nextFrame >= totalFrames) {
+          if (isLooping) {
+            setCurrentFrame(0);
+          } else {
+            pause();
+            return;
+          }
+        } else {
+          setCurrentFrame(nextFrame);
+        }
+      }
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [isPlaying, totalFrames, playbackSpeed, isLooping, currentFrame, setCurrentFrame, pause]);
+
+  const handlePlayingChange = useCallback(
+    (playing: boolean) => {
+      if (playing) {
+        play();
+      } else {
+        pause();
+      }
+    },
+    [play, pause]
+  );
+
+  // Calculate current time for time series marker
+  const currentTime = useMemo(() => {
+    if (!probeData) return undefined;
+    return (currentFrame / totalFrames) * probeData.duration;
+  }, [currentFrame, totalFrames, probeData]);
+
+  // Handle time selection from chart
+  const handleTimeSelect = useCallback(
+    (time: number) => {
+      if (!probeData) return;
+      const frame = Math.round((time / probeData.duration) * totalFrames);
+      setCurrentFrame(Math.max(0, Math.min(totalFrames - 1, frame)));
+    },
+    [setCurrentFrame, totalFrames, probeData]
+  );
+
+  // Export callbacks
+  const getCanvas = useCallback(() => {
+    return rendererRef.current?.getCanvas() ?? null;
+  }, []);
+
+  const renderFrameForExport = useCallback(
+    async (frameIndex: number) => {
+      await loadTimestep(frameIndex);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      rendererRef.current?.render();
+    },
+    [loadTimestep]
+  );
+
+  const getViewState = useCallback((): ViewState => {
+    return {
+      cameraPosition: [0, 0, 0],
+      cameraTarget: [0, 0, 0],
+      cameraFov: 75,
+      viewOptions: {
+        threshold,
+        displayFill,
+        voxelGeometry,
+        geometryMode,
+        showGrid,
+        showAxes,
+      },
+      simulation: {
+        currentFrame,
+        totalFrames,
+        shape,
+        resolution,
+      },
+      timestamp: new Date().toISOString(),
+    };
+  }, [threshold, displayFill, voxelGeometry, geometryMode, showGrid, showAxes, currentFrame, totalFrames, shape, resolution]);
+
+  // Handle file/URL loading with error handling
+  const handleLoadFile = useCallback(
+    async (file: File) => {
+      try {
+        await loadFile(file);
+      } catch {
+        // Error is already set in the hook
+      }
+    },
+    [loadFile]
+  );
+
+  const handleLoadURL = useCallback(
+    async (url: string) => {
+      try {
+        await loadURL(url);
+      } catch {
+        // Error is already set in the hook
+      }
+    },
+    [loadURL]
+  );
+
+  // If not loaded, show file upload UI
+  if (!isLoaded) {
+    return (
+      <div className="h-screen w-screen flex flex-col bg-background">
+        {/* Header */}
+        <header className="flex items-center justify-between px-6 py-4 border-b">
+          <div className="flex items-center gap-4">
+            {onBack && (
+              <Button variant="ghost" size="icon" onClick={onBack}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+            <div>
+              <h1 className="text-lg font-bold">Simulation Viewer</h1>
+              <p className="text-sm text-muted-foreground">
+                Load HDF5 simulation results
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {/* File upload area */}
+        <main className="flex-1 flex items-center justify-center p-8">
+          <FileUpload
+            onFile={handleLoadFile}
+            onURL={handleLoadURL}
+            isLoading={isLoading}
+            progress={progress}
+            error={error}
+            className="w-full"
+          />
+        </main>
+      </div>
+    );
+  }
+
+  // Main visualization view
+  return (
+    <Layout
+      sidebar={
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-bold text-foreground">Simulation Viewer</h1>
+              <p className="text-sm text-muted-foreground">HDF5 Visualization</p>
+            </div>
+            {onBack && (
+              <Button variant="ghost" size="icon" onClick={onBack}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          {/* File Info */}
+          <Panel title="Simulation">
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Grid</span>
+                <span>{shape.join(" × ")}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Frames</span>
+                <span>{totalFrames}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Resolution</span>
+                <span>{(resolution * 1000).toFixed(2)} mm</span>
+              </div>
+              {hdf5Data?.simulation.totalTime && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Duration</span>
+                  <span>{(hdf5Data.simulation.totalTime * 1e6).toFixed(1)} μs</span>
+                </div>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full mt-3 gap-2"
+              onClick={() => setShowMetadata(!showMetadata)}
+            >
+              <FileText className="h-3 w-3" />
+              {showMetadata ? "Hide" : "Show"} Metadata
+            </Button>
+
+            {showMetadata && hdf5Data && (
+              <div className="mt-3 p-3 bg-secondary/30 rounded-md text-xs space-y-1">
+                <div><strong>Created:</strong> {hdf5Data.metadata.createdAt}</div>
+                <div><strong>Solver:</strong> {hdf5Data.metadata.solverVersion}</div>
+                {hdf5Data.metadata.backend && (
+                  <div><strong>Backend:</strong> {hdf5Data.metadata.backend}</div>
+                )}
+                {hdf5Data.metadata.totalRuntimeSeconds && (
+                  <div><strong>Runtime:</strong> {hdf5Data.metadata.totalRuntimeSeconds.toFixed(1)}s</div>
+                )}
+              </div>
+            )}
+
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full mt-3"
+              onClick={reset}
+            >
+              Unload Simulation
+            </Button>
+          </Panel>
+
+          {/* Boundary Display */}
+          <Panel title="Boundary Display">
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-1">
+                {GEOMETRY_MODES.map((mode) => (
+                  <Badge
+                    key={mode.value}
+                    variant={geometryMode === mode.value ? "default" : "secondary"}
+                    className="cursor-pointer"
+                    onClick={() => setGeometryMode(mode.value)}
+                  >
+                    {mode.label}
+                  </Badge>
+                ))}
+              </div>
+              {geometryMode === "transparent" && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Opacity</span>
+                    <span>{geometryOpacity}%</span>
+                  </div>
+                  <Slider
+                    value={[geometryOpacity]}
+                    onValueChange={(v) => setGeometryOpacity(v[0])}
+                    min={10}
+                    max={80}
+                    step={5}
+                  />
+                </div>
+              )}
+            </div>
+          </Panel>
+
+          {/* Voxel Display */}
+          <Panel title="Voxel Display">
+            <div className="space-y-3">
+              <div>
+                <span className="text-sm mb-2 block">Geometry</span>
+                <div className="flex gap-1">
+                  {[
+                    { value: "point" as VoxelGeometry, label: "Points", icon: <Sparkles className="h-3 w-3" /> },
+                    { value: "mesh" as VoxelGeometry, label: "Mesh", icon: <Grid3x3 className="h-3 w-3" /> },
+                    { value: "hidden" as VoxelGeometry, label: "Hidden", icon: <EyeOff className="h-3 w-3" /> },
+                  ].map((opt) => (
+                    <Button
+                      key={opt.value}
+                      variant={voxelGeometry === opt.value ? "default" : "outline"}
+                      size="sm"
+                      className="flex-1 gap-1"
+                      onClick={() => setVoxelGeometry(opt.value)}
+                    >
+                      {opt.icon}
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Colormap</span>
+                <Badge variant="secondary">Diverging</Badge>
+              </div>
+            </div>
+          </Panel>
+
+          {/* Threshold */}
+          <Panel title="Threshold">
+            <Slider
+              value={[threshold * 100]}
+              max={100}
+              step={1}
+              onValueChange={([v]) => setThreshold(v / 100)}
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>0%</span>
+              <span>{Math.round(threshold * 100)}%</span>
+              <span>100%</span>
+            </div>
+          </Panel>
+
+          {/* Display Fill */}
+          <Panel title="Display Fill">
+            <Slider
+              value={[displayFill * 100]}
+              min={1}
+              max={100}
+              step={1}
+              onValueChange={([v]) => setDisplayFill(v / 100)}
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>1%</span>
+              <span>{Math.round(displayFill * 100)}%</span>
+              <span>100%</span>
+            </div>
+          </Panel>
+
+          {/* Playback */}
+          <Panel title="Playback">
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isLooping}
+                  onChange={(e) => setLooping(e.target.checked)}
+                  className="rounded"
+                />
+                <Repeat className="h-3 w-3" />
+                Loop
+              </label>
+              <div>
+                <span className="text-sm mb-2 block">Speed</span>
+                <div className="flex gap-1">
+                  {[0.25, 0.5, 1, 2, 4].map((speed) => (
+                    <Button
+                      key={speed}
+                      variant={playbackSpeed === speed ? "default" : "outline"}
+                      size="sm"
+                      className="flex-1 text-xs"
+                      onClick={() => setPlaybackSpeed(speed)}
+                    >
+                      {speed}x
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Panel>
+
+          {/* View Options */}
+          <Panel title="View Options">
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showGrid}
+                  onChange={(e) => e.target.checked !== showGrid && toggleGrid()}
+                  className="rounded"
+                />
+                Show Grid
+              </label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showAxes}
+                  onChange={(e) => e.target.checked !== showAxes && toggleAxes()}
+                  className="rounded"
+                />
+                Show Axes
+              </label>
+            </div>
+          </Panel>
+
+          {/* Performance */}
+          <PerformancePanel
+            enableDownsampling={enableDownsampling}
+            targetVoxels={targetVoxels}
+            downsampleMethod={downsampleMethod}
+            showPerformanceMetrics={showPerformanceMetrics}
+            onEnableDownsamplingChange={setEnableDownsampling}
+            onTargetVoxelsChange={setTargetVoxels}
+            onDownsampleMethodChange={setDownsampleMethod}
+            onShowPerformanceMetricsChange={setShowPerformanceMetrics}
+          />
+
+          {/* Export */}
+          <Panel title="Export">
+            <ExportPanel
+              exportState={exportState}
+              exportActions={exportActions}
+              getCanvas={getCanvas}
+              totalFrames={totalFrames}
+              currentFrame={currentFrame}
+              renderFrame={renderFrameForExport}
+              pressure={pressure}
+              shape={shape}
+              resolution={resolution}
+              probeData={probeData}
+              getViewState={getViewState}
+            />
+          </Panel>
+
+          {/* Footer */}
+          <div className="pt-4 border-t border-border">
+            <div className="flex gap-2">
+              <Button variant="ghost" size="icon" title="Settings">
+                <Settings className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" title="Info">
+                <Info className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      }
+      main={
+        <OptimizedVoxelRenderer
+          ref={rendererRef}
+          pressure={pressure}
+          shape={shape}
+          resolution={resolution}
+          geometry={voxelGeometry}
+          threshold={threshold}
+          displayFill={displayFill}
+          showGrid={showGrid}
+          showAxes={showAxes}
+          geometryMode={geometryMode}
+          demoType={"helmholtz" as DemoGeometryType}
+          geometryOpacity={geometryOpacity / 100}
+          enableDownsampling={enableDownsampling}
+          targetVoxels={targetVoxels}
+          downsampleMethod={downsampleMethod}
+          showPerformanceMetrics={showPerformanceMetrics}
+          onPerformanceUpdate={updatePerformanceMetrics}
+        />
+      }
+      bottom={
+        <BottomPanel
+          totalFrames={totalFrames}
+          currentFrame={currentFrame}
+          isPlaying={isPlaying}
+          playbackSpeed={playbackSpeed}
+          probeData={probeData}
+          selectedProbe={selectedProbe}
+          viewMode={viewMode}
+          currentTime={currentTime}
+          onFrameChange={setCurrentFrame}
+          onPlayingChange={handlePlayingChange}
+          onTimeSelect={handleTimeSelect}
+          onViewModeChange={setViewMode}
+          onSelectProbe={setSelectedProbe}
+        />
+      }
+    />
+  );
+}
+
+// =============================================================================
+// Sub-components
+// =============================================================================
+
+interface PerformancePanelProps {
+  enableDownsampling: boolean;
+  targetVoxels: number;
+  downsampleMethod: DownsampleMethod;
+  showPerformanceMetrics: boolean;
+  onEnableDownsamplingChange: (v: boolean) => void;
+  onTargetVoxelsChange: (v: number) => void;
+  onDownsampleMethodChange: (v: DownsampleMethod) => void;
+  onShowPerformanceMetricsChange: (v: boolean) => void;
+}
+
+function PerformancePanel({
+  enableDownsampling,
+  targetVoxels,
+  downsampleMethod,
+  showPerformanceMetrics,
+  onEnableDownsamplingChange,
+  onTargetVoxelsChange,
+  onDownsampleMethodChange,
+  onShowPerformanceMetricsChange,
+}: PerformancePanelProps) {
+  const [showPerfSettings, setShowPerfSettings] = useState(false);
+
+  return (
+    <Panel title="Performance">
+      <div className="space-y-3">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showPerformanceMetrics}
+            onChange={(e) => onShowPerformanceMetricsChange(e.target.checked)}
+            className="rounded"
+          />
+          <Gauge className="h-3 w-3" />
+          Show Metrics
+        </label>
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={enableDownsampling}
+            onChange={(e) => onEnableDownsamplingChange(e.target.checked)}
+            className="rounded"
+          />
+          Auto Downsampling
+        </label>
+
+        {enableDownsampling && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-between text-xs"
+              onClick={() => setShowPerfSettings(!showPerfSettings)}
+            >
+              Advanced Settings
+              <ChevronDown className={`h-3 w-3 transition-transform ${showPerfSettings ? "rotate-180" : ""}`} />
+            </Button>
+
+            {showPerfSettings && (
+              <div className="space-y-3 pl-2 border-l-2 border-border">
+                <div>
+                  <span className="text-xs text-muted-foreground mb-1 block">Target Voxels</span>
+                  <div className="flex flex-wrap gap-1">
+                    {TARGET_VOXEL_PRESETS.map((preset) => (
+                      <Badge
+                        key={preset.value}
+                        variant={targetVoxels === preset.value ? "default" : "secondary"}
+                        className="cursor-pointer text-xs"
+                        onClick={() => onTargetVoxelsChange(preset.value)}
+                      >
+                        {preset.label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-xs text-muted-foreground mb-1 block">Method</span>
+                  <div className="flex gap-1">
+                    {DOWNSAMPLE_METHODS.map((method) => (
+                      <Badge
+                        key={method.value}
+                        variant={downsampleMethod === method.value ? "default" : "secondary"}
+                        className="cursor-pointer text-xs"
+                        onClick={() => onDownsampleMethodChange(method.value)}
+                      >
+                        {method.label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </Panel>
+  );
+}
+
+interface BottomPanelProps {
+  totalFrames: number;
+  currentFrame: number;
+  isPlaying: boolean;
+  playbackSpeed: number;
+  probeData: ReturnType<typeof useSimulationStore.getState>["probeData"];
+  selectedProbe: string | null;
+  viewMode: "time" | "spectrum";
+  currentTime?: number;
+  onFrameChange: (frame: number) => void;
+  onPlayingChange: (playing: boolean) => void;
+  onTimeSelect: (time: number) => void;
+  onViewModeChange: (mode: "time" | "spectrum") => void;
+  onSelectProbe: (name: string | null) => void;
+}
+
+function BottomPanel({
+  totalFrames,
+  currentFrame,
+  isPlaying,
+  playbackSpeed,
+  probeData,
+  selectedProbe,
+  viewMode,
+  currentTime,
+  onFrameChange,
+  onPlayingChange,
+  onTimeSelect,
+  onViewModeChange,
+  onSelectProbe,
+}: BottomPanelProps) {
+  const probeNames = probeData ? Object.keys(probeData.probes) : [];
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex gap-2">
+          <Button
+            variant={viewMode === "time" ? "default" : "outline"}
+            size="sm"
+            className="text-xs h-6"
+            onClick={() => onViewModeChange("time")}
+          >
+            Time Series
+          </Button>
+          <Button
+            variant={viewMode === "spectrum" ? "default" : "outline"}
+            size="sm"
+            className="text-xs h-6"
+            onClick={() => onViewModeChange("spectrum")}
+          >
+            Spectrum
+          </Button>
+        </div>
+        {viewMode === "spectrum" && probeNames.length > 0 && (
+          <div className="flex gap-1">
+            {probeNames.map((name) => (
+              <Badge
+                key={name}
+                variant={selectedProbe === name ? "default" : "outline"}
+                className="cursor-pointer text-xs"
+                onClick={() => onSelectProbe(name)}
+              >
+                {name}
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 min-h-0">
+        {!probeData ? (
+          <div className="h-full bg-secondary/30 rounded-md flex items-center justify-center text-muted-foreground text-sm">
+            No probe data available
+          </div>
+        ) : viewMode === "time" ? (
+          <TimeSeriesPlot
+            probes={probeData.probes}
+            sampleRate={probeData.sampleRate}
+            currentTime={currentTime}
+            onTimeSelect={onTimeSelect}
+          />
+        ) : (
+          <SpectrumPlot
+            data={
+              selectedProbe && probeData.probes[selectedProbe]
+                ? probeData.probes[selectedProbe].data
+                : new Float32Array(0)
+            }
+            sampleRate={probeData.sampleRate}
+          />
+        )}
+      </div>
+
+      <div className="mt-2 flex items-center gap-4">
+        <PlaybackControls
+          totalFrames={totalFrames}
+          currentFrame={currentFrame}
+          isPlaying={isPlaying}
+          onFrameChange={onFrameChange}
+          onPlayingChange={onPlayingChange}
+          disabled={totalFrames === 0}
+          fps={15 * playbackSpeed}
+        />
+        <BackgroundLoadingIndicator />
+      </div>
+    </div>
+  );
+}

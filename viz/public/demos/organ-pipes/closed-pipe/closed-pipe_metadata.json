@@ -1,0 +1,74 @@
+{
+  "grid": {
+    "shape": [
+      130,
+      44,
+      44
+    ],
+    "resolution": 0.002,
+    "physical_size": [
+      0.26,
+      0.088,
+      0.088
+    ]
+  },
+  "physics": {
+    "c": 343.0,
+    "rho": 1.2
+  },
+  "simulation": {
+    "dt": 3.198150179184516e-06,
+    "cfl_limit": 3.3664738728258063e-06,
+    "current_time": 0.02915753518362471,
+    "step_count": 9117
+  },
+  "probes": {
+    "left_end": {
+      "position": [
+        16,
+        22,
+        22
+      ]
+    },
+    "quarter": {
+      "position": [
+        40,
+        22,
+        22
+      ]
+    },
+    "center": {
+      "position": [
+        65,
+        22,
+        22
+      ]
+    },
+    "three_quarter": {
+      "position": [
+        90,
+        22,
+        22
+      ]
+    },
+    "right_end": {
+      "position": [
+        113,
+        22,
+        22
+      ]
+    }
+  },
+  "sources": [
+    {
+      "type": "point",
+      "position": [
+        18,
+        22,
+        22
+      ],
+      "frequency": 857.5,
+      "bandwidth": 2572.5
+    }
+  ]
+}

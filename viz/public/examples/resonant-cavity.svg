@@ -1,0 +1,22 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff9800;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fff3e0;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#grad3)"/>
+  <!-- Cavity walls -->
+  <rect x="100" y="80" width="200" height="140" fill="none" stroke="#e65100" stroke-width="4"/>
+  <!-- Standing wave pattern -->
+  <line x1="100" y1="150" x2="300" y2="150" stroke="#f57c00" stroke-width="1" stroke-dasharray="5,5"/>
+  <path d="M 100 150 Q 125 120, 150 150 T 200 150 T 250 150 T 300 150" stroke="#e65100" stroke-width="3" fill="none"/>
+  <path d="M 100 150 Q 125 180, 150 150 T 200 150 T 250 150 T 300 150" stroke="#e65100" stroke-width="3" fill="none"/>
+  <!-- Nodes -->
+  <circle cx="150" cy="150" r="5" fill="#bf360c"/>
+  <circle cx="200" cy="150" r="5" fill="#bf360c"/>
+  <circle cx="250" cy="150" r="5" fill="#bf360c"/>
+  <!-- Title -->
+  <rect x="0" y="250" width="400" height="50" fill="rgba(0,0,0,0.5)"/>
+  <text x="200" y="283" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">Resonant Cavity</text>
+</svg>

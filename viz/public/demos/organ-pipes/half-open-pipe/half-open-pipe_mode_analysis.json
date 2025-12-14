@@ -1,0 +1,43 @@
+{
+  "pipe_type": "half-open",
+  "analysis_probe": "air_volume",
+  "expected_modes_hz": [
+    410.28708133971287,
+    1230.8612440191387,
+    2051.4354066985643,
+    2872.0095693779904,
+    3692.583732057416
+  ],
+  "measured_modes_hz": [
+    407.93158286782256,
+    1219.0236189792827,
+    "not detected",
+    "not detected",
+    "not detected"
+  ],
+  "mode_errors_percent": [
+    0.57,
+    0.96,
+    "N/A",
+    "N/A",
+    "N/A"
+  ],
+  "mode_descriptions": [
+    "Mode 1 (1st harmonic)",
+    "Mode 2 (3rd harmonic)",
+    "Mode 3 (5th harmonic)",
+    "Mode 4 (7th harmonic)",
+    "Mode 5 (9th harmonic)"
+  ],
+  "detection_summary": {
+    "modes_expected": 5,
+    "modes_detected": 2,
+    "detection_rate": "40%"
+  },
+  "analysis_parameters": {
+    "window": "hann",
+    "n_fft": 131072,
+    "freq_resolution_hz": 2.39,
+    "transient_skip_samples": 4572
+  }
+}

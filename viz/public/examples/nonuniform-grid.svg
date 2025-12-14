@@ -1,0 +1,41 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad8" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#795548;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#efebe9;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#grad8)"/>
+  <!-- Grid with variable spacing -->
+  <!-- Fine grid in center -->
+  <g stroke="#5d4037" stroke-width="1.5" opacity="0.6">
+    <line x1="180" y1="100" x2="180" y2="200"/>
+    <line x1="190" y1="100" x2="190" y2="200"/>
+    <line x1="200" y1="100" x2="200" y2="200"/>
+    <line x1="210" y1="100" x2="210" y2="200"/>
+    <line x1="220" y1="100" x2="220" y2="200"/>
+  </g>
+  <!-- Coarser grid on sides -->
+  <g stroke="#6d4c41" stroke-width="1.5" opacity="0.4">
+    <line x1="100" y1="100" x2="100" y2="200"/>
+    <line x1="140" y1="100" x2="140" y2="200"/>
+    <line x1="260" y1="100" x2="260" y2="200"/>
+    <line x1="300" y1="100" x2="300" y2="200"/>
+  </g>
+  <!-- Horizontal lines -->
+  <g stroke="#5d4037" stroke-width="1" opacity="0.5">
+    <line x1="100" y1="140" x2="300" y2="140"/>
+    <line x1="100" y1="150" x2="300" y2="150"/>
+    <line x1="100" y1="160" x2="300" y2="160"/>
+  </g>
+  <!-- Source at center -->
+  <circle cx="200" cy="150" r="8" fill="#3e2723"/>
+  <circle cx="200" cy="150" r="20" fill="none" stroke="#3e2723" stroke-width="2"/>
+  <!-- Labels -->
+  <text x="120" y="220" font-family="monospace" font-size="14" fill="#4e342e">coarse</text>
+  <text x="185" y="220" font-family="monospace" font-size="14" fill="#3e2723">fine</text>
+  <text x="265" y="220" font-family="monospace" font-size="14" fill="#4e342e">coarse</text>
+  <!-- Title -->
+  <rect x="0" y="250" width="400" height="50" fill="rgba(0,0,0,0.5)"/>
+  <text x="200" y="283" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">Nonuniform Grid</text>
+</svg>

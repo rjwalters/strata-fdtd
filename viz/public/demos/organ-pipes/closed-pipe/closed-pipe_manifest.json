@@ -1,0 +1,4950 @@
+{
+  "metadata": "closed-pipe_metadata.json",
+  "probes": "closed-pipe_probes.json",
+  "geometry": "closed-pipe_geometry.bin",
+  "snapshots": [
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0000.bin",
+      "bytes": 503360,
+      "time": 0.0
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0001.bin",
+      "bytes": 503360,
+      "time": 0.00015990750895922563
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0002.bin",
+      "bytes": 503360,
+      "time": 0.00031981501791845116
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0003.bin",
+      "bytes": 503360,
+      "time": 0.00047972252687767666
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0004.bin",
+      "bytes": 503360,
+      "time": 0.0006396300358369047
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0005.bin",
+      "bytes": 503360,
+      "time": 0.0007995375447961329
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0006.bin",
+      "bytes": 503360,
+      "time": 0.0009594450537553611
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0007.bin",
+      "bytes": 503360,
+      "time": 0.0011193525627145845
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0008.bin",
+      "bytes": 503360,
+      "time": 0.0012792600716738072
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0009.bin",
+      "bytes": 503360,
+      "time": 0.00143916758063303
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0010.bin",
+      "bytes": 503360,
+      "time": 0.0015990750895922528
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0011.bin",
+      "bytes": 503360,
+      "time": 0.0017589825985514756
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0012.bin",
+      "bytes": 503360,
+      "time": 0.0019188901075106984
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0013.bin",
+      "bytes": 503360,
+      "time": 0.0020787976164699214
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0014.bin",
+      "bytes": 503360,
+      "time": 0.002238705125429144
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0015.bin",
+      "bytes": 503360,
+      "time": 0.002398612634388367
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0016.bin",
+      "bytes": 503360,
+      "time": 0.0025585201433475898
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0017.bin",
+      "bytes": 503360,
+      "time": 0.0027184276523068126
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0018.bin",
+      "bytes": 503360,
+      "time": 0.0028783351612660353
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0019.bin",
+      "bytes": 503360,
+      "time": 0.003038242670225258
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0020.bin",
+      "bytes": 503360,
+      "time": 0.003198150179184481
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0021.bin",
+      "bytes": 503360,
+      "time": 0.0033580576881437037
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0022.bin",
+      "bytes": 503360,
+      "time": 0.0035179651971029265
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0023.bin",
+      "bytes": 503360,
+      "time": 0.0036778727060621493
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0024.bin",
+      "bytes": 503360,
+      "time": 0.003837780215021372
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0025.bin",
+      "bytes": 503360,
+      "time": 0.003997687723980595
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0026.bin",
+      "bytes": 503360,
+      "time": 0.004157595232939818
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0027.bin",
+      "bytes": 503360,
+      "time": 0.0043175027418990404
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0028.bin",
+      "bytes": 503360,
+      "time": 0.004477410250858263
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0029.bin",
+      "bytes": 503360,
+      "time": 0.004637317759817486
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0030.bin",
+      "bytes": 503360,
+      "time": 0.004797225268776709
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0031.bin",
+      "bytes": 503360,
+      "time": 0.004957132777735932
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0032.bin",
+      "bytes": 503360,
+      "time": 0.005117040286695154
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0033.bin",
+      "bytes": 503360,
+      "time": 0.005276947795654377
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0034.bin",
+      "bytes": 503360,
+      "time": 0.0054368553046136
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0035.bin",
+      "bytes": 503360,
+      "time": 0.005596762813572823
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0036.bin",
+      "bytes": 503360,
+      "time": 0.0057566703225320455
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0037.bin",
+      "bytes": 503360,
+      "time": 0.005916577831491268
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0038.bin",
+      "bytes": 503360,
+      "time": 0.006076485340450491
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0039.bin",
+      "bytes": 503360,
+      "time": 0.006236392849409714
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0040.bin",
+      "bytes": 503360,
+      "time": 0.006396300358368937
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0041.bin",
+      "bytes": 503360,
+      "time": 0.0065562078673281595
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0042.bin",
+      "bytes": 503360,
+      "time": 0.006716115376287382
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0043.bin",
+      "bytes": 503360,
+      "time": 0.006876022885246605
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0044.bin",
+      "bytes": 503360,
+      "time": 0.007035930394205828
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0045.bin",
+      "bytes": 503360,
+      "time": 0.007195837903165051
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0046.bin",
+      "bytes": 503360,
+      "time": 0.007355745412124273
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0047.bin",
+      "bytes": 503360,
+      "time": 0.007515652921083496
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0048.bin",
+      "bytes": 503360,
+      "time": 0.007675560430042719
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0049.bin",
+      "bytes": 503360,
+      "time": 0.007835467939001943
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0050.bin",
+      "bytes": 503360,
+      "time": 0.007995375447961165
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0051.bin",
+      "bytes": 503360,
+      "time": 0.008155282956920388
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0052.bin",
+      "bytes": 503360,
+      "time": 0.008315190465879611
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0053.bin",
+      "bytes": 503360,
+      "time": 0.008475097974838834
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0054.bin",
+      "bytes": 503360,
+      "time": 0.008635005483798057
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0055.bin",
+      "bytes": 503360,
+      "time": 0.00879491299275728
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0056.bin",
+      "bytes": 503360,
+      "time": 0.008954820501716502
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0057.bin",
+      "bytes": 503360,
+      "time": 0.009114728010675725
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0058.bin",
+      "bytes": 503360,
+      "time": 0.009274635519634948
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0059.bin",
+      "bytes": 503360,
+      "time": 0.00943454302859417
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0060.bin",
+      "bytes": 503360,
+      "time": 0.009594450537553393
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0061.bin",
+      "bytes": 503360,
+      "time": 0.009754358046512616
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0062.bin",
+      "bytes": 503360,
+      "time": 0.009914265555471839
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0063.bin",
+      "bytes": 503360,
+      "time": 0.010074173064431062
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0064.bin",
+      "bytes": 503360,
+      "time": 0.010234080573390284
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0065.bin",
+      "bytes": 503360,
+      "time": 0.010393988082349507
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0066.bin",
+      "bytes": 503360,
+      "time": 0.01055389559130873
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0067.bin",
+      "bytes": 503360,
+      "time": 0.010713803100267953
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0068.bin",
+      "bytes": 503360,
+      "time": 0.010873710609227176
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0069.bin",
+      "bytes": 503360,
+      "time": 0.011033618118186398
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0070.bin",
+      "bytes": 503360,
+      "time": 0.011193525627145621
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0071.bin",
+      "bytes": 503360,
+      "time": 0.011353433136104844
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0072.bin",
+      "bytes": 503360,
+      "time": 0.011513340645064067
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0073.bin",
+      "bytes": 503360,
+      "time": 0.01167324815402329
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0074.bin",
+      "bytes": 503360,
+      "time": 0.011833155662982512
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0075.bin",
+      "bytes": 503360,
+      "time": 0.011993063171941735
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0076.bin",
+      "bytes": 503360,
+      "time": 0.012152970680900958
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0077.bin",
+      "bytes": 503360,
+      "time": 0.01231287818986018
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0078.bin",
+      "bytes": 503360,
+      "time": 0.012472785698819404
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0079.bin",
+      "bytes": 503360,
+      "time": 0.012632693207778626
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0080.bin",
+      "bytes": 503360,
+      "time": 0.012792600716737849
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0081.bin",
+      "bytes": 503360,
+      "time": 0.012952508225697072
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0082.bin",
+      "bytes": 503360,
+      "time": 0.013112415734656295
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0083.bin",
+      "bytes": 503360,
+      "time": 0.013272323243615517
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0084.bin",
+      "bytes": 503360,
+      "time": 0.01343223075257474
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0085.bin",
+      "bytes": 503360,
+      "time": 0.013592138261533963
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0086.bin",
+      "bytes": 503360,
+      "time": 0.013752045770493186
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0087.bin",
+      "bytes": 503360,
+      "time": 0.013911953279452409
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0088.bin",
+      "bytes": 503360,
+      "time": 0.014071860788411631
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0089.bin",
+      "bytes": 503360,
+      "time": 0.014231768297370854
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0090.bin",
+      "bytes": 503360,
+      "time": 0.014391675806330077
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0091.bin",
+      "bytes": 503360,
+      "time": 0.0145515833152893
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0092.bin",
+      "bytes": 503360,
+      "time": 0.014711490824248523
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0093.bin",
+      "bytes": 503360,
+      "time": 0.014871398333207745
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0094.bin",
+      "bytes": 503360,
+      "time": 0.015031305842166968
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0095.bin",
+      "bytes": 503360,
+      "time": 0.015191213351126191
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0096.bin",
+      "bytes": 503360,
+      "time": 0.015351120860085414
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0097.bin",
+      "bytes": 503360,
+      "time": 0.015511028369044636
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0098.bin",
+      "bytes": 503360,
+      "time": 0.01567093587800386
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0099.bin",
+      "bytes": 503360,
+      "time": 0.015830843386963084
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0100.bin",
+      "bytes": 503360,
+      "time": 0.015990750895922307
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0101.bin",
+      "bytes": 503360,
+      "time": 0.01615065840488153
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0102.bin",
+      "bytes": 503360,
+      "time": 0.016310565913840752
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0103.bin",
+      "bytes": 503360,
+      "time": 0.016470473422799975
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0104.bin",
+      "bytes": 503360,
+      "time": 0.016630380931759198
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0105.bin",
+      "bytes": 503360,
+      "time": 0.01679028844071842
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0106.bin",
+      "bytes": 503360,
+      "time": 0.016950195949677643
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0107.bin",
+      "bytes": 503360,
+      "time": 0.017110103458636866
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0108.bin",
+      "bytes": 503360,
+      "time": 0.01727001096759609
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0109.bin",
+      "bytes": 503360,
+      "time": 0.01742991847655531
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0110.bin",
+      "bytes": 503360,
+      "time": 0.017589825985514534
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0111.bin",
+      "bytes": 503360,
+      "time": 0.017749733494473757
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0112.bin",
+      "bytes": 503360,
+      "time": 0.01790964100343298
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0113.bin",
+      "bytes": 503360,
+      "time": 0.018069548512392203
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0114.bin",
+      "bytes": 503360,
+      "time": 0.018229456021351426
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0115.bin",
+      "bytes": 503360,
+      "time": 0.01838936353031065
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0116.bin",
+      "bytes": 503360,
+      "time": 0.01854927103926987
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0117.bin",
+      "bytes": 503360,
+      "time": 0.018709178548229094
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0118.bin",
+      "bytes": 503360,
+      "time": 0.018869086057188317
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0119.bin",
+      "bytes": 503360,
+      "time": 0.01902899356614754
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0120.bin",
+      "bytes": 503360,
+      "time": 0.019188901075106762
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0121.bin",
+      "bytes": 503360,
+      "time": 0.019348808584065985
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0122.bin",
+      "bytes": 503360,
+      "time": 0.019508716093025208
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0123.bin",
+      "bytes": 503360,
+      "time": 0.01966862360198443
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0124.bin",
+      "bytes": 503360,
+      "time": 0.019828531110943654
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0125.bin",
+      "bytes": 503360,
+      "time": 0.019988438619902876
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0126.bin",
+      "bytes": 503360,
+      "time": 0.0201483461288621
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0127.bin",
+      "bytes": 503360,
+      "time": 0.020308253637821322
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0128.bin",
+      "bytes": 503360,
+      "time": 0.020468161146780545
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0129.bin",
+      "bytes": 503360,
+      "time": 0.020628068655739767
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0130.bin",
+      "bytes": 503360,
+      "time": 0.02078797616469899
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0131.bin",
+      "bytes": 503360,
+      "time": 0.020947883673658213
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0132.bin",
+      "bytes": 503360,
+      "time": 0.021107791182617436
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0133.bin",
+      "bytes": 503360,
+      "time": 0.02126769869157666
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0134.bin",
+      "bytes": 503360,
+      "time": 0.02142760620053588
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0135.bin",
+      "bytes": 503360,
+      "time": 0.021587513709495104
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0136.bin",
+      "bytes": 503360,
+      "time": 0.021747421218454327
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0137.bin",
+      "bytes": 503360,
+      "time": 0.02190732872741355
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0138.bin",
+      "bytes": 503360,
+      "time": 0.022067236236372773
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0139.bin",
+      "bytes": 503360,
+      "time": 0.022227143745331995
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0140.bin",
+      "bytes": 503360,
+      "time": 0.022387051254291218
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0141.bin",
+      "bytes": 503360,
+      "time": 0.02254695876325044
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0142.bin",
+      "bytes": 503360,
+      "time": 0.022706866272209664
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0143.bin",
+      "bytes": 503360,
+      "time": 0.022866773781168886
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0144.bin",
+      "bytes": 503360,
+      "time": 0.02302668129012811
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0145.bin",
+      "bytes": 503360,
+      "time": 0.023186588799087332
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0146.bin",
+      "bytes": 503360,
+      "time": 0.023346496308046555
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0147.bin",
+      "bytes": 503360,
+      "time": 0.023506403817005778
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0148.bin",
+      "bytes": 503360,
+      "time": 0.023666311325965
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0149.bin",
+      "bytes": 503360,
+      "time": 0.023826218834924223
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0150.bin",
+      "bytes": 503360,
+      "time": 0.023986126343883446
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0151.bin",
+      "bytes": 503360,
+      "time": 0.02414603385284267
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0152.bin",
+      "bytes": 503360,
+      "time": 0.02430594136180189
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0153.bin",
+      "bytes": 503360,
+      "time": 0.024465848870761114
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0154.bin",
+      "bytes": 503360,
+      "time": 0.024625756379720337
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0155.bin",
+      "bytes": 503360,
+      "time": 0.02478566388867956
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0156.bin",
+      "bytes": 503360,
+      "time": 0.024945571397638783
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0157.bin",
+      "bytes": 503360,
+      "time": 0.025105478906598006
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0158.bin",
+      "bytes": 503360,
+      "time": 0.02526538641555723
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0159.bin",
+      "bytes": 503360,
+      "time": 0.02542529392451645
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0160.bin",
+      "bytes": 503360,
+      "time": 0.025585201433475674
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0161.bin",
+      "bytes": 503360,
+      "time": 0.025745108942434897
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0162.bin",
+      "bytes": 503360,
+      "time": 0.02590501645139412
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0163.bin",
+      "bytes": 503360,
+      "time": 0.026064923960353342
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0164.bin",
+      "bytes": 503360,
+      "time": 0.026224831469312565
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0165.bin",
+      "bytes": 503360,
+      "time": 0.026384738978271788
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0166.bin",
+      "bytes": 503360,
+      "time": 0.02654464648723101
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0167.bin",
+      "bytes": 503360,
+      "time": 0.026704553996190233
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0168.bin",
+      "bytes": 503360,
+      "time": 0.026864461505149456
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0169.bin",
+      "bytes": 503360,
+      "time": 0.02702436901410868
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0170.bin",
+      "bytes": 503360,
+      "time": 0.027184276523067902
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0171.bin",
+      "bytes": 503360,
+      "time": 0.027344184032027125
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0172.bin",
+      "bytes": 503360,
+      "time": 0.027504091540986347
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0173.bin",
+      "bytes": 503360,
+      "time": 0.02766399904994557
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0174.bin",
+      "bytes": 503360,
+      "time": 0.027823906558904793
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0175.bin",
+      "bytes": 503360,
+      "time": 0.027983814067864016
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0176.bin",
+      "bytes": 503360,
+      "time": 0.02814372157682324
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0177.bin",
+      "bytes": 503360,
+      "time": 0.02830362908578246
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0178.bin",
+      "bytes": 503360,
+      "time": 0.028463536594741684
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0179.bin",
+      "bytes": 503360,
+      "time": 0.028623444103700907
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0180.bin",
+      "bytes": 503360,
+      "time": 0.02878335161266013
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0181.bin",
+      "bytes": 503360,
+      "time": 0.028943259121619352
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "float16",
+      "format": "float16",
+      "downsample": 1,
+      "file": "closed-pipe_snapshot_0182.bin",
+      "bytes": 503360,
+      "time": 0.029103166630578575
+    }
+  ],
+  "velocitySnapshots": [
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0000.bin",
+      "bytes": 1510080,
+      "time": 0.0
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0001.bin",
+      "bytes": 1510080,
+      "time": 0.00015990750895922563
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0002.bin",
+      "bytes": 1510080,
+      "time": 0.00031981501791845116
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0003.bin",
+      "bytes": 1510080,
+      "time": 0.00047972252687767666
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0004.bin",
+      "bytes": 1510080,
+      "time": 0.0006396300358369047
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0005.bin",
+      "bytes": 1510080,
+      "time": 0.0007995375447961329
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0006.bin",
+      "bytes": 1510080,
+      "time": 0.0009594450537553611
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0007.bin",
+      "bytes": 1510080,
+      "time": 0.0011193525627145845
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0008.bin",
+      "bytes": 1510080,
+      "time": 0.0012792600716738072
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0009.bin",
+      "bytes": 1510080,
+      "time": 0.00143916758063303
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0010.bin",
+      "bytes": 1510080,
+      "time": 0.0015990750895922528
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0011.bin",
+      "bytes": 1510080,
+      "time": 0.0017589825985514756
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0012.bin",
+      "bytes": 1510080,
+      "time": 0.0019188901075106984
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0013.bin",
+      "bytes": 1510080,
+      "time": 0.0020787976164699214
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0014.bin",
+      "bytes": 1510080,
+      "time": 0.002238705125429144
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0015.bin",
+      "bytes": 1510080,
+      "time": 0.002398612634388367
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0016.bin",
+      "bytes": 1510080,
+      "time": 0.0025585201433475898
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0017.bin",
+      "bytes": 1510080,
+      "time": 0.0027184276523068126
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0018.bin",
+      "bytes": 1510080,
+      "time": 0.0028783351612660353
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0019.bin",
+      "bytes": 1510080,
+      "time": 0.003038242670225258
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0020.bin",
+      "bytes": 1510080,
+      "time": 0.003198150179184481
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0021.bin",
+      "bytes": 1510080,
+      "time": 0.0033580576881437037
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0022.bin",
+      "bytes": 1510080,
+      "time": 0.0035179651971029265
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0023.bin",
+      "bytes": 1510080,
+      "time": 0.0036778727060621493
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0024.bin",
+      "bytes": 1510080,
+      "time": 0.003837780215021372
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0025.bin",
+      "bytes": 1510080,
+      "time": 0.003997687723980595
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0026.bin",
+      "bytes": 1510080,
+      "time": 0.004157595232939818
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0027.bin",
+      "bytes": 1510080,
+      "time": 0.0043175027418990404
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0028.bin",
+      "bytes": 1510080,
+      "time": 0.004477410250858263
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0029.bin",
+      "bytes": 1510080,
+      "time": 0.004637317759817486
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0030.bin",
+      "bytes": 1510080,
+      "time": 0.004797225268776709
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0031.bin",
+      "bytes": 1510080,
+      "time": 0.004957132777735932
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0032.bin",
+      "bytes": 1510080,
+      "time": 0.005117040286695154
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0033.bin",
+      "bytes": 1510080,
+      "time": 0.005276947795654377
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0034.bin",
+      "bytes": 1510080,
+      "time": 0.0054368553046136
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0035.bin",
+      "bytes": 1510080,
+      "time": 0.005596762813572823
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0036.bin",
+      "bytes": 1510080,
+      "time": 0.0057566703225320455
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0037.bin",
+      "bytes": 1510080,
+      "time": 0.005916577831491268
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0038.bin",
+      "bytes": 1510080,
+      "time": 0.006076485340450491
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0039.bin",
+      "bytes": 1510080,
+      "time": 0.006236392849409714
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0040.bin",
+      "bytes": 1510080,
+      "time": 0.006396300358368937
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0041.bin",
+      "bytes": 1510080,
+      "time": 0.0065562078673281595
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0042.bin",
+      "bytes": 1510080,
+      "time": 0.006716115376287382
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0043.bin",
+      "bytes": 1510080,
+      "time": 0.006876022885246605
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0044.bin",
+      "bytes": 1510080,
+      "time": 0.007035930394205828
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0045.bin",
+      "bytes": 1510080,
+      "time": 0.007195837903165051
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0046.bin",
+      "bytes": 1510080,
+      "time": 0.007355745412124273
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0047.bin",
+      "bytes": 1510080,
+      "time": 0.007515652921083496
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0048.bin",
+      "bytes": 1510080,
+      "time": 0.007675560430042719
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0049.bin",
+      "bytes": 1510080,
+      "time": 0.007835467939001943
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0050.bin",
+      "bytes": 1510080,
+      "time": 0.007995375447961165
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0051.bin",
+      "bytes": 1510080,
+      "time": 0.008155282956920388
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0052.bin",
+      "bytes": 1510080,
+      "time": 0.008315190465879611
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0053.bin",
+      "bytes": 1510080,
+      "time": 0.008475097974838834
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0054.bin",
+      "bytes": 1510080,
+      "time": 0.008635005483798057
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0055.bin",
+      "bytes": 1510080,
+      "time": 0.00879491299275728
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0056.bin",
+      "bytes": 1510080,
+      "time": 0.008954820501716502
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0057.bin",
+      "bytes": 1510080,
+      "time": 0.009114728010675725
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0058.bin",
+      "bytes": 1510080,
+      "time": 0.009274635519634948
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0059.bin",
+      "bytes": 1510080,
+      "time": 0.00943454302859417
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0060.bin",
+      "bytes": 1510080,
+      "time": 0.009594450537553393
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0061.bin",
+      "bytes": 1510080,
+      "time": 0.009754358046512616
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0062.bin",
+      "bytes": 1510080,
+      "time": 0.009914265555471839
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0063.bin",
+      "bytes": 1510080,
+      "time": 0.010074173064431062
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0064.bin",
+      "bytes": 1510080,
+      "time": 0.010234080573390284
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0065.bin",
+      "bytes": 1510080,
+      "time": 0.010393988082349507
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0066.bin",
+      "bytes": 1510080,
+      "time": 0.01055389559130873
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0067.bin",
+      "bytes": 1510080,
+      "time": 0.010713803100267953
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0068.bin",
+      "bytes": 1510080,
+      "time": 0.010873710609227176
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0069.bin",
+      "bytes": 1510080,
+      "time": 0.011033618118186398
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0070.bin",
+      "bytes": 1510080,
+      "time": 0.011193525627145621
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0071.bin",
+      "bytes": 1510080,
+      "time": 0.011353433136104844
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0072.bin",
+      "bytes": 1510080,
+      "time": 0.011513340645064067
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0073.bin",
+      "bytes": 1510080,
+      "time": 0.01167324815402329
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0074.bin",
+      "bytes": 1510080,
+      "time": 0.011833155662982512
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0075.bin",
+      "bytes": 1510080,
+      "time": 0.011993063171941735
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0076.bin",
+      "bytes": 1510080,
+      "time": 0.012152970680900958
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0077.bin",
+      "bytes": 1510080,
+      "time": 0.01231287818986018
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0078.bin",
+      "bytes": 1510080,
+      "time": 0.012472785698819404
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0079.bin",
+      "bytes": 1510080,
+      "time": 0.012632693207778626
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0080.bin",
+      "bytes": 1510080,
+      "time": 0.012792600716737849
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0081.bin",
+      "bytes": 1510080,
+      "time": 0.012952508225697072
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0082.bin",
+      "bytes": 1510080,
+      "time": 0.013112415734656295
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0083.bin",
+      "bytes": 1510080,
+      "time": 0.013272323243615517
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0084.bin",
+      "bytes": 1510080,
+      "time": 0.01343223075257474
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0085.bin",
+      "bytes": 1510080,
+      "time": 0.013592138261533963
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0086.bin",
+      "bytes": 1510080,
+      "time": 0.013752045770493186
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0087.bin",
+      "bytes": 1510080,
+      "time": 0.013911953279452409
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0088.bin",
+      "bytes": 1510080,
+      "time": 0.014071860788411631
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0089.bin",
+      "bytes": 1510080,
+      "time": 0.014231768297370854
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0090.bin",
+      "bytes": 1510080,
+      "time": 0.014391675806330077
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0091.bin",
+      "bytes": 1510080,
+      "time": 0.0145515833152893
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0092.bin",
+      "bytes": 1510080,
+      "time": 0.014711490824248523
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0093.bin",
+      "bytes": 1510080,
+      "time": 0.014871398333207745
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0094.bin",
+      "bytes": 1510080,
+      "time": 0.015031305842166968
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0095.bin",
+      "bytes": 1510080,
+      "time": 0.015191213351126191
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0096.bin",
+      "bytes": 1510080,
+      "time": 0.015351120860085414
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0097.bin",
+      "bytes": 1510080,
+      "time": 0.015511028369044636
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0098.bin",
+      "bytes": 1510080,
+      "time": 0.01567093587800386
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0099.bin",
+      "bytes": 1510080,
+      "time": 0.015830843386963084
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0100.bin",
+      "bytes": 1510080,
+      "time": 0.015990750895922307
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0101.bin",
+      "bytes": 1510080,
+      "time": 0.01615065840488153
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0102.bin",
+      "bytes": 1510080,
+      "time": 0.016310565913840752
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0103.bin",
+      "bytes": 1510080,
+      "time": 0.016470473422799975
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0104.bin",
+      "bytes": 1510080,
+      "time": 0.016630380931759198
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0105.bin",
+      "bytes": 1510080,
+      "time": 0.01679028844071842
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0106.bin",
+      "bytes": 1510080,
+      "time": 0.016950195949677643
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0107.bin",
+      "bytes": 1510080,
+      "time": 0.017110103458636866
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0108.bin",
+      "bytes": 1510080,
+      "time": 0.01727001096759609
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0109.bin",
+      "bytes": 1510080,
+      "time": 0.01742991847655531
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0110.bin",
+      "bytes": 1510080,
+      "time": 0.017589825985514534
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0111.bin",
+      "bytes": 1510080,
+      "time": 0.017749733494473757
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0112.bin",
+      "bytes": 1510080,
+      "time": 0.01790964100343298
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0113.bin",
+      "bytes": 1510080,
+      "time": 0.018069548512392203
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0114.bin",
+      "bytes": 1510080,
+      "time": 0.018229456021351426
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0115.bin",
+      "bytes": 1510080,
+      "time": 0.01838936353031065
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0116.bin",
+      "bytes": 1510080,
+      "time": 0.01854927103926987
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0117.bin",
+      "bytes": 1510080,
+      "time": 0.018709178548229094
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0118.bin",
+      "bytes": 1510080,
+      "time": 0.018869086057188317
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0119.bin",
+      "bytes": 1510080,
+      "time": 0.01902899356614754
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0120.bin",
+      "bytes": 1510080,
+      "time": 0.019188901075106762
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0121.bin",
+      "bytes": 1510080,
+      "time": 0.019348808584065985
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0122.bin",
+      "bytes": 1510080,
+      "time": 0.019508716093025208
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0123.bin",
+      "bytes": 1510080,
+      "time": 0.01966862360198443
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0124.bin",
+      "bytes": 1510080,
+      "time": 0.019828531110943654
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0125.bin",
+      "bytes": 1510080,
+      "time": 0.019988438619902876
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0126.bin",
+      "bytes": 1510080,
+      "time": 0.0201483461288621
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0127.bin",
+      "bytes": 1510080,
+      "time": 0.020308253637821322
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0128.bin",
+      "bytes": 1510080,
+      "time": 0.020468161146780545
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0129.bin",
+      "bytes": 1510080,
+      "time": 0.020628068655739767
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0130.bin",
+      "bytes": 1510080,
+      "time": 0.02078797616469899
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0131.bin",
+      "bytes": 1510080,
+      "time": 0.020947883673658213
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0132.bin",
+      "bytes": 1510080,
+      "time": 0.021107791182617436
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0133.bin",
+      "bytes": 1510080,
+      "time": 0.02126769869157666
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0134.bin",
+      "bytes": 1510080,
+      "time": 0.02142760620053588
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0135.bin",
+      "bytes": 1510080,
+      "time": 0.021587513709495104
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0136.bin",
+      "bytes": 1510080,
+      "time": 0.021747421218454327
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0137.bin",
+      "bytes": 1510080,
+      "time": 0.02190732872741355
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0138.bin",
+      "bytes": 1510080,
+      "time": 0.022067236236372773
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0139.bin",
+      "bytes": 1510080,
+      "time": 0.022227143745331995
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0140.bin",
+      "bytes": 1510080,
+      "time": 0.022387051254291218
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0141.bin",
+      "bytes": 1510080,
+      "time": 0.02254695876325044
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0142.bin",
+      "bytes": 1510080,
+      "time": 0.022706866272209664
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0143.bin",
+      "bytes": 1510080,
+      "time": 0.022866773781168886
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0144.bin",
+      "bytes": 1510080,
+      "time": 0.02302668129012811
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0145.bin",
+      "bytes": 1510080,
+      "time": 0.023186588799087332
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0146.bin",
+      "bytes": 1510080,
+      "time": 0.023346496308046555
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0147.bin",
+      "bytes": 1510080,
+      "time": 0.023506403817005778
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0148.bin",
+      "bytes": 1510080,
+      "time": 0.023666311325965
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0149.bin",
+      "bytes": 1510080,
+      "time": 0.023826218834924223
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0150.bin",
+      "bytes": 1510080,
+      "time": 0.023986126343883446
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0151.bin",
+      "bytes": 1510080,
+      "time": 0.02414603385284267
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0152.bin",
+      "bytes": 1510080,
+      "time": 0.02430594136180189
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0153.bin",
+      "bytes": 1510080,
+      "time": 0.024465848870761114
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0154.bin",
+      "bytes": 1510080,
+      "time": 0.024625756379720337
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0155.bin",
+      "bytes": 1510080,
+      "time": 0.02478566388867956
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0156.bin",
+      "bytes": 1510080,
+      "time": 0.024945571397638783
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0157.bin",
+      "bytes": 1510080,
+      "time": 0.025105478906598006
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0158.bin",
+      "bytes": 1510080,
+      "time": 0.02526538641555723
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0159.bin",
+      "bytes": 1510080,
+      "time": 0.02542529392451645
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0160.bin",
+      "bytes": 1510080,
+      "time": 0.025585201433475674
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0161.bin",
+      "bytes": 1510080,
+      "time": 0.025745108942434897
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0162.bin",
+      "bytes": 1510080,
+      "time": 0.02590501645139412
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0163.bin",
+      "bytes": 1510080,
+      "time": 0.026064923960353342
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0164.bin",
+      "bytes": 1510080,
+      "time": 0.026224831469312565
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0165.bin",
+      "bytes": 1510080,
+      "time": 0.026384738978271788
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0166.bin",
+      "bytes": 1510080,
+      "time": 0.02654464648723101
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0167.bin",
+      "bytes": 1510080,
+      "time": 0.026704553996190233
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0168.bin",
+      "bytes": 1510080,
+      "time": 0.026864461505149456
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0169.bin",
+      "bytes": 1510080,
+      "time": 0.02702436901410868
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0170.bin",
+      "bytes": 1510080,
+      "time": 0.027184276523067902
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0171.bin",
+      "bytes": 1510080,
+      "time": 0.027344184032027125
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0172.bin",
+      "bytes": 1510080,
+      "time": 0.027504091540986347
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0173.bin",
+      "bytes": 1510080,
+      "time": 0.02766399904994557
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0174.bin",
+      "bytes": 1510080,
+      "time": 0.027823906558904793
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0175.bin",
+      "bytes": 1510080,
+      "time": 0.027983814067864016
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0176.bin",
+      "bytes": 1510080,
+      "time": 0.02814372157682324
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0177.bin",
+      "bytes": 1510080,
+      "time": 0.02830362908578246
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0178.bin",
+      "bytes": 1510080,
+      "time": 0.028463536594741684
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0179.bin",
+      "bytes": 1510080,
+      "time": 0.028623444103700907
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0180.bin",
+      "bytes": 1510080,
+      "time": 0.02878335161266013
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0181.bin",
+      "bytes": 1510080,
+      "time": 0.028943259121619352
+    },
+    {
+      "shape": [
+        130,
+        44,
+        44
+      ],
+      "dtype": "<class 'numpy.float16'>",
+      "format": "interleaved",
+      "downsample": 1,
+      "components": 3,
+      "file": "closed-pipe_velocity_0182.bin",
+      "bytes": 1510080,
+      "time": 0.029103166630578575
+    }
+  ]
+}
