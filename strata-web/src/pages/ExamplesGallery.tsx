@@ -15,15 +15,15 @@ interface Demo {
 const DEMOS: Demo[] = [
   {
     id: 'open-pipe',
-    title: 'Open Organ Pipe',
-    description: 'Acoustic simulation of an open-ended organ pipe showing standing wave patterns and harmonics.',
+    title: 'Open Pipe',
+    description: 'Acoustic simulation of an open-ended pipe showing standing wave patterns and harmonics.',
     category: 'Acoustics',
     path: '/demos/organ-pipes/open-pipe',
   },
   {
     id: 'closed-pipe',
-    title: 'Closed Organ Pipe',
-    description: 'Acoustic simulation of a closed organ pipe demonstrating odd harmonic patterns.',
+    title: 'Closed Pipe',
+    description: 'Acoustic simulation of a closed pipe demonstrating odd harmonic patterns.',
     category: 'Acoustics',
     path: '/demos/organ-pipes/closed-pipe',
   },
