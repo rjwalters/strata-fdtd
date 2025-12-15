@@ -10,16 +10,9 @@ Tests verify:
 import numpy as np
 import pytest
 
-from strata_fdtd import (
-    FDTDSolver,
-    GaussianPulse,
-    apply_weighting,
-    calculate_leq,
-    calculate_spl,
-    calculate_time_weighted_level,
-    weighting_response,
-)
-from strata_fdtd.weighting import P_REF, get_weighting_sos
+from strata_fdtd import FDTDSolver, GaussianPulse, apply_weighting, calculate_leq, calculate_spl
+from strata_fdtd.analysis import weighting_response
+from strata_fdtd.analysis.weighting import P_REF, calculate_time_weighted_level, get_weighting_sos
 
 # =============================================================================
 # IEC 61672-1 Reference Values

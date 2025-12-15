@@ -41,7 +41,7 @@ from numpy.typing import NDArray
 if TYPE_CHECKING:
     from strata_fdtd.grid import NonuniformGrid, UniformGrid
     from strata_fdtd.materials.base import AcousticMaterial
-    from strata_fdtd.sdf import Box, SDFPrimitive
+    from strata_fdtd.geometry.sdf import Box, SDFPrimitive
 
 
 @dataclass
@@ -279,7 +279,7 @@ class MaterialVolume:
         Returns:
             Box SDF primitive matching this volume's bounds
         """
-        from strata_fdtd.sdf import Box
+        from strata_fdtd.geometry.sdf import Box
 
         min_corner, max_corner = self.bounds
         return Box(min_corner=tuple(min_corner), max_corner=tuple(max_corner))

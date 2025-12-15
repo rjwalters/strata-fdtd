@@ -15,7 +15,7 @@ import numpy as np
 import pytest
 
 from strata_fdtd import FDTDSolver, GaussianPulse
-from strata_fdtd.fdtd import has_native_kernels
+from strata_fdtd.core.solver import has_native_kernels
 
 # Skip all tests if native kernels are not available
 pytestmark = pytest.mark.skipif(

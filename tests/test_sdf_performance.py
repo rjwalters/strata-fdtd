@@ -10,8 +10,8 @@ import time
 import numpy as np
 import pytest
 
-from strata_fdtd.grid import UniformGrid
-from strata_fdtd.sdf import Difference, Intersection, SDFPrimitive, Sphere, Union
+from strata_fdtd.core.grid import UniformGrid
+from strata_fdtd.geometry.sdf import Difference, Intersection, SDFPrimitive, Sphere, Union
 
 
 @pytest.mark.slow
@@ -98,7 +98,7 @@ class TestCSGPerformance:
     def test_voxelization_performance(self):
         """Test performance of voxelizing a complex CSG tree."""
         # Create a moderately complex shape: box with multiple spherical holes
-        from strata_fdtd.sdf import Difference, Union
+        from strata_fdtd.geometry.sdf import Difference, Union
 
         # Base box (using sphere as approximation)
         base = Sphere(center=(0.05, 0.05, 0.05), radius=0.04)

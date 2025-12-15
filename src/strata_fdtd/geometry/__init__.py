@@ -3,7 +3,7 @@
 # SDF primitives and CSG operations
 from strata_fdtd.geometry.sdf import (
     # Base SDF class
-    SDF,
+    SDFPrimitive,
     # Primitives
     Box,
     Sphere,
@@ -20,8 +20,8 @@ from strata_fdtd.geometry.sdf import (
     SmoothIntersection,
     SmoothDifference,
     # Transformations
-    Translation,
-    Rotation,
+    Translate,
+    Rotate,
     Scale,
 )
 
@@ -71,7 +71,7 @@ from strata_fdtd.geometry.material_assignment import (
 
 __all__ = [
     # SDF
-    "SDF",
+    "SDFPrimitive",
     "Box",
     "Sphere",
     "Cylinder",
@@ -85,8 +85,8 @@ __all__ = [
     "SmoothUnion",
     "SmoothIntersection",
     "SmoothDifference",
-    "Translation",
-    "Rotation",
+    "Translate",
+    "Rotate",
     "Scale",
     # Primitives
     "HelmholtzCell",

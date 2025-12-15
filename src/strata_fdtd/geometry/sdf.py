@@ -1444,7 +1444,7 @@ class SpiralHorn(SDFPrimitive):
         profile: str = "exponential",
         spiral_type: str = "logarithmic",
     ):
-        from strata_fdtd.paths import SpiralPath
+        from strata_fdtd.geometry.paths import SpiralPath
 
         self.center_2d = np.array(center, dtype=np.float64)
         self.throat_radius = float(throat_radius)
@@ -1510,7 +1510,7 @@ class SpiralHorn(SDFPrimitive):
         2. Get radius at nearest path point
         3. Combine with Z distance for extrusion
         """
-        from strata_fdtd.paths import distance_to_polyline
+        from strata_fdtd.geometry.paths import distance_to_polyline
 
         points = np.asarray(points, dtype=np.float64)
         if points.ndim != 2 or points.shape[1] != 3:
@@ -1627,7 +1627,7 @@ class HelicalTube(SDFPrimitive):
         pitch: float,
         turns: float,
     ):
-        from strata_fdtd.paths import HelixPath
+        from strata_fdtd.geometry.paths import HelixPath
 
         self.center = np.array(center, dtype=np.float64)
         self.helix_radius = float(helix_radius)
@@ -1671,7 +1671,7 @@ class HelicalTube(SDFPrimitive):
         2. Get tube radius at nearest path point
         3. Distance is path_distance - tube_radius
         """
-        from strata_fdtd.paths import distance_to_polyline
+        from strata_fdtd.geometry.paths import distance_to_polyline
 
         points = np.asarray(points, dtype=np.float64)
         if points.ndim != 2 or points.shape[1] != 3:

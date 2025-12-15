@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from strata_fdtd.geometry import (
+from strata_fdtd.manufacturing.lamination import (
     DEFAULT_SLICE_THICKNESS,
     Slice,
     Stack,

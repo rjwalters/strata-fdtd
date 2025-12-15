@@ -5,11 +5,8 @@ Tests for SDF to Stack conversion functionality.
 import numpy as np
 import pytest
 
-from strata_fdtd import (
-    Box,
-    Cylinder,
-    Horn,
-    Sphere,
+from strata_fdtd import Box, Cylinder, Horn, Sphere
+from strata_fdtd.manufacturing.conversion import (
     VoxelSDF,
     sdf_to_slices_generator,
     sdf_to_stack,

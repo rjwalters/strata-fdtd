@@ -12,10 +12,11 @@ Tests verify:
 import numpy as np
 import pytest
 
-from strata_fdtd import MaterializedGeometry, MaterialVolume, UniformGrid
+from strata_fdtd import UniformGrid
+from strata_fdtd.geometry import MaterializedGeometry, MaterialVolume
 from strata_fdtd.materials.base import SimpleMaterial
 from strata_fdtd.materials.library import FIBERGLASS_48
-from strata_fdtd.sdf import Box
+from strata_fdtd.geometry.sdf import Box
 
 
 class TestMaterializedGeometry:

@@ -70,7 +70,7 @@ if TYPE_CHECKING:
     from .grid import NonuniformGrid, UniformGrid
     from .material_geometry import MaterializedGeometry
     from .sdf import SDFPrimitive
-    from .weighting import WeightingType
+    from strata_fdtd.analysis.weighting import WeightingType
 
 # =============================================================================
 # Native C++ Extension Support
@@ -650,7 +650,7 @@ class Microphone:
             return waveform
 
         # Import here to avoid circular import
-        from .weighting import apply_weighting
+        from strata_fdtd.analysis.weighting import apply_weighting
 
         fs = self.get_sample_rate()
         return apply_weighting(waveform, fs, weighting).astype(np.float32)
@@ -703,7 +703,7 @@ class Microphone:
         waveform = self.get_waveform(weighting=weighting)
 
         # Import here to avoid circular import
-        from .weighting import calculate_spl
+        from strata_fdtd.analysis.weighting import calculate_spl
 
         return calculate_spl(waveform, p_ref)
 
@@ -741,7 +741,7 @@ class Microphone:
         fs = self.get_sample_rate()
 
         # Import here to avoid circular import
-        from .weighting import calculate_leq
+        from strata_fdtd.analysis.weighting import calculate_leq
 
         return calculate_leq(waveform, fs, duration, p_ref)
 
@@ -780,7 +780,7 @@ class Microphone:
         fs = self.get_sample_rate()
 
         # Import here to avoid circular import
-        from .weighting import calculate_time_weighted_level
+        from strata_fdtd.analysis.weighting import calculate_time_weighted_level
 
         return calculate_time_weighted_level(waveform, fs, time_constant, p_ref)
 
@@ -1163,7 +1163,7 @@ class FDTDSolver:
             >>> solver.set_geometry(mat_geo)
         """
         from strata_fdtd.geometry.material_assignment import MaterializedGeometry
-        from strata_fdtd.sdf import SDFPrimitive
+        from strata_fdtd.geometry.sdf import SDFPrimitive
 
         if isinstance(geometry, MaterializedGeometry):
             # Voxelize with materials
@@ -1891,7 +1891,7 @@ class FDTDSolver:
         # Set up HDF5 output if requested
         hdf5_writer = None
         if output_file:
-            from .hdf5_output import HDF5ResultWriter
+            from strata_fdtd.io import HDF5ResultWriter
 
             hdf5_writer = HDF5ResultWriter(output_file, self, script_content)
 

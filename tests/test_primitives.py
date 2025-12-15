@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from strata_fdtd.primitives import (
+from strata_fdtd.geometry.primitives import (
     SPEED_OF_SOUND,
     Channel,
     HelmholtzCell,

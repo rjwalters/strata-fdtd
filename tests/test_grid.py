@@ -370,7 +370,7 @@ class TestFDTDWithNonuniformGrid:
     def test_native_backend_with_nonuniform(self):
         """Test that native backend works with nonuniform grid (Issue #131)."""
         from strata_fdtd import FDTDSolver
-        from strata_fdtd.fdtd import has_native_kernels
+        from strata_fdtd.core.solver import has_native_kernels
 
         grid = NonuniformGrid.from_stretch(
             shape=(20, 20, 20),
@@ -442,7 +442,7 @@ class TestNativeNonuniformKernels:
     @pytest.fixture
     def skip_without_native(self):
         """Skip test if native kernels are not available."""
-        from strata_fdtd.fdtd import has_native_kernels
+        from strata_fdtd.core.solver import has_native_kernels
 
         if not has_native_kernels():
             pytest.skip("Native kernels not available")

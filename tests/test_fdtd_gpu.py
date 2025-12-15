@@ -11,7 +11,7 @@ Tests verify:
 import numpy as np
 import pytest
 
-from strata_fdtd.fdtd_gpu import (
+from strata_fdtd.core.solver_gpu import (
     BatchedGPUFDTDSolver,
     GPUFDTDSolver,
     GPUGaussianPulse,

@@ -11,8 +11,8 @@ Tests verify:
 import numpy as np
 import pytest
 
-from strata_fdtd.grid import UniformGrid
-from strata_fdtd.sdf import (
+from strata_fdtd.core.grid import UniformGrid
+from strata_fdtd.geometry.sdf import (
     Box,
     Difference,
     Intersection,

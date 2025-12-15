@@ -12,12 +12,8 @@ Tests cover:
 import numpy as np
 import pytest
 
-from strata_fdtd import (
-    Box,
-    HelmholtzResonator,
-    UniformGrid,
-    helmholtz_array,
-)
+from strata_fdtd import Box, HelmholtzResonator, UniformGrid
+from strata_fdtd.geometry import helmholtz_array
 
 
 class TestHelmholtzResonatorGeometry:

@@ -34,8 +34,8 @@ from typing import Literal
 
 import numpy as np
 
-from strata_fdtd.resonator import HelmholtzResonator, helmholtz_array
-from strata_fdtd.sdf import (
+from strata_fdtd.geometry.resonator import HelmholtzResonator, helmholtz_array
+from strata_fdtd.geometry.sdf import (
     Box,
     Cone,
     Cylinder,

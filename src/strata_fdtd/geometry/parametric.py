@@ -41,7 +41,7 @@ from numpy.typing import NDArray
 
 if TYPE_CHECKING:
     from strata_fdtd.grid import UniformGrid
-    from strata_fdtd.sdf import Horn, SDFPrimitive
+    from strata_fdtd.geometry.sdf import Horn, SDFPrimitive
 
 
 @dataclass
@@ -298,7 +298,7 @@ class ParametricHorn(ParametricPrimitive):
         Returns:
             Horn with current parameter values
         """
-        from strata_fdtd.sdf import Horn
+        from strata_fdtd.geometry.sdf import Horn
 
         throat_position = self.axis_start
         mouth_position = self.axis_start + self.axis_direction * self.length

@@ -11,7 +11,7 @@ Tests verify:
 import numpy as np
 import pytest
 
-from strata_fdtd.paths import (
+from strata_fdtd.geometry.paths import (
     HelixPath,
     SpiralPath,
     distance_to_helix,

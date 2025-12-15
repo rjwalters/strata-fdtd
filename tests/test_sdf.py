@@ -15,14 +15,13 @@ from strata_fdtd import (
     Box,
     Cone,
     Cylinder,
-    HelicalTube,
     Horn,
     NonuniformGrid,
     Sphere,
-    SpiralHorn,
     UniformGrid,
 )
-from strata_fdtd.sdf import conical_horn, exponential_horn, hyperbolic_horn, tractrix_horn
+from strata_fdtd.geometry import HelicalTube, SpiralHorn
+from strata_fdtd.geometry.sdf import conical_horn, exponential_horn, hyperbolic_horn, tractrix_horn
 
 # =============================================================================
 # Box Tests

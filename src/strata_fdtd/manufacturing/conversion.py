@@ -43,7 +43,7 @@ from typing import TYPE_CHECKING, Literal
 import numpy as np
 from scipy import ndimage
 
-from strata_fdtd.sdf import SDFPrimitive
+from strata_fdtd.geometry.sdf import SDFPrimitive
 
 if TYPE_CHECKING:
     from numpy.typing import NDArray

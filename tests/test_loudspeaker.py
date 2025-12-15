@@ -11,8 +11,9 @@ Tests verify:
 
 import numpy as np
 
-from strata_fdtd import LoudspeakerEnclosure, UniformGrid, bookshelf_speaker, tower_speaker
-from strata_fdtd.resonator import HelmholtzResonator
+from strata_fdtd import LoudspeakerEnclosure, UniformGrid
+from strata_fdtd.geometry import bookshelf_speaker, tower_speaker
+from strata_fdtd.geometry.resonator import HelmholtzResonator
 
 
 class TestLoudspeakerEnclosure:

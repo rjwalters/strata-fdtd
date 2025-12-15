@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 
 from strata_fdtd import Box, Cylinder, Sphere
-from strata_fdtd.sdf import Rotate, Scale, Translate, rotation_matrix
+from strata_fdtd.geometry.sdf import Rotate, Scale, Translate, rotation_matrix
 
 # =============================================================================
 # rotation_matrix Tests

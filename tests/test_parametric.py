@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 
 from strata_fdtd import UniformGrid
-from strata_fdtd.parametric import (
+from strata_fdtd.geometry.parametric import (
     ConstraintSet,
     GeometricConstraint,
     GeometryOptimizer,
@@ -164,7 +164,7 @@ class TestParametricHorn:
         horn_sdf = horn_param.to_sdf()
 
         # Check that it's a Horn primitive
-        from strata_fdtd.sdf import Horn
+        from strata_fdtd.geometry.sdf import Horn
 
         assert isinstance(horn_sdf, Horn)
         assert horn_sdf.throat_radius == 0.025

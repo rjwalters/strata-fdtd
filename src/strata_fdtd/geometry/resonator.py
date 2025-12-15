@@ -46,7 +46,7 @@ from typing import TYPE_CHECKING, Literal
 import numpy as np
 from numpy.typing import NDArray
 
-from strata_fdtd.sdf import Box, Cylinder, SDFPrimitive, Sphere, Union
+from strata_fdtd.geometry.sdf import Box, Cylinder, SDFPrimitive, Sphere, Union
 
 if TYPE_CHECKING:
     pass

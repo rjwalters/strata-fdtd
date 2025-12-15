@@ -173,12 +173,12 @@ class TestEnergyConservation:
         condition application (boundaries were applied AFTER pressure update
         instead of BETWEEN velocity and pressure updates).
         """
-        from strata_fdtd.fdtd import has_native_kernels
+        from strata_fdtd.core.solver import has_native_kernels
 
         if backend == "native" and not has_native_kernels():
             pytest.skip("Native kernels not available")
 
-        from strata_fdtd.primitives import SPEED_OF_SOUND
+        from strata_fdtd.geometry.primitives import SPEED_OF_SOUND
 
         # Create closed pipe geometry (issue #89 reproduction case)
         solver = FDTDSolver(
@@ -1130,8 +1130,8 @@ class TestNonuniformGridNative:
 
     def test_nonuniform_native_fdtd_step(self):
         """Verify native nonuniform FDTD step matches Python implementation."""
-        from strata_fdtd.fdtd import has_native_kernels
-        from strata_fdtd.grid import NonuniformGrid
+        from strata_fdtd.core.solver import has_native_kernels
+        from strata_fdtd.core.grid import NonuniformGrid
 
         if not has_native_kernels():
             pytest.skip("Native kernels not available")
@@ -1170,8 +1170,8 @@ class TestNonuniformGridNative:
 
     def test_nonuniform_native_uses_correct_backend(self):
         """Verify native backend is actually used for nonuniform grids."""
-        from strata_fdtd.fdtd import has_native_kernels
-        from strata_fdtd.grid import NonuniformGrid
+        from strata_fdtd.core.solver import has_native_kernels
+        from strata_fdtd.core.grid import NonuniformGrid
 
         if not has_native_kernels():
             pytest.skip("Native kernels not available")
@@ -1188,8 +1188,8 @@ class TestNonuniformGridNative:
 
     def test_nonuniform_native_energy_conservation(self):
         """Verify energy is conserved with nonuniform grid and native backend."""
-        from strata_fdtd.fdtd import has_native_kernels
-        from strata_fdtd.grid import NonuniformGrid
+        from strata_fdtd.core.solver import has_native_kernels
+        from strata_fdtd.core.grid import NonuniformGrid
 
         if not has_native_kernels():
             pytest.skip("Native kernels not available")
@@ -1223,8 +1223,8 @@ class TestNonuniformGridNative:
     @pytest.mark.parametrize("backend", ["python", "native"])
     def test_nonuniform_divergence_consistency(self, backend):
         """Verify divergence computation matches between backends."""
-        from strata_fdtd.fdtd import has_native_kernels
-        from strata_fdtd.grid import NonuniformGrid
+        from strata_fdtd.core.solver import has_native_kernels
+        from strata_fdtd.core.grid import NonuniformGrid
 
         if backend == "native" and not has_native_kernels():
             pytest.skip("Native kernels not available")
@@ -1268,13 +1268,13 @@ class TestGPUBackendSelection:
 
     def test_has_gpu_backend_returns_bool(self):
         """has_gpu_backend() should return a boolean."""
-        from strata_fdtd.fdtd import has_gpu_backend
+        from strata_fdtd.core.solver import has_gpu_backend
         result = has_gpu_backend()
         assert isinstance(result, bool)
 
     def test_backend_auto_selects_available(self):
         """Auto backend should select best available option."""
-        from strata_fdtd.fdtd import has_gpu_backend, has_native_kernels
+        from strata_fdtd.core.solver import has_gpu_backend, has_native_kernels
 
         solver = FDTDSolver(shape=(10, 10, 10), resolution=1e-3, backend="auto")
 
@@ -1297,7 +1297,7 @@ class TestGPUBackendSelection:
 
     def test_backend_native_raises_if_unavailable(self):
         """Backend='native' should raise ImportError if unavailable."""
-        from strata_fdtd.fdtd import has_native_kernels
+        from strata_fdtd.core.solver import has_native_kernels
 
         if has_native_kernels():
             # Should work
@@ -1310,7 +1310,7 @@ class TestGPUBackendSelection:
 
     def test_backend_gpu_raises_if_unavailable(self):
         """Backend='gpu' should raise RuntimeError if unavailable."""
-        from strata_fdtd.fdtd import has_gpu_backend
+        from strata_fdtd.core.solver import has_gpu_backend
 
         if has_gpu_backend():
             # Should work (with warning)
@@ -1328,7 +1328,7 @@ class TestGPUBackendSelection:
                 FDTDSolver(shape=(10, 10, 10), resolution=1e-3, backend="gpu")
 
     @pytest.mark.skipif(
-        not __import__("strata_fdtd.fdtd", fromlist=["has_gpu_backend"]).has_gpu_backend(),
+        not __import__("strata_fdtd.core.solver", fromlist=["has_gpu_backend"]).has_gpu_backend(),
         reason="GPU backend not available"
     )
     def test_gpu_backend_runs_simulation(self):
@@ -1351,7 +1351,7 @@ class TestGPUBackendSelection:
         assert np.abs(solver.p).sum() > 0  # Not all zero
 
     @pytest.mark.skipif(
-        not __import__("strata_fdtd.fdtd", fromlist=["has_gpu_backend"]).has_gpu_backend(),
+        not __import__("strata_fdtd.core.solver", fromlist=["has_gpu_backend"]).has_gpu_backend(),
         reason="GPU backend not available"
     )
     def test_gpu_backend_probe_recording(self):

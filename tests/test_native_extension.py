@@ -10,7 +10,7 @@ These tests verify:
 import numpy as np
 import pytest
 
-from strata_fdtd.fdtd import (
+from strata_fdtd.core.solver import (
     FDTDSolver,
     GaussianPulse,
     get_native_info,

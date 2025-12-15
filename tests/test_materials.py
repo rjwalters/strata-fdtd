@@ -1339,7 +1339,7 @@ class TestNativeADEKernels:
         solver.set_material_region(mask, mat_id)
 
         # Add source
-        from strata_fdtd.fdtd import GaussianPulse
+        from strata_fdtd.core.solver import GaussianPulse
         source = GaussianPulse(position=(15, 15, 15), frequency=1000, amplitude=100)
         solver.add_source(source)
 
@@ -1374,7 +1374,7 @@ class TestNativeADEKernels:
         mat_mask = np.zeros(shape, dtype=bool)
         mat_mask[8:17, 8:17, 8:17] = True
 
-        from strata_fdtd.fdtd import GaussianPulse
+        from strata_fdtd.core.solver import GaussianPulse
 
         # Python solver
         solver_py = FDTDSolver(shape=shape, resolution=resolution, backend="python")
@@ -1437,7 +1437,7 @@ class TestNativeADEKernels:
         mask[5:15, 5:15, 5:15] = True
         solver.set_material_region(mask, mat_id)
 
-        from strata_fdtd.fdtd import GaussianPulse
+        from strata_fdtd.core.solver import GaussianPulse
         source = GaussianPulse(position=(10, 10, 10), frequency=500, amplitude=50)
         solver.add_source(source)
 
@@ -1487,7 +1487,7 @@ class TestNativeADEKernels:
         mat_mask = np.zeros(shape, dtype=bool)
         mat_mask[5:15, 5:15, 5:15] = True
 
-        from strata_fdtd.fdtd import GaussianPulse
+        from strata_fdtd.core.solver import GaussianPulse
 
         # Python solver
         solver_py = FDTDSolver(shape=shape, resolution=resolution, backend="python")
