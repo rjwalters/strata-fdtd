@@ -55,6 +55,8 @@ import {
   Waves,
 } from "lucide-react";
 import { useHDF5Simulation } from "../hooks/useHDF5Simulation";
+import { useLearningPath } from "../hooks/useLearningPath";
+import { ProgressTracker, ContextualHelp } from "../components/tutorial";
 import { getDemoBasePath, getDemoConfig } from "../config/demos";
 
 // =============================================================================
@@ -97,6 +99,34 @@ const TARGET_VOXEL_PRESETS = [
 export default function ViewerPage({ onBack }: ViewerPageProps) {
   // Get demoId from route params
   const { demoId } = useParams<{ demoId?: string }>();
+
+  // Learning path state
+  const {
+    activePath,
+    currentStepIndex,
+    progress: learningProgress,
+    isTutorialMode,
+    goToStep,
+    nextStep,
+    previousStep,
+    exitPath,
+    completeCurrentStep,
+    isStepCompleted,
+  } = useLearningPath();
+
+  // Get current step info when in tutorial mode
+  const currentStep = activePath?.steps[currentStepIndex];
+  const isCurrentStepCompleted = currentStep
+    ? isStepCompleted(currentStep.exampleId)
+    : false;
+
+  // Track if user has interacted with the simulation (for showing "after" help)
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  // Reset interaction state when step changes
+  useEffect(() => {
+    setHasInteracted(false);
+  }, [currentStepIndex, activePath?.id]);
 
   // HDF5 loading state (for file uploads)
   const {
@@ -458,11 +488,49 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
     );
   }
 
+  // Handle tutorial navigation
+  const handleTutorialStepSelect = useCallback(
+    (stepIndex: number) => {
+      goToStep(stepIndex);
+    },
+    [goToStep]
+  );
+
+  const handleTutorialNext = useCallback(() => {
+    nextStep();
+  }, [nextStep]);
+
+  const handleTutorialPrevious = useCallback(() => {
+    previousStep();
+  }, [previousStep]);
+
+  const handleTutorialExit = useCallback(() => {
+    exitPath();
+  }, [exitPath]);
+
+  const handleMarkComplete = useCallback(() => {
+    completeCurrentStep();
+    setHasInteracted(true);
+  }, [completeCurrentStep]);
+
   // Main visualization view
   return (
     <Layout
       sidebar={
         <div className="space-y-6">
+          {/* Tutorial Progress Tracker (shown when in tutorial mode) */}
+          {isTutorialMode && activePath && (
+            <ProgressTracker
+              path={activePath}
+              currentStepIndex={currentStepIndex}
+              progress={learningProgress}
+              onStepSelect={handleTutorialStepSelect}
+              onNext={handleTutorialNext}
+              onPrevious={handleTutorialPrevious}
+              onExit={handleTutorialExit}
+            />
+          )}
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-bold text-foreground">
@@ -478,6 +546,16 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
               </Button>
             )}
           </div>
+
+          {/* Contextual Help (shown when in tutorial mode) */}
+          {isTutorialMode && currentStep && (
+            <ContextualHelp
+              step={currentStep}
+              mode={hasInteracted || isCurrentStepCompleted ? 'after' : 'before'}
+              onMarkComplete={handleMarkComplete}
+              isCompleted={isCurrentStepCompleted}
+            />
+          )}
 
           {/* File Info */}
           <Panel title="Simulation">
