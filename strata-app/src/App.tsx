@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from "react"
 import * as THREE from "three"
+import { UpdateNotification } from "./components/UpdateNotification"
 import {
   Layout,
   Panel,
@@ -330,32 +331,43 @@ function App() {
 
   if (page === "organ-pipes") {
     return (
-      <Suspense fallback={<PageLoadingFallback />}>
-        <OrganPipeDemo onBack={() => setPage("home")} />
-      </Suspense>
+      <>
+        <UpdateNotification />
+        <Suspense fallback={<PageLoadingFallback />}>
+          <OrganPipeDemo onBack={() => setPage("home")} />
+        </Suspense>
+      </>
     )
   }
 
-if (page === "builder") {
+  if (page === "builder") {
     return (
-      <Suspense fallback={<PageLoadingFallback />}>
-        <SimulationBuilder onBack={() => setPage("home")} />
-      </Suspense>
+      <>
+        <UpdateNotification />
+        <Suspense fallback={<PageLoadingFallback />}>
+          <SimulationBuilder onBack={() => setPage("home")} />
+        </Suspense>
+      </>
     )
   }
 
   if (page === "viewer") {
     return (
-      <Suspense fallback={<PageLoadingFallback />}>
-        <ViewerPage onBack={() => setPage("home")} />
-      </Suspense>
+      <>
+        <UpdateNotification />
+        <Suspense fallback={<PageLoadingFallback />}>
+          <ViewerPage onBack={() => setPage("home")} />
+        </Suspense>
+      </>
     )
   }
 
   return (
-    <Layout
-      sidebar={
-        <Sidebar
+    <>
+      <UpdateNotification />
+      <Layout
+        sidebar={
+          <Sidebar
           isLoading={isLoading}
           error={error}
           manifest={manifest}
@@ -465,7 +477,8 @@ if (page === "builder") {
           onSelectProbe={setSelectedProbe}
         />
       }
-    />
+      />
+    </>
   )
 }
 
