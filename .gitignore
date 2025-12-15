@@ -6,12 +6,10 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
 lib/
-!viz/src/lib/
 lib64/
 parts/
 sdist/
@@ -25,6 +23,12 @@ wheels/
 venv/
 env/
 ENV/
+.venv/
+
+# Node.js / pnpm monorepo
+node_modules/
+dist/
+!strata-ui/src/lib/
 
 # IDE
 .vscode/
@@ -51,3 +55,9 @@ CMakeFiles/
 .loom/worktrees/
 .loom/*.log
 .loom/*.sock
+
+# Tauri
+strata-app/src-tauri/target/
+
+# Wrangler
+.wrangler/

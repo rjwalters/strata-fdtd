@@ -1,0 +1,4 @@
+packages:
+  - 'strata-ui'
+  - 'strata-app'
+  - 'strata-web'
