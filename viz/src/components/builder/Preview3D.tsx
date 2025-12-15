@@ -2,9 +2,10 @@
  * 3D preview component for simulation builder
  */
 
-import { Suspense } from 'react'
+import { Suspense, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Grid as DreiGrid } from '@react-three/drei'
+import * as THREE from 'three'
 import { GridBox } from './GridBox'
 import { MaterialRegion } from './MaterialRegion'
 import { SourceMarker } from './SourceMarker'
@@ -31,6 +32,7 @@ interface Preview3DProps {
   showSliceGrid: boolean
 }
 
+
 function Scene({
   ast,
   showGrid,
@@ -47,6 +49,44 @@ function Scene({
   showSliceGrid,
 }: Preview3DProps) {
   const addMeasurementPoint = useBuilderStore((s) => s.addMeasurementPoint)
+
+  // Create clipping plane(s) based on slice axis and position
+  // Hook must be called before any early returns to follow React rules
+  const clippingPlanes = useMemo(() => {
+    if (!ast?.grid || sliceAxis === 'none') return []
+
+    const extent = ast.grid.extent
+
+    const createPlane = (position: number) => {
+      const normal = new THREE.Vector3()
+
+      switch (sliceAxis) {
+        case 'xy': // Z-axis slicing
+          normal.set(0, 0, 1)
+          return new THREE.Plane(normal, -(extent[2] * position))
+        case 'xz': // Y-axis slicing
+          normal.set(0, 1, 0)
+          return new THREE.Plane(normal, -(extent[1] * position))
+        case 'yz': // X-axis slicing
+          normal.set(1, 0, 0)
+          return new THREE.Plane(normal, -(extent[0] * position))
+      }
+    }
+
+    if (dualSliceMode) {
+      // Two clipping planes for slab mode - clip outside the slab
+      const pos1 = Math.min(slice1Position, slice2Position)
+      const pos2 = Math.max(slice1Position, slice2Position)
+      const plane1 = createPlane(pos1)
+      const plane2 = createPlane(pos2)
+      // Flip the second plane to clip the other side
+      if (plane2) plane2.negate()
+      return [plane1, plane2].filter((p): p is THREE.Plane => p !== undefined)
+    } else {
+      const plane = createPlane(slicePosition)
+      return plane ? [plane] : []
+    }
+  }, [ast?.grid, sliceAxis, slicePosition, dualSliceMode, slice1Position, slice2Position])
 
   if (!ast?.grid) {
     return (
@@ -158,6 +198,7 @@ function Scene({
             dualSliceMode={dualSliceMode}
             slice1Position={slice1Position}
             slice2Position={slice2Position}
+            clippingPlanes={clippingPlanes}
           />
         ))}
 
@@ -247,7 +288,7 @@ export function Preview3D(props: Preview3DProps) {
             position: cameraPosition,
             fov: 50,
           }}
-          gl={{ antialias: true, alpha: true }}
+          gl={{ antialias: true, alpha: true, localClippingEnabled: true }}
         >
           <Suspense fallback={<Fallback />}>
             <Scene {...props} />
