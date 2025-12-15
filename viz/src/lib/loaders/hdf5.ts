@@ -37,7 +37,6 @@ async function loadH5Wasm(): Promise<H5WasmModule> {
     return h5wasm
   }
 
-  // @ts-expect-error - dynamic import
   const module = await import('h5wasm')
   await module.ready
   h5wasm = module as unknown as H5WasmModule

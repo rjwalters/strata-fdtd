@@ -2,6 +2,27 @@
  * Export utilities for simulation data
  */
 
+export interface ViewState {
+  cameraPosition: [number, number, number]
+  cameraTarget: [number, number, number]
+  cameraFov: number
+  viewOptions: {
+    threshold: number
+    displayFill: boolean
+    voxelGeometry: string
+    geometryMode: string
+    showGrid: boolean
+    showAxes: boolean
+  }
+  simulation: {
+    currentFrame: number
+    totalFrames: number
+    shape: [number, number, number]
+    resolution: number
+  }
+  timestamp: string
+}
+
 export interface ExportOptions {
   format: 'csv' | 'json' | 'png' | 'svg'
   filename?: string

@@ -10,9 +10,10 @@ export interface SimulationData {
 }
 
 export interface ProbeData {
-  probes: Record<string, { data: Float32Array; position?: [number, number, number] }>
-  sampleRate: number
-  duration: number
+  name: string
+  position: [number, number, number]
+  times: Float32Array
+  values: Float32Array
 }
 
 export interface FieldData {
@@ -28,7 +29,7 @@ export interface SimulationMetadata {
   resolution?: number
   duration?: number
   sampleRate?: number
-  grid: {
+  grid?: {
     shape: [number, number, number]
     resolution: number
   }
@@ -253,7 +254,7 @@ export async function loadGeometry(
  */
 export async function loadSnapshot(
   url: string,
-  info: SnapshotInfo
+  _info: SnapshotInfo
 ): Promise<SnapshotData> {
   const response = await fetch(url)
   if (!response.ok) {
@@ -270,7 +271,7 @@ export async function loadSnapshot(
  */
 export async function loadVelocitySnapshot(
   url: string,
-  info: VelocitySnapshotInfo
+  _info: VelocitySnapshotInfo
 ): Promise<VelocitySnapshot> {
   const response = await fetch(url)
   if (!response.ok) {
