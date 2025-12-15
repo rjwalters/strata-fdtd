@@ -2,7 +2,7 @@
  * Monaco-based Python script editor component with AST validation
  */
 
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react'
 import Editor from '@monaco-editor/react'
 import type { Monaco } from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
@@ -19,16 +19,64 @@ interface ScriptEditorProps {
   onValidationChange?: (errors: ValidationError[]) => void
 }
 
-export function ScriptEditor({
+export interface ScriptEditorHandle {
+  scrollToLine: (line: number, column?: number) => void
+}
+
+export const ScriptEditor = forwardRef<ScriptEditorHandle, ScriptEditorProps>(function ScriptEditor({
   value,
   onChange,
   onSave,
   onValidationChange,
-}: ScriptEditorProps) {
+}, ref) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const monacoRef = useRef<Monaco | null>(null)
   const validationTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const decorationsRef = useRef<string[]>([])
   const [skulptLoaded, setSkulptLoaded] = useState(false)
+
+  // Expose scrollToLine method to parent components
+  useImperativeHandle(ref, () => ({
+    scrollToLine: (line: number, column: number = 1) => {
+      if (!editorRef.current || !monacoRef.current) return
+
+      const editor = editorRef.current
+      const monaco = monacoRef.current
+
+      // Scroll to line and center it in the viewport
+      editor.revealLineInCenter(line)
+
+      // Set cursor at the specified position
+      editor.setPosition({ lineNumber: line, column })
+
+      // Focus the editor
+      editor.focus()
+
+      // Add temporary highlight decoration
+      const model = editor.getModel()
+      if (model) {
+        // Clear previous highlight
+        if (highlightTimeoutRef.current) {
+          clearTimeout(highlightTimeoutRef.current)
+        }
+
+        // Apply new highlight decoration
+        decorationsRef.current = editor.deltaDecorations(decorationsRef.current, [{
+          range: new monaco.Range(line, 1, line, model.getLineMaxColumn(line)),
+          options: {
+            className: 'error-line-highlight',
+            isWholeLine: true,
+          }
+        }])
+
+        // Remove highlight after 2 seconds
+        highlightTimeoutRef.current = setTimeout(() => {
+          decorationsRef.current = editor.deltaDecorations(decorationsRef.current, [])
+        }, 2000)
+      }
+    }
+  }), [])
 
   // Load Skulpt on component mount
   useEffect(() => {
@@ -140,11 +188,14 @@ export function ScriptEditor({
     }
   }, [skulptLoaded, value, validateScript])
 
-  // Cleanup timeout on unmount
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (validationTimeoutRef.current) {
         clearTimeout(validationTimeoutRef.current)
+      }
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current)
       }
     }
   }, [])
@@ -179,4 +230,4 @@ export function ScriptEditor({
       }}
     />
   )
-}
+})

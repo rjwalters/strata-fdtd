@@ -8,9 +8,10 @@ import type { ValidationError } from '../../lib/pythonValidator'
 interface ErrorPanelProps {
   errors: ValidationError[]
   onClose?: () => void
+  onErrorClick?: (line: number, column: number) => void
 }
 
-export function ErrorPanel({ errors, onClose }: ErrorPanelProps) {
+export function ErrorPanel({ errors, onClose, onErrorClick }: ErrorPanelProps) {
   if (errors.length === 0) {
     return null
   }
@@ -55,11 +56,20 @@ export function ErrorPanel({ errors, onClose }: ErrorPanelProps) {
         {errors.map((error, index) => (
           <div
             key={index}
+            onClick={() => onErrorClick?.(error.line, error.column)}
             className={`
               flex items-start gap-3 border-b border-gray-700 px-4 py-3
               hover:bg-gray-800 transition-colors cursor-pointer
               ${error.severity === 'error' ? 'bg-red-950/20' : 'bg-yellow-950/20'}
             `}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onErrorClick?.(error.line, error.column)
+              }
+            }}
           >
             {/* Icon */}
             <div className="flex-shrink-0 pt-0.5">

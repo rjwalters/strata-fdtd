@@ -7,7 +7,7 @@ import { ArrowLeft, HelpCircle, Eye, EyeOff, Ruler, Layers, Play, Pause, Grid3x3
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
-import { ScriptEditor } from '@/components/ScriptEditor'
+import { ScriptEditor, type ScriptEditorHandle } from '@/components/ScriptEditor'
 import { Preview3D } from '@/components/builder/Preview3D'
 import { TemplateBar } from '@/components/builder/TemplateBar'
 import { EstimationPanel } from '@/components/builder/EstimationPanel'
@@ -38,9 +38,15 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
   const setIsAnimating = useBuilderStore((s) => s.setIsAnimating)
   const setAnimationSpeed = useBuilderStore((s) => s.setAnimationSpeed)
 
-  // Animation loop
+  // Refs
+  const scriptEditorRef = useRef<ScriptEditorHandle>(null)
   const animationRef = useRef<number | null>(null)
   const lastTimeRef = useRef<number>(0)
+
+  // Handle error click to jump to line in editor
+  const handleErrorClick = (line: number, column: number) => {
+    scriptEditorRef.current?.scrollToLine(line, column)
+  }
 
   useEffect(() => {
     if (!viewOptions.isAnimating || viewOptions.sliceAxis === 'none') {
@@ -157,6 +163,7 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
 
           <div className="flex-1 overflow-hidden">
             <ScriptEditor
+              ref={scriptEditorRef}
               value={script}
               onChange={setScript}
               onSave={handleSave}
@@ -167,7 +174,7 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
           {/* Error panel */}
           {validationErrors.length > 0 && (
             <div className="flex-shrink-0">
-              <ErrorPanel errors={validationErrors} />
+              <ErrorPanel errors={validationErrors} onErrorClick={handleErrorClick} />
             </div>
           )}
 

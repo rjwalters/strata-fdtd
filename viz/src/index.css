@@ -56,3 +56,21 @@ body {
 canvas {
   display: block;
 }
+
+/* Monaco editor error line highlight */
+.error-line-highlight {
+  background-color: rgba(250, 204, 21, 0.3);
+  animation: error-highlight-fade 2s ease-out forwards;
+}
+
+@keyframes error-highlight-fade {
+  0% {
+    background-color: rgba(250, 204, 21, 0.3);
+  }
+  70% {
+    background-color: rgba(250, 204, 21, 0.3);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
