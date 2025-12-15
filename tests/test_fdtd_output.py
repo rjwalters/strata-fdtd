@@ -9,7 +9,6 @@ import numpy as np
 import pytest
 
 from strata_fdtd import (
-    PML,
     FDTDSolver,
     GaussianPulse,
     UniformGrid,
@@ -243,7 +242,7 @@ def test_hdf5_reader_load_probe(small_solver, temp_h5_file):
     # Load probe data - note: probe data may be empty if not written during simulation
     # This test just verifies the API works
     try:
-        probe_data = reader.load_probe('center')
+        reader.load_probe('center')
         # If we got here, the probe exists (data may or may not be populated)
     except KeyError:
         pytest.fail("Probe 'center' should exist")

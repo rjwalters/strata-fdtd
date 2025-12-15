@@ -39,9 +39,9 @@ import numpy as np
 from numpy.typing import NDArray
 
 if TYPE_CHECKING:
+    from strata_fdtd.geometry.sdf import Box, SDFPrimitive
     from strata_fdtd.grid import NonuniformGrid, UniformGrid
     from strata_fdtd.materials.base import AcousticMaterial
-    from strata_fdtd.geometry.sdf import Box, SDFPrimitive
 
 
 @dataclass

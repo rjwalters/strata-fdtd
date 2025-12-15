@@ -1,17 +1,11 @@
 """Manufacturing tools for lamination, constraints, and export."""
 
 # Lamination (Slice/Stack geometry)
-from strata_fdtd.manufacturing.lamination import (
-    Slice,
-    Stack,
-    Violation,
-)
-
 # Manufacturing constraints
 from strata_fdtd.manufacturing.constraints import (
     check_connectivity,
-    check_min_wall,
     check_min_gap,
+    check_min_wall,
     check_slice_alignment,
 )
 
@@ -25,8 +19,13 @@ from strata_fdtd.manufacturing.conversion import (
 # CAD export (DXF, STL, JSON)
 from strata_fdtd.manufacturing.export import (
     export_dxf,
-    export_stl,
     export_json,
+    export_stl,
+)
+from strata_fdtd.manufacturing.lamination import (
+    Slice,
+    Stack,
+    Violation,
 )
 
 __all__ = [
