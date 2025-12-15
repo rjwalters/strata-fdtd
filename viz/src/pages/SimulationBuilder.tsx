@@ -2,7 +2,7 @@
  * Simulation Builder page - Script editor with live 3D preview
  */
 
-import { ArrowLeft, HelpCircle, Eye, EyeOff, Ruler } from 'lucide-react'
+import { ArrowLeft, HelpCircle, Eye, EyeOff, Ruler, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
@@ -31,6 +31,9 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
   const setSliceAxis = useBuilderStore((s) => s.setSliceAxis)
   const setSlicePosition = useBuilderStore((s) => s.setSlicePosition)
   const setMeasurementMode = useBuilderStore((s) => s.setMeasurementMode)
+  const setDualSliceMode = useBuilderStore((s) => s.setDualSliceMode)
+  const setSlice1Position = useBuilderStore((s) => s.setSlice1Position)
+  const setSlice2Position = useBuilderStore((s) => s.setSlice2Position)
 
   const handleSave = () => {
     // Trigger download on Ctrl+S
@@ -162,7 +165,7 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
             </div>
 
             {/* Slice plane controls */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <span className="text-xs text-gray-400">Slice Plane:</span>
               <Select
                 value={viewOptions.sliceAxis}
@@ -181,18 +184,64 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
 
               {viewOptions.sliceAxis !== 'none' && (
                 <>
-                  <span className="text-xs text-gray-400">Position:</span>
-                  <Slider
-                    value={[viewOptions.slicePosition * 100]}
-                    onValueChange={(value) => setSlicePosition(value[0] / 100)}
-                    min={0}
-                    max={100}
-                    step={1}
-                    className="w-32"
-                  />
-                  <span className="text-xs text-gray-400 w-12">
-                    {Math.round(viewOptions.slicePosition * 100)}%
-                  </span>
+                  {/* Dual slice toggle */}
+                  <Button
+                    variant={viewOptions.dualSliceMode ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setDualSliceMode(!viewOptions.dualSliceMode)}
+                    className="gap-1.5 text-xs h-7"
+                  >
+                    <Layers className="h-3 w-3" />
+                    Dual Slice
+                  </Button>
+
+                  {viewOptions.dualSliceMode ? (
+                    <>
+                      {/* Slice 1 position */}
+                      <span className="text-xs text-blue-400">Slice 1:</span>
+                      <Slider
+                        value={[viewOptions.slice1Position * 100]}
+                        onValueChange={(value) => setSlice1Position(value[0] / 100)}
+                        min={0}
+                        max={100}
+                        step={1}
+                        className="w-24"
+                      />
+                      <span className="text-xs text-blue-400 w-10">
+                        {Math.round(viewOptions.slice1Position * 100)}%
+                      </span>
+
+                      {/* Slice 2 position */}
+                      <span className="text-xs text-pink-400">Slice 2:</span>
+                      <Slider
+                        value={[viewOptions.slice2Position * 100]}
+                        onValueChange={(value) => setSlice2Position(value[0] / 100)}
+                        min={0}
+                        max={100}
+                        step={1}
+                        className="w-24"
+                      />
+                      <span className="text-xs text-pink-400 w-10">
+                        {Math.round(viewOptions.slice2Position * 100)}%
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      {/* Single slice position */}
+                      <span className="text-xs text-gray-400">Position:</span>
+                      <Slider
+                        value={[viewOptions.slicePosition * 100]}
+                        onValueChange={(value) => setSlicePosition(value[0] / 100)}
+                        min={0}
+                        max={100}
+                        step={1}
+                        className="w-32"
+                      />
+                      <span className="text-xs text-gray-400 w-12">
+                        {Math.round(viewOptions.slicePosition * 100)}%
+                      </span>
+                    </>
+                  )}
 
                   {/* Measurement tool */}
                   <Button
@@ -221,6 +270,9 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
               slicePosition={viewOptions.slicePosition}
               measurementMode={viewOptions.measurementMode}
               measurementPoints={measurementPoints}
+              dualSliceMode={viewOptions.dualSliceMode}
+              slice1Position={viewOptions.slice1Position}
+              slice2Position={viewOptions.slice2Position}
             />
           </div>
 

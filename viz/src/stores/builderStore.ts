@@ -15,6 +15,9 @@ interface ViewOptions {
   sliceAxis: 'none' | 'xy' | 'xz' | 'yz'
   slicePosition: number
   measurementMode: boolean
+  dualSliceMode: boolean
+  slice1Position: number
+  slice2Position: number
 }
 
 export interface MeasurementPoint {
@@ -50,6 +53,9 @@ export interface BuilderState {
   addMeasurementPoint: (point: MeasurementPoint) => void
   clearMeasurements: () => void
   setMeasurementMode: (enabled: boolean) => void
+  setDualSliceMode: (enabled: boolean) => void
+  setSlice1Position: (position: number) => void
+  setSlice2Position: (position: number) => void
 }
 
 /**
@@ -105,6 +111,9 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     sliceAxis: 'none',
     slicePosition: 0.5,
     measurementMode: false,
+    dualSliceMode: false,
+    slice1Position: 0.33,
+    slice2Position: 0.67,
   },
 
   measurementPoints: [],
@@ -148,8 +157,9 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       viewOptions: {
         ...state.viewOptions,
         sliceAxis: axis,
-        // Disable measurement mode when disabling slice
+        // Disable measurement mode and dual slice mode when disabling slice
         measurementMode: axis === 'none' ? false : state.viewOptions.measurementMode,
+        dualSliceMode: axis === 'none' ? false : state.viewOptions.dualSliceMode,
       },
       // Clear measurements when switching slice axis
       measurementPoints: [],
@@ -188,6 +198,33 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       },
       // Clear measurements when disabling mode
       measurementPoints: enabled ? state.measurementPoints : [],
+    }))
+  },
+
+  setDualSliceMode: (enabled: boolean) => {
+    set((state) => ({
+      viewOptions: {
+        ...state.viewOptions,
+        dualSliceMode: enabled,
+      },
+    }))
+  },
+
+  setSlice1Position: (position: number) => {
+    set((state) => ({
+      viewOptions: {
+        ...state.viewOptions,
+        slice1Position: position,
+      },
+    }))
+  },
+
+  setSlice2Position: (position: number) => {
+    set((state) => ({
+      viewOptions: {
+        ...state.viewOptions,
+        slice2Position: position,
+      },
     }))
   },
 }))

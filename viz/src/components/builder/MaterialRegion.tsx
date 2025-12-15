@@ -10,6 +10,9 @@ interface MaterialRegionProps {
   sliceAxis: 'none' | 'xy' | 'xz' | 'yz'
   slicePosition: number
   extent: [number, number, number]
+  dualSliceMode: boolean
+  slice1Position: number
+  slice2Position: number
 }
 
 /**
@@ -31,15 +34,14 @@ function getMaterialColor(materialName: string): number {
   return MATERIAL_COLORS[materialName.toLowerCase()] ?? DEFAULT_COLOR
 }
 
-export function MaterialRegion({ region, sliceAxis, slicePosition, extent }: MaterialRegionProps) {
+export function MaterialRegion({ region, sliceAxis, slicePosition, extent, dualSliceMode, slice1Position, slice2Position }: MaterialRegionProps) {
   const color = getMaterialColor(region.material)
 
-  // Check if region intersects slice plane
+  // Check if region intersects slice plane(s)
   const isVisible = useMemo(() => {
     if (sliceAxis === 'none') return true
 
     const axisIndex = sliceAxis === 'yz' ? 0 : sliceAxis === 'xz' ? 1 : 2
-    const threshold = extent[axisIndex] * slicePosition
 
     // Get region bounds
     const center = region.center
@@ -53,11 +55,25 @@ export function MaterialRegion({ region, sliceAxis, slicePosition, extent }: Mat
       return false
     }
 
-    // Check if material intersects the slice plane (within tolerance)
     const minBound = center[axisIndex] - halfSize
     const maxBound = center[axisIndex] + halfSize
-    return threshold >= minBound && threshold <= maxBound
-  }, [region, sliceAxis, slicePosition, extent])
+
+    if (dualSliceMode) {
+      // In dual slice mode, show geometry within the slab between the two slices
+      const threshold1 = extent[axisIndex] * slice1Position
+      const threshold2 = extent[axisIndex] * slice2Position
+      const [minThreshold, maxThreshold] = [
+        Math.min(threshold1, threshold2),
+        Math.max(threshold1, threshold2)
+      ]
+      // Show if intersects with slab between the two slices
+      return minBound <= maxThreshold && maxBound >= minThreshold
+    } else {
+      // Single slice mode: check if material intersects the slice plane
+      const threshold = extent[axisIndex] * slicePosition
+      return threshold >= minBound && threshold <= maxBound
+    }
+  }, [region, sliceAxis, slicePosition, extent, dualSliceMode, slice1Position, slice2Position])
 
   if (!isVisible) return null
 

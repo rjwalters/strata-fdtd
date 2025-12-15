@@ -24,6 +24,9 @@ interface Preview3DProps {
   slicePosition: number
   measurementMode: boolean
   measurementPoints: MeasurementPoint[]
+  dualSliceMode: boolean
+  slice1Position: number
+  slice2Position: number
 }
 
 function Scene({
@@ -36,6 +39,9 @@ function Scene({
   slicePosition,
   measurementMode,
   measurementPoints,
+  dualSliceMode,
+  slice1Position,
+  slice2Position,
 }: Preview3DProps) {
   const addMeasurementPoint = useBuilderStore((s) => s.addMeasurementPoint)
 
@@ -88,15 +94,28 @@ function Scene({
       {/* Grid bounding box */}
       {showGrid && <GridBox grid={grid} />}
 
-      {/* Slice plane */}
+      {/* Slice plane(s) */}
       {sliceAxis !== 'none' && (
-        <SlicePlane
-          axis={sliceAxis}
-          position={slicePosition}
-          extent={grid.extent}
-          onClick={handleSliceClick}
-          measurementMode={measurementMode}
-        />
+        <>
+          <SlicePlane
+            axis={sliceAxis}
+            position={dualSliceMode ? slice1Position : slicePosition}
+            extent={grid.extent}
+            onClick={handleSliceClick}
+            measurementMode={measurementMode}
+            color="#4a90e2"
+          />
+          {dualSliceMode && (
+            <SlicePlane
+              axis={sliceAxis}
+              position={slice2Position}
+              extent={grid.extent}
+              onClick={handleSliceClick}
+              measurementMode={measurementMode}
+              color="#e24a90"
+            />
+          )}
+        </>
       )}
 
       {/* Measurement line */}
@@ -113,6 +132,9 @@ function Scene({
             sliceAxis={sliceAxis}
             slicePosition={slicePosition}
             extent={grid.extent}
+            dualSliceMode={dualSliceMode}
+            slice1Position={slice1Position}
+            slice2Position={slice2Position}
           />
         ))}
 
@@ -125,6 +147,9 @@ function Scene({
             sliceAxis={sliceAxis}
             slicePosition={slicePosition}
             extent={grid.extent}
+            dualSliceMode={dualSliceMode}
+            slice1Position={slice1Position}
+            slice2Position={slice2Position}
           />
         ))}
 
@@ -137,6 +162,9 @@ function Scene({
             sliceAxis={sliceAxis}
             slicePosition={slicePosition}
             extent={grid.extent}
+            dualSliceMode={dualSliceMode}
+            slice1Position={slice1Position}
+            slice2Position={slice2Position}
           />
         ))}
     </>

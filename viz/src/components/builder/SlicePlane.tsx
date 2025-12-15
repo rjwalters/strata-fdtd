@@ -13,9 +13,10 @@ interface SlicePlaneProps {
   extent: [number, number, number]
   onClick?: (point: MeasurementPoint) => void
   measurementMode?: boolean
+  color?: string
 }
 
-export function SlicePlane({ axis, position, extent, onClick, measurementMode = false }: SlicePlaneProps) {
+export function SlicePlane({ axis, position, extent, onClick, measurementMode = false, color = '#4a90e2' }: SlicePlaneProps) {
   const [planePosition, planeRotation, planeSize] = useMemo(() => {
     switch (axis) {
       case 'xy':
@@ -55,7 +56,7 @@ export function SlicePlane({ axis, position, extent, onClick, measurementMode = 
     >
       <planeGeometry args={planeSize} />
       <meshBasicMaterial
-        color="#4a90e2"
+        color={color}
         transparent
         opacity={0.2}
         side={THREE.DoubleSide}
