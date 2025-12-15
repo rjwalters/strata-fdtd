@@ -7,6 +7,8 @@ import type { SimulationAST } from '../lib/scriptParser'
 import { parseScript, getDefaultScript } from '../lib/scriptParser'
 import type { ValidationError } from '../lib/pythonValidator'
 
+export type AnimationSpeed = 'slow' | 'normal' | 'fast'
+
 interface ViewOptions {
   showGrid: boolean
   showMaterials: boolean
@@ -18,6 +20,8 @@ interface ViewOptions {
   dualSliceMode: boolean
   slice1Position: number
   slice2Position: number
+  isAnimating: boolean
+  animationSpeed: AnimationSpeed
 }
 
 export interface MeasurementPoint {
@@ -56,6 +60,9 @@ export interface BuilderState {
   setDualSliceMode: (enabled: boolean) => void
   setSlice1Position: (position: number) => void
   setSlice2Position: (position: number) => void
+  setIsAnimating: (animating: boolean) => void
+  setAnimationSpeed: (speed: AnimationSpeed) => void
+  toggleAnimation: () => void
 }
 
 /**
@@ -114,6 +121,8 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     dualSliceMode: false,
     slice1Position: 0.33,
     slice2Position: 0.67,
+    isAnimating: false,
+    animationSpeed: 'normal',
   },
 
   measurementPoints: [],
@@ -157,9 +166,10 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       viewOptions: {
         ...state.viewOptions,
         sliceAxis: axis,
-        // Disable measurement mode and dual slice mode when disabling slice
+        // Disable measurement mode, dual slice mode, and animation when disabling slice
         measurementMode: axis === 'none' ? false : state.viewOptions.measurementMode,
         dualSliceMode: axis === 'none' ? false : state.viewOptions.dualSliceMode,
+        isAnimating: axis === 'none' ? false : state.viewOptions.isAnimating,
       },
       // Clear measurements when switching slice axis
       measurementPoints: [],
@@ -224,6 +234,33 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       viewOptions: {
         ...state.viewOptions,
         slice2Position: position,
+      },
+    }))
+  },
+
+  setIsAnimating: (animating: boolean) => {
+    set((state) => ({
+      viewOptions: {
+        ...state.viewOptions,
+        isAnimating: animating,
+      },
+    }))
+  },
+
+  setAnimationSpeed: (speed: AnimationSpeed) => {
+    set((state) => ({
+      viewOptions: {
+        ...state.viewOptions,
+        animationSpeed: speed,
+      },
+    }))
+  },
+
+  toggleAnimation: () => {
+    set((state) => ({
+      viewOptions: {
+        ...state.viewOptions,
+        isAnimating: !state.viewOptions.isAnimating,
       },
     }))
   },

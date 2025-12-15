@@ -19,4 +19,4 @@ export {
   type FlowParticleConfig,
 } from "./simulationStore";
 
-export { useBuilderStore, type BuilderState, type MeasurementPoint } from "./builderStore";
+export { useBuilderStore, type BuilderState, type MeasurementPoint, type AnimationSpeed } from "./builderStore";

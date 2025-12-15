@@ -2,7 +2,8 @@
  * Simulation Builder page - Script editor with live 3D preview
  */
 
-import { ArrowLeft, HelpCircle, Eye, EyeOff, Ruler } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { ArrowLeft, HelpCircle, Eye, EyeOff, Ruler, Play, Pause } from 'lucide-react'
 import {
   Button,
   Select,
@@ -18,6 +19,7 @@ import {
   ExportBar,
   ErrorPanel,
   useBuilderStore,
+  type AnimationSpeed,
 } from 'strata-ui'
 
 interface SimulationBuilderProps {
@@ -37,6 +39,68 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
   const setSliceAxis = useBuilderStore((s) => s.setSliceAxis)
   const setSlicePosition = useBuilderStore((s) => s.setSlicePosition)
   const setMeasurementMode = useBuilderStore((s) => s.setMeasurementMode)
+  const setIsAnimating = useBuilderStore((s) => s.setIsAnimating)
+  const setAnimationSpeed = useBuilderStore((s) => s.setAnimationSpeed)
+
+  // Animation loop
+  const animationRef = useRef<number | null>(null)
+  const lastTimeRef = useRef<number>(0)
+
+  useEffect(() => {
+    if (!viewOptions.isAnimating || viewOptions.sliceAxis === 'none') {
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current)
+        animationRef.current = null
+      }
+      return
+    }
+
+    // Speed: positions per second (0 to 1 range)
+    const speedMap: Record<AnimationSpeed, number> = {
+      slow: 0.1,    // 10 seconds for full sweep
+      normal: 0.25, // 4 seconds for full sweep
+      fast: 0.5,    // 2 seconds for full sweep
+    }
+    const speed = speedMap[viewOptions.animationSpeed]
+
+    const animate = (time: number) => {
+      if (lastTimeRef.current === 0) {
+        lastTimeRef.current = time
+      }
+
+      const deltaTime = (time - lastTimeRef.current) / 1000 // seconds
+      lastTimeRef.current = time
+
+      const currentPosition = useBuilderStore.getState().viewOptions.slicePosition
+      let newPosition = currentPosition + speed * deltaTime
+
+      // Loop back to start when reaching end
+      if (newPosition > 1) {
+        newPosition = 0
+      }
+
+      setSlicePosition(newPosition)
+      animationRef.current = requestAnimationFrame(animate)
+    }
+
+    lastTimeRef.current = 0
+    animationRef.current = requestAnimationFrame(animate)
+
+    return () => {
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current)
+        animationRef.current = null
+      }
+    }
+  }, [viewOptions.isAnimating, viewOptions.sliceAxis, viewOptions.animationSpeed, setSlicePosition])
+
+  // Auto-pause animation when user manually adjusts slider
+  const handleSliderChange = (value: number[]) => {
+    if (viewOptions.isAnimating) {
+      setIsAnimating(false)
+    }
+    setSlicePosition(value[0] / 100)
+  }
 
   const handleSave = () => {
     // Trigger download on Ctrl+S
@@ -190,7 +254,7 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
                   <span className="text-xs text-gray-400">Position:</span>
                   <Slider
                     value={[viewOptions.slicePosition * 100]}
-                    onValueChange={(value) => setSlicePosition(value[0] / 100)}
+                    onValueChange={handleSliderChange}
                     min={0}
                     max={100}
                     step={1}
@@ -199,6 +263,32 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
                   <span className="text-xs text-gray-400 w-12">
                     {Math.round(viewOptions.slicePosition * 100)}%
                   </span>
+
+                  {/* Animation controls */}
+                  <Button
+                    variant={viewOptions.isAnimating ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setIsAnimating(!viewOptions.isAnimating)}
+                    className="gap-1.5 text-xs h-7"
+                    title={viewOptions.isAnimating ? 'Pause animation' : 'Animate slice'}
+                  >
+                    {viewOptions.isAnimating ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                  </Button>
+
+                  <span className="text-xs text-gray-400">Speed:</span>
+                  <Select
+                    value={viewOptions.animationSpeed}
+                    onValueChange={(value) => setAnimationSpeed(value as AnimationSpeed)}
+                  >
+                    <SelectTrigger className="w-20 h-7 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="slow">Slow</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="fast">Fast</SelectItem>
+                    </SelectContent>
+                  </Select>
 
                   {/* Measurement tool */}
                   <Button
