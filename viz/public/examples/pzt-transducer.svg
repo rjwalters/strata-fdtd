@@ -1,0 +1,20 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4caf50;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e8f5e9;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#grad2)"/>
+  <!-- Transducer element -->
+  <rect x="180" y="100" width="40" height="20" fill="#2e7d32" rx="3"/>
+  <!-- Radiation pattern arcs -->
+  <path d="M 200 120 Q 150 180, 100 240" stroke="#2e7d32" stroke-width="3" fill="none" opacity="0.4"/>
+  <path d="M 200 120 Q 180 200, 160 270" stroke="#2e7d32" stroke-width="3" fill="none" opacity="0.5"/>
+  <path d="M 200 120 Q 200 210, 200 280" stroke="#2e7d32" stroke-width="4" fill="none" opacity="0.7"/>
+  <path d="M 200 120 Q 220 200, 240 270" stroke="#2e7d32" stroke-width="3" fill="none" opacity="0.5"/>
+  <path d="M 200 120 Q 250 180, 300 240" stroke="#2e7d32" stroke-width="3" fill="none" opacity="0.4"/>
+  <!-- Title -->
+  <rect x="0" y="250" width="400" height="50" fill="rgba(0,0,0,0.5)"/>
+  <text x="200" y="283" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white">PZT Transducer</text>
+</svg>

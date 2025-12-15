@@ -1,0 +1,95 @@
+{
+  "grid": {
+    "shape": [
+      165,
+      76,
+      76
+    ],
+    "resolution": 0.002,
+    "physical_size": [
+      0.33,
+      0.152,
+      0.152
+    ]
+  },
+  "physics": {
+    "c": 343.0,
+    "rho": 1.2
+  },
+  "simulation": {
+    "dt": 3.198150179184516e-06,
+    "cfl_limit": 3.3664738728258063e-06,
+    "current_time": 0.07312250569687342,
+    "step_count": 22864
+  },
+  "probes": {
+    "closed_end": {
+      "position": [
+        16,
+        38,
+        38
+      ]
+    },
+    "fifth": {
+      "position": [
+        35,
+        38,
+        38
+      ]
+    },
+    "quarter": {
+      "position": [
+        40,
+        38,
+        38
+      ]
+    },
+    "third": {
+      "position": [
+        48,
+        38,
+        38
+      ]
+    },
+    "center": {
+      "position": [
+        65,
+        38,
+        38
+      ]
+    },
+    "three_quarter": {
+      "position": [
+        90,
+        38,
+        38
+      ]
+    },
+    "pipe_mouth": {
+      "position": [
+        113,
+        38,
+        38
+      ]
+    },
+    "air_volume": {
+      "position": [
+        125,
+        38,
+        38
+      ]
+    }
+  },
+  "sources": [
+    {
+      "type": "point",
+      "position": [
+        18,
+        38,
+        38
+      ],
+      "frequency": 410.28708133971287,
+      "bandwidth": 2051.4354066985643
+    }
+  ]
+}

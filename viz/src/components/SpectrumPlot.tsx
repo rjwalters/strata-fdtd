@@ -1,0 +1,643 @@
+import { useRef, useEffect, useState, useCallback } from "react";
+import * as d3 from "d3";
+import { computeSpectrum, computeSpectrumAsync } from "@/lib/fft";
+import { logBinDownsample, WORKER_THRESHOLD } from "@/lib/downsample";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
+
+export interface FrequencyMarker {
+  frequency: number;
+  label: string;
+}
+
+export interface SpectrumPlotProps {
+  data: Float32Array;
+  sampleRate: number;
+  nfft?: number;
+  logScale?: boolean;
+  markers?: FrequencyMarker[];
+}
+
+const MARGIN = { top: 10, right: 20, bottom: 30, left: 50 };
+
+/**
+ * Calculate Q-factor at a peak using the -3dB bandwidth method
+ * Q = f₀ / Δf where Δf is the bandwidth at -3dB from peak
+ */
+function calculateQFactor(
+  frequencies: Float32Array,
+  magnitude: Float32Array,
+  peakIdx: number
+): number | null {
+  const peakMag = magnitude[peakIdx];
+  // -3dB point is where magnitude drops to 1/√2 of peak
+  const threshold = peakMag / Math.sqrt(2);
+
+  // Find -3dB points on either side
+  let lowIdx = peakIdx;
+  let highIdx = peakIdx;
+
+  // Search left for -3dB point
+  while (lowIdx > 0 && magnitude[lowIdx] > threshold) {
+    lowIdx--;
+  }
+
+  // Search right for -3dB point
+  while (highIdx < magnitude.length - 1 && magnitude[highIdx] > threshold) {
+    highIdx++;
+  }
+
+  // If we hit the boundaries, Q-factor is undefined
+  if (lowIdx === 0 || highIdx === magnitude.length - 1) {
+    return null;
+  }
+
+  const bandwidth = frequencies[highIdx] - frequencies[lowIdx];
+  if (bandwidth <= 0) return null;
+
+  return frequencies[peakIdx] / bandwidth;
+}
+
+interface PeakInfo {
+  frequency: number;
+  magnitude: number;
+  index: number;
+  qFactor: number | null;
+}
+
+
+function findPeaks(
+  frequencies: Float32Array,
+  magnitude: Float32Array,
+  threshold: number = 0.1,
+  maxPeaks: number = 5
+): PeakInfo[] {
+  const maxMag = Math.max(...magnitude);
+  const peaks: PeakInfo[] = [];
+
+  for (let i = 1; i < magnitude.length - 1; i++) {
+    // Local maximum check
+    if (magnitude[i] > magnitude[i - 1] && magnitude[i] > magnitude[i + 1]) {
+      // Above threshold
+      if (magnitude[i] > maxMag * threshold) {
+        const qFactor = calculateQFactor(frequencies, magnitude, i);
+        peaks.push({
+          frequency: frequencies[i],
+          magnitude: magnitude[i],
+          index: i,
+          qFactor,
+        });
+      }
+    }
+  }
+
+  // Sort by magnitude and take top N
+  peaks.sort((a, b) => b.magnitude - a.magnitude);
+  return peaks.slice(0, maxPeaks);
+}
+
+function toDecibels(value: number, ref: number = 1): number {
+  return 20 * Math.log10(Math.max(value / ref, 1e-10));
+}
+
+export function SpectrumPlot({
+  data,
+  sampleRate,
+  nfft,
+  logScale: initialLogScale = true,
+  markers = [],
+}: SpectrumPlotProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [logScale, setLogScale] = useState(initialLogScale);
+  const [showPeaks, setShowPeaks] = useState(true);
+  const [zoomDomain, setZoomDomain] = useState<[number, number] | null>(null);
+  const [spectrum, setSpectrum] = useState<{
+    frequencies: Float32Array;
+    magnitude: Float32Array;
+  } | null>(null);
+  const [isComputing, setIsComputing] = useState(false);
+  // Track brush state to suppress tooltip during drag
+  const isBrushingRef = useRef(false);
+
+  // Compute spectrum - use async for large datasets
+  useEffect(() => {
+    if (data.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSpectrum(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    // Use async for large datasets to avoid blocking main thread
+    if (data.length >= WORKER_THRESHOLD) {
+      setIsComputing(true);
+      computeSpectrumAsync(data, sampleRate, nfft)
+        .then((result) => {
+          if (!cancelled) {
+            setSpectrum(result);
+            setIsComputing(false);
+          }
+        })
+        .catch((error) => {
+          console.error("FFT computation error:", error);
+          if (!cancelled) {
+            // Fallback to sync on error
+            setSpectrum(computeSpectrum(data, sampleRate, nfft));
+            setIsComputing(false);
+          }
+        });
+    } else {
+      // Sync for small datasets
+      setSpectrum(computeSpectrum(data, sampleRate, nfft));
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data, sampleRate, nfft]);
+
+  // Find peaks (cached based on spectrum)
+  const [peaks, setPeaks] = useState<PeakInfo[]>([]);
+  useEffect(() => {
+    if (!spectrum) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPeaks([]);
+      return;
+    }
+    setPeaks(findPeaks(spectrum.frequencies, spectrum.magnitude));
+  }, [spectrum]);
+
+  // Threshold for downsampling (number of frequency bins)
+  const DOWNSAMPLE_THRESHOLD = 2000;
+
+  // Track container size
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      setDimensions({ width, height });
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  // Render chart
+  useEffect(() => {
+    if (!svgRef.current || dimensions.width === 0 || !spectrum) return;
+
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
+
+    const width = dimensions.width - MARGIN.left - MARGIN.right;
+    const height = dimensions.height - MARGIN.top - MARGIN.bottom;
+
+    if (width <= 0 || height <= 0) return;
+
+    const { frequencies, magnitude } = spectrum;
+
+    // Default frequency range (audible or simulation range)
+    const defaultMaxFreq = Math.min(sampleRate / 2, 20000); // Nyquist or 20kHz
+    const defaultMinFreq = 20; // 20 Hz lower bound for audio
+
+    // Use zoom domain if set
+    const [minFreq, maxFreq] = zoomDomain ?? [defaultMinFreq, defaultMaxFreq];
+
+    // Find indices for frequency range
+    let startIdx = 0;
+    let endIdx = frequencies.length - 1;
+    for (let i = 0; i < frequencies.length; i++) {
+      if (frequencies[i] >= minFreq) {
+        startIdx = i;
+        break;
+      }
+    }
+    for (let i = frequencies.length - 1; i >= 0; i--) {
+      if (frequencies[i] <= maxFreq) {
+        endIdx = i;
+        break;
+      }
+    }
+
+    // Convert to dB if needed
+    const refMag = Math.max(...magnitude);
+    const displayMag = logScale
+      ? Float32Array.from(magnitude, (v) => toDecibels(v, refMag))
+      : magnitude;
+
+    // Create scales
+    const xScale = d3
+      .scaleLog()
+      .domain([Math.max(minFreq, frequencies[startIdx]), maxFreq])
+      .range([0, width])
+      .clamp(true);
+
+    const yMin = logScale ? -80 : 0;
+    const yMax = logScale ? 0 : refMag;
+    const yScale = d3.scaleLinear().domain([yMin, yMax]).range([height, 0]);
+
+    // Create main group
+    const g = svg
+      .append("g")
+      .attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
+
+    // Create axes
+    const xAxis = d3
+      .axisBottom(xScale)
+      .ticks(5, ",.0f")
+      .tickFormat((d) => {
+        const val = +d;
+        if (val >= 1000) return `${val / 1000}k`;
+        return `${val}`;
+      });
+
+    const yAxis = d3
+      .axisLeft(yScale)
+      .ticks(5)
+      .tickFormat((d) => (logScale ? `${d}dB` : d3.format(".1e")(+d)));
+
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .attr("class", "x-axis")
+      .call(xAxis)
+      .selectAll("text")
+      .style("fill", "hsl(var(--muted-foreground))");
+
+    // X-axis label
+    g.append("text")
+      .attr("x", width / 2)
+      .attr("y", height + 25)
+      .attr("text-anchor", "middle")
+      .attr("fill", "hsl(var(--muted-foreground))")
+      .attr("font-size", "10px")
+      .text("Frequency (Hz)");
+
+    g.append("g")
+      .attr("class", "y-axis")
+      .call(yAxis)
+      .selectAll("text")
+      .style("fill", "hsl(var(--muted-foreground))");
+
+    // Style axis lines
+    g.selectAll(".domain, .tick line").style("stroke", "hsl(var(--border))");
+
+    // Add grid lines
+    g.append("g")
+      .attr("class", "grid")
+      .selectAll("line")
+      .data(yScale.ticks(5))
+      .join("line")
+      .attr("x1", 0)
+      .attr("x2", width)
+      .attr("y1", (d) => yScale(d))
+      .attr("y2", (d) => yScale(d))
+      .attr("stroke", "hsl(var(--border))")
+      .attr("stroke-opacity", 0.3);
+
+    // Determine if downsampling is needed
+    const visibleBins = endIdx - startIdx + 1;
+    const targetBins = Math.min(width * 2, visibleBins); // Max 2 points per pixel
+
+    // Get display data (possibly downsampled)
+    let displayFreqs: Float32Array;
+    let displayMagValues: Float32Array;
+
+    if (visibleBins > DOWNSAMPLE_THRESHOLD && targetBins < visibleBins) {
+      // Downsample using log-binning for logarithmic frequency display
+      const result = logBinDownsample(
+        frequencies.subarray(startIdx, endIdx + 1),
+        magnitude.subarray(startIdx, endIdx + 1),
+        targetBins,
+        minFreq,
+        maxFreq
+      );
+      displayFreqs = result.frequencies;
+      // Convert downsampled magnitude to dB if needed
+      displayMagValues = logScale
+        ? Float32Array.from(result.magnitude, (v) => toDecibels(v, refMag))
+        : result.magnitude;
+    } else {
+      // Use original data for visible range
+      displayFreqs = frequencies.subarray(startIdx, endIdx + 1);
+      displayMagValues = displayMag.subarray(startIdx, endIdx + 1);
+    }
+
+    // Build path data from (possibly downsampled) display data
+    const pathData: [number, number][] = [];
+    for (let i = 0; i < displayFreqs.length; i++) {
+      const x = xScale(displayFreqs[i]);
+      const y = yScale(displayMagValues[i]);
+      if (isFinite(x) && isFinite(y)) {
+        pathData.push([x, y]);
+      }
+    }
+
+    // Create line generator
+    const line = d3.line().x((d) => d[0]).y((d) => d[1]);
+
+    // Draw spectrum line
+    g.append("path")
+      .attr("fill", "none")
+      .attr("stroke", "hsl(var(--primary))")
+      .attr("stroke-width", 1.5)
+      .attr("d", line(pathData));
+
+    // Draw markers
+    for (const marker of markers) {
+      if (marker.frequency >= minFreq && marker.frequency <= maxFreq) {
+        const x = xScale(marker.frequency);
+        g.append("line")
+          .attr("x1", x)
+          .attr("x2", x)
+          .attr("y1", 0)
+          .attr("y2", height)
+          .attr("stroke", "hsl(var(--destructive))")
+          .attr("stroke-width", 1)
+          .attr("stroke-dasharray", "4,4");
+
+        g.append("text")
+          .attr("x", x + 4)
+          .attr("y", 12)
+          .attr("fill", "hsl(var(--destructive))")
+          .attr("font-size", "10px")
+          .text(marker.label);
+      }
+    }
+
+    // Draw peaks with Q-factor
+    if (showPeaks) {
+      for (const peak of peaks) {
+        if (peak.frequency >= minFreq && peak.frequency <= maxFreq) {
+          const x = xScale(peak.frequency);
+          const y = yScale(logScale ? toDecibels(peak.magnitude, refMag) : peak.magnitude);
+
+          g.append("circle")
+            .attr("cx", x)
+            .attr("cy", y)
+            .attr("r", 4)
+            .attr("fill", "hsl(var(--accent))")
+            .attr("stroke", "white")
+            .attr("stroke-width", 1);
+
+          // Frequency label
+          g.append("text")
+            .attr("x", x)
+            .attr("y", y - 16)
+            .attr("text-anchor", "middle")
+            .attr("fill", "hsl(var(--accent-foreground))")
+            .attr("font-size", "9px")
+            .text(`${Math.round(peak.frequency)} Hz`);
+
+          // Q-factor label (if available)
+          if (peak.qFactor !== null) {
+            g.append("text")
+              .attr("x", x)
+              .attr("y", y - 6)
+              .attr("text-anchor", "middle")
+              .attr("fill", "hsl(var(--muted-foreground))")
+              .attr("font-size", "8px")
+              .text(`Q=${peak.qFactor.toFixed(1)}`);
+          }
+        }
+      }
+    }
+
+    // Create tooltip group
+    const tooltip = g
+      .append("g")
+      .attr("class", "tooltip")
+      .style("display", "none");
+
+    // Tooltip background
+    tooltip
+      .append("rect")
+      .attr("fill", "hsl(var(--popover))")
+      .attr("stroke", "hsl(var(--border))")
+      .attr("rx", 4)
+      .attr("ry", 4);
+
+    // Tooltip text
+    const tooltipText = tooltip
+      .append("text")
+      .attr("fill", "hsl(var(--popover-foreground))")
+      .attr("font-size", "11px")
+      .attr("font-family", "monospace");
+
+    // Vertical line for hover
+    const hoverLine = g
+      .append("line")
+      .attr("stroke", "hsl(var(--muted-foreground))")
+      .attr("stroke-width", 1)
+      .attr("stroke-dasharray", "2,2")
+      .style("display", "none");
+
+    // Helper to find magnitude at frequency
+    const getMagnitudeAtFreq = (freq: number): { mag: number; displayMag: number } | null => {
+      // Find closest frequency bin
+      let closestIdx = startIdx;
+      let minDiff = Math.abs(frequencies[startIdx] - freq);
+      for (let i = startIdx; i <= endIdx; i++) {
+        const diff = Math.abs(frequencies[i] - freq);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIdx = i;
+        }
+      }
+      return {
+        mag: magnitude[closestIdx],
+        displayMag: displayMag[closestIdx],
+      };
+    };
+
+    // Add brush for frequency zoom
+    const brush = d3
+      .brushX<unknown>()
+      .extent([
+        [0, 0],
+        [width, height],
+      ])
+      .on("start", () => {
+        // Mark brush as active to suppress tooltip
+        isBrushingRef.current = true;
+        tooltip.style("display", "none");
+        hoverLine.style("display", "none");
+      })
+      .on("end", (event: d3.D3BrushEvent<unknown>) => {
+        // Mark brush as inactive
+        isBrushingRef.current = false;
+
+        if (!event.selection) return;
+
+        const [x0, x1] = (event.selection as [number, number]).map(xScale.invert);
+
+        // Only zoom if selection is significant
+        if (Math.abs((event.selection as [number, number])[1] - (event.selection as [number, number])[0]) > 5) {
+          setZoomDomain([x0, x1]);
+        }
+
+        // Clear the brush selection visually
+        g.select<SVGGElement>(".brush").call(brush.move, null);
+      });
+
+    g.append("g")
+      .attr("class", "brush")
+      .call(brush)
+      .selectAll(".selection")
+      .style("fill", "hsl(var(--primary))")
+      .style("fill-opacity", 0.2)
+      .style("stroke", "hsl(var(--primary))");
+
+    // Interaction overlay for tooltip
+    g.append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("fill", "transparent")
+      .style("cursor", "crosshair")
+      .style("pointer-events", "all")
+      .lower() // Put behind brush
+      .on("mousemove", (event) => {
+        // Suppress tooltip while brush is active
+        if (isBrushingRef.current) {
+          return;
+        }
+
+        const [x] = d3.pointer(event);
+        const freq = xScale.invert(x);
+
+        // Clamp to valid range
+        if (freq < minFreq || freq > maxFreq) {
+          tooltip.style("display", "none");
+          hoverLine.style("display", "none");
+          return;
+        }
+
+        // Update hover line
+        hoverLine
+          .attr("x1", x)
+          .attr("x2", x)
+          .attr("y1", 0)
+          .attr("y2", height)
+          .style("display", null);
+
+        // Get magnitude at frequency
+        const result = getMagnitudeAtFreq(freq);
+        if (!result) return;
+
+        // Build tooltip content
+        const freqStr = freq >= 1000 ? `${(freq / 1000).toFixed(2)} kHz` : `${freq.toFixed(1)} Hz`;
+        const magStr = logScale
+          ? `${result.displayMag.toFixed(1)} dB`
+          : result.mag.toExponential(2);
+
+        const lines = [freqStr, magStr];
+
+        // Update tooltip text
+        tooltipText.selectAll("tspan").remove();
+        lines.forEach((line, i) => {
+          tooltipText
+            .append("tspan")
+            .attr("x", 8)
+            .attr("dy", i === 0 ? 14 : 14)
+            .text(line);
+        });
+
+        // Size tooltip background
+        const textBox = (tooltipText.node() as SVGTextElement).getBBox();
+        tooltip
+          .select("rect")
+          .attr("width", textBox.width + 16)
+          .attr("height", textBox.height + 8)
+          .attr("y", 2);
+
+        // Position tooltip (flip if near right edge)
+        const tooltipWidth = textBox.width + 16;
+        const tooltipX = x + 15 + tooltipWidth > width ? x - tooltipWidth - 10 : x + 15;
+        const tooltipY = Math.min(10, height - textBox.height - 20);
+        tooltip.attr("transform", `translate(${tooltipX},${tooltipY})`).style("display", null);
+      })
+      .on("mouseleave", () => {
+        tooltip.style("display", "none");
+        hoverLine.style("display", "none");
+      })
+      .on("dblclick", () => {
+        setZoomDomain(null);
+      });
+  }, [dimensions, spectrum, logScale, markers, peaks, showPeaks, sampleRate, zoomDomain]);
+
+  // Format frequency for display
+  const formatFreq = useCallback((freq: number) => {
+    if (freq >= 1000) return `${(freq / 1000).toFixed(1)}k`;
+    return `${Math.round(freq)}`;
+  }, []);
+
+  // Reset zoom callback
+  const resetZoom = useCallback(() => {
+    setZoomDomain(null);
+  }, []);
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-muted-foreground">Frequency Spectrum</h3>
+          {zoomDomain && (
+            <Badge
+              variant="outline"
+              className="cursor-pointer text-xs"
+              onClick={resetZoom}
+            >
+              {formatFreq(zoomDomain[0])}–{formatFreq(zoomDomain[1])} Hz ✕
+            </Badge>
+          )}
+        </div>
+        <div className="flex gap-1">
+          <Button
+            variant={logScale ? "default" : "outline"}
+            size="sm"
+            className="text-xs h-6 px-2"
+            onClick={() => setLogScale(true)}
+          >
+            dB
+          </Button>
+          <Button
+            variant={!logScale ? "default" : "outline"}
+            size="sm"
+            className="text-xs h-6 px-2"
+            onClick={() => setLogScale(false)}
+          >
+            Linear
+          </Button>
+          <Button
+            variant={showPeaks ? "default" : "outline"}
+            size="sm"
+            className="text-xs h-6 px-2"
+            onClick={() => setShowPeaks(!showPeaks)}
+          >
+            Peaks
+          </Button>
+        </div>
+      </div>
+      <div ref={containerRef} className="flex-1 min-h-0 relative">
+        <svg ref={svgRef} width={dimensions.width} height={dimensions.height} />
+        {isComputing && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Computing spectrum...</span>
+            </div>
+          </div>
+        )}
+      </div>
+      {zoomDomain && (
+        <div className="text-xs text-muted-foreground mt-1 text-center">
+          Double-click to reset zoom
+        </div>
+      )}
+    </div>
+  );
+}

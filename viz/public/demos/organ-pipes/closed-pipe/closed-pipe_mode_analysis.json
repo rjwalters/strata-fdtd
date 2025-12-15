@@ -1,0 +1,43 @@
+{
+  "pipe_type": "closed",
+  "analysis_probe": "left_end",
+  "expected_modes_hz": [
+    857.5,
+    1715.0,
+    2572.5,
+    3430.0,
+    4287.5
+  ],
+  "measured_modes_hz": [
+    858.8033323533107,
+    1717.6066647066214,
+    2576.4099970599323,
+    3425.6710701648726,
+    "not detected"
+  ],
+  "mode_errors_percent": [
+    0.15,
+    0.15,
+    0.15,
+    0.13,
+    "N/A"
+  ],
+  "mode_descriptions": [
+    "Mode 1 (1st harmonic)",
+    "Mode 2 (2nd harmonic)",
+    "Mode 3 (3rd harmonic)",
+    "Mode 4 (4th harmonic)",
+    "Mode 5 (5th harmonic)"
+  ],
+  "detection_summary": {
+    "modes_expected": 5,
+    "modes_detected": 4,
+    "detection_rate": "80%"
+  },
+  "analysis_parameters": {
+    "window": "hann",
+    "n_fft": 32768,
+    "freq_resolution_hz": 9.54,
+    "transient_skip_samples": 1823
+  }
+}
