@@ -51,7 +51,8 @@ from __future__ import annotations
 import hashlib
 import time
 from datetime import datetime, timezone
-from importlib.metadata import PackageNotFoundError, version as get_package_version
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as get_package_version
 from typing import TYPE_CHECKING
 
 import h5py
