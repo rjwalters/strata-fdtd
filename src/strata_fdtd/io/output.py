@@ -51,6 +51,7 @@ from __future__ import annotations
 import hashlib
 import time
 from datetime import datetime, timezone
+from importlib.metadata import PackageNotFoundError, version as get_package_version
 from typing import TYPE_CHECKING
 
 import h5py
@@ -128,10 +129,16 @@ class HDF5ResultWriter:
             num_threads = _kernels.get_num_threads()
 
         # Write metadata as root attributes
+        # Get solver version dynamically from package metadata
+        try:
+            solver_version = get_package_version("strata-fdtd")
+        except PackageNotFoundError:
+            solver_version = "unknown"
+
         self.file.attrs['script_hash'] = script_hash
         self.file.attrs['script_content'] = script_content
         self.file.attrs['created_at'] = datetime.now(timezone.utc).isoformat()
-        self.file.attrs['solver_version'] = "0.1.0"
+        self.file.attrs['solver_version'] = solver_version
         self.file.attrs['backend'] = backend
         self.file.attrs['num_threads'] = num_threads
 
