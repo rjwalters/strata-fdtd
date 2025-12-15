@@ -90,6 +90,7 @@ export {
   type HDF5SimulationParams,
   type HDF5Source,
   type HDF5LoadOptions,
+  type HDF5URLLoadResult,
 } from './hdf5';
 
 // =============================================================================
