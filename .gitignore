@@ -46,3 +46,11 @@ htmlcov/
 *.a
 CMakeCache.txt
 CMakeFiles/
+
+# Node.js
+node_modules/
+dist/
+*.local
+
+# Loom worktrees
+.loom/
