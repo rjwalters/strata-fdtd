@@ -3,6 +3,7 @@
  */
 
 import { useMemo } from 'react'
+import * as THREE from 'three'
 import type { MaterialRegion as MaterialRegionType } from '@/lib/scriptParser'
 
 interface MaterialRegionProps {
@@ -13,6 +14,7 @@ interface MaterialRegionProps {
   dualSliceMode: boolean
   slice1Position: number
   slice2Position: number
+  clippingPlanes?: THREE.Plane[]
 }
 
 /**
@@ -34,7 +36,7 @@ function getMaterialColor(materialName: string): number {
   return MATERIAL_COLORS[materialName.toLowerCase()] ?? DEFAULT_COLOR
 }
 
-export function MaterialRegion({ region, sliceAxis, slicePosition, extent, dualSliceMode, slice1Position, slice2Position }: MaterialRegionProps) {
+export function MaterialRegion({ region, sliceAxis, slicePosition, extent, dualSliceMode, slice1Position, slice2Position, clippingPlanes = [] }: MaterialRegionProps) {
   const color = getMaterialColor(region.material)
 
   // Check if region intersects slice plane(s)
@@ -86,6 +88,9 @@ export function MaterialRegion({ region, sliceAxis, slicePosition, extent, dualS
           transparent
           opacity={0.6}
           depthWrite={false}
+          clippingPlanes={clippingPlanes}
+          clipShadows
+          side={THREE.DoubleSide}
         />
       </mesh>
     )
@@ -100,6 +105,9 @@ export function MaterialRegion({ region, sliceAxis, slicePosition, extent, dualS
           transparent
           opacity={0.6}
           depthWrite={false}
+          clippingPlanes={clippingPlanes}
+          clipShadows
+          side={THREE.DoubleSide}
         />
       </mesh>
     )
