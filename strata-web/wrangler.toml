@@ -1,3 +1,10 @@
 name = "strata-web"
 compatibility_date = "2024-01-01"
 pages_build_output_dir = "dist"
+
+# R2 bucket for demo simulation data
+# This binding enables Pages Functions to access R2 if needed
+# For public access, the bucket should also have public access enabled
+[[r2_buckets]]
+binding = "DEMOS_BUCKET"
+bucket_name = "strata-demos"
