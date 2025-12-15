@@ -46,3 +46,7 @@ htmlcov/
 *.a
 CMakeCache.txt
 CMakeFiles/
+.loom/state.json
+.loom/worktrees/
+.loom/*.log
+.loom/*.sock
