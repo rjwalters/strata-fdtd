@@ -1130,8 +1130,8 @@ class TestNonuniformGridNative:
 
     def test_nonuniform_native_fdtd_step(self):
         """Verify native nonuniform FDTD step matches Python implementation."""
-        from strata_fdtd.core.solver import has_native_kernels
         from strata_fdtd.core.grid import NonuniformGrid
+        from strata_fdtd.core.solver import has_native_kernels
 
         if not has_native_kernels():
             pytest.skip("Native kernels not available")
@@ -1170,8 +1170,8 @@ class TestNonuniformGridNative:
 
     def test_nonuniform_native_uses_correct_backend(self):
         """Verify native backend is actually used for nonuniform grids."""
-        from strata_fdtd.core.solver import has_native_kernels
         from strata_fdtd.core.grid import NonuniformGrid
+        from strata_fdtd.core.solver import has_native_kernels
 
         if not has_native_kernels():
             pytest.skip("Native kernels not available")
@@ -1188,8 +1188,8 @@ class TestNonuniformGridNative:
 
     def test_nonuniform_native_energy_conservation(self):
         """Verify energy is conserved with nonuniform grid and native backend."""
-        from strata_fdtd.core.solver import has_native_kernels
         from strata_fdtd.core.grid import NonuniformGrid
+        from strata_fdtd.core.solver import has_native_kernels
 
         if not has_native_kernels():
             pytest.skip("Native kernels not available")
@@ -1223,8 +1223,8 @@ class TestNonuniformGridNative:
     @pytest.mark.parametrize("backend", ["python", "native"])
     def test_nonuniform_divergence_consistency(self, backend):
         """Verify divergence computation matches between backends."""
-        from strata_fdtd.core.solver import has_native_kernels
         from strata_fdtd.core.grid import NonuniformGrid
+        from strata_fdtd.core.solver import has_native_kernels
 
         if backend == "native" and not has_native_kernels():
             pytest.skip("Native kernels not available")

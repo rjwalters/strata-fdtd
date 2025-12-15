@@ -67,10 +67,11 @@ from numpy.typing import NDArray
 from .grid import NonuniformGrid, UniformGrid
 
 if TYPE_CHECKING:
+    from strata_fdtd.analysis.weighting import WeightingType
+
     from .grid import NonuniformGrid, UniformGrid
     from .material_geometry import MaterializedGeometry
     from .sdf import SDFPrimitive
-    from strata_fdtd.analysis.weighting import WeightingType
 
 # =============================================================================
 # Native C++ Extension Support

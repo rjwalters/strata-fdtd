@@ -1,19 +1,19 @@
 """Core FDTD solver components."""
 
+from strata_fdtd.core.grid import NonuniformGrid, UniformGrid
 from strata_fdtd.core.solver import (
+    POLAR_PATTERNS,
     FDTDSolver,
     GaussianPulse,
-    Probe,
     Microphone,
-    POLAR_PATTERNS,
+    Probe,
     has_native_kernels,
 )
 from strata_fdtd.core.solver_gpu import (
-    GPUFDTDSolver,
     BatchedGPUFDTDSolver,
+    GPUFDTDSolver,
     has_gpu_support,
 )
-from strata_fdtd.core.grid import UniformGrid, NonuniformGrid
 
 __all__ = [
     "FDTDSolver",

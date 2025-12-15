@@ -1,38 +1,26 @@
 """Geometric modeling for FDTD simulations."""
 
 # SDF primitives and CSG operations
-from strata_fdtd.geometry.sdf import (
-    # Base SDF class
-    SDFPrimitive,
-    # Primitives
-    Box,
-    Sphere,
-    Cylinder,
-    Cone,
-    Horn,
-    HelicalTube,
-    SpiralHorn,
-    # CSG operations
-    Union,
-    Intersection,
-    Difference,
-    SmoothUnion,
-    SmoothIntersection,
-    SmoothDifference,
-    # Transformations
-    Translate,
-    Rotate,
-    Scale,
+# Loudspeaker enclosures
+from strata_fdtd.geometry.loudspeaker import (
+    LoudspeakerEnclosure,
+    bookshelf_speaker,
+    tower_speaker,
 )
 
-# Metamaterial primitives
-from strata_fdtd.geometry.primitives import (
-    HelmholtzCell,
-    Channel,
-    TaperedChannel,
-    SerpentineChannel,
-    SphereCell,
-    SphereLattice,
+# Material assignment
+from strata_fdtd.geometry.material_assignment import (
+    MaterializedGeometry,
+    MaterialVolume,
+)
+
+# Parametric geometry
+from strata_fdtd.geometry.parametric import (
+    ConstraintSet,
+    GeometryOptimizer,
+    Parameter,
+    ParametricHorn,
+    ParametricPrimitive,
 )
 
 # Path generation
@@ -41,11 +29,14 @@ from strata_fdtd.geometry.paths import (
     SpiralPath,
 )
 
-# Loudspeaker enclosures
-from strata_fdtd.geometry.loudspeaker import (
-    LoudspeakerEnclosure,
-    tower_speaker,
-    bookshelf_speaker,
+# Metamaterial primitives
+from strata_fdtd.geometry.primitives import (
+    Channel,
+    HelmholtzCell,
+    SerpentineChannel,
+    SphereCell,
+    SphereLattice,
+    TaperedChannel,
 )
 
 # Helmholtz resonators
@@ -53,20 +44,28 @@ from strata_fdtd.geometry.resonator import (
     HelmholtzResonator,
     helmholtz_array,
 )
-
-# Parametric geometry
-from strata_fdtd.geometry.parametric import (
-    Parameter,
-    ParametricPrimitive,
-    ParametricHorn,
-    GeometryOptimizer,
-    ConstraintSet,
-)
-
-# Material assignment
-from strata_fdtd.geometry.material_assignment import (
-    MaterializedGeometry,
-    MaterialVolume,
+from strata_fdtd.geometry.sdf import (
+    # Primitives
+    Box,
+    Cone,
+    Cylinder,
+    Difference,
+    HelicalTube,
+    Horn,
+    Intersection,
+    Rotate,
+    Scale,
+    # Base SDF class
+    SDFPrimitive,
+    SmoothDifference,
+    SmoothIntersection,
+    SmoothUnion,
+    Sphere,
+    SpiralHorn,
+    # Transformations
+    Translate,
+    # CSG operations
+    Union,
 )
 
 __all__ = [

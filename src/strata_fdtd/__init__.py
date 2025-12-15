@@ -9,56 +9,51 @@ Main exports:
 - Materials: Acoustic material library
 """
 
+# Re-export common analysis functions
+from strata_fdtd.analysis import (
+    apply_weighting,
+    calculate_leq,
+    calculate_spl,
+)
+from strata_fdtd.boundaries import PML, RadiationImpedance, RigidBoundary
+from strata_fdtd.core.grid import NonuniformGrid, UniformGrid
 from strata_fdtd.core.solver import (
+    POLAR_PATTERNS,
     FDTDSolver,
     GaussianPulse,
-    Probe,
     Microphone,
-    POLAR_PATTERNS,
+    Probe,
     has_native_kernels,
 )
 from strata_fdtd.core.solver_gpu import (
-    GPUFDTDSolver,
     BatchedGPUFDTDSolver,
+    GPUFDTDSolver,
     has_gpu_support,
 )
-from strata_fdtd.core.grid import UniformGrid, NonuniformGrid
-from strata_fdtd.boundaries import PML, RigidBoundary, RadiationImpedance
 
 # Re-export common geometry classes for convenience
 from strata_fdtd.geometry import (
     Box,
-    Sphere,
-    Cylinder,
     Cone,
-    Horn,
-    Union,
-    Intersection,
+    Cylinder,
     Difference,
-    SmoothUnion,
-    SmoothIntersection,
-    SmoothDifference,
-    Translate,
+    HelmholtzResonator,
+    Horn,
+    Intersection,
+    LoudspeakerEnclosure,
     Rotate,
     Scale,
     SDFPrimitive,
-    LoudspeakerEnclosure,
-    HelmholtzResonator,
-)
-
-# Re-export common analysis functions
-from strata_fdtd.analysis import (
-    apply_weighting,
-    calculate_spl,
-    calculate_leq,
+    SmoothDifference,
+    SmoothIntersection,
+    SmoothUnion,
+    Sphere,
+    Translate,
+    Union,
 )
 
 # Submodules for more specific imports
-from . import materials
-from . import geometry
-from . import manufacturing
-from . import io
-from . import analysis
+from . import analysis, geometry, io, manufacturing, materials
 
 __version__ = "0.1.0"
 

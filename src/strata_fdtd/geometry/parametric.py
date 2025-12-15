@@ -40,8 +40,8 @@ import numpy as np
 from numpy.typing import NDArray
 
 if TYPE_CHECKING:
-    from strata_fdtd.grid import UniformGrid
     from strata_fdtd.geometry.sdf import Horn, SDFPrimitive
+    from strata_fdtd.grid import UniformGrid
 
 
 @dataclass
