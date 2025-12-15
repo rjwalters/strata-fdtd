@@ -10,6 +10,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useParams } from "react-router-dom";
 import {
   Layout,
   Panel,
@@ -51,8 +52,10 @@ import {
   Grid3x3,
   EyeOff,
   FileText,
+  Waves,
 } from "lucide-react";
 import { useHDF5Simulation } from "../hooks/useHDF5Simulation";
+import { getDemoBasePath, getDemoConfig } from "../config/demos";
 
 // =============================================================================
 // Types
@@ -92,18 +95,82 @@ const TARGET_VOXEL_PRESETS = [
 // =============================================================================
 
 export default function ViewerPage({ onBack }: ViewerPageProps) {
-  // HDF5 loading state
+  // Get demoId from route params
+  const { demoId } = useParams<{ demoId?: string }>();
+
+  // HDF5 loading state (for file uploads)
   const {
-    isLoaded,
-    isLoading,
-    progress,
-    error,
+    isLoaded: isHDF5Loaded,
+    isLoading: isHDF5Loading,
+    progress: hdf5Progress,
+    error: hdf5Error,
     hdf5Data,
     loadFile,
     loadURL,
     loadTimestep,
-    reset,
+    reset: hdf5Reset,
   } = useHDF5Simulation();
+
+  // Store-based loading (for demos)
+  const storeLoadSimulation = useSimulationStore((s) => s.loadSimulation);
+  const storeIsLoading = useSimulationStore((s) => s.isLoading);
+  const storeLoadingProgress = useSimulationStore((s) => s.loadingProgress);
+  const storeError = useSimulationStore((s) => s.error);
+  const storeReset = useSimulationStore((s) => s.reset);
+  const storeManifest = useSimulationStore((s) => s.manifest);
+
+  // Demo loading state
+  const [demoLoadAttempted, setDemoLoadAttempted] = useState(false);
+  const [demoLoadError, setDemoLoadError] = useState<string | null>(null);
+
+  // Combined loading state
+  const isLoaded = isHDF5Loaded || storeManifest !== null;
+  const isLoading = isHDF5Loading || storeIsLoading;
+  const progress = isHDF5Loading ? hdf5Progress : storeLoadingProgress / 100;
+  const error = hdf5Error || storeError || demoLoadError;
+
+  // Reset function that handles both loading methods
+  const reset = useCallback(() => {
+    hdf5Reset();
+    storeReset();
+    setDemoLoadAttempted(false);
+    setDemoLoadError(null);
+  }, [hdf5Reset, storeReset]);
+
+  // Auto-load demo when demoId is present
+  useEffect(() => {
+    if (!demoId || demoLoadAttempted || isLoaded) {
+      return;
+    }
+
+    const loadDemo = async () => {
+      setDemoLoadAttempted(true);
+      setDemoLoadError(null);
+
+      const basePath = getDemoBasePath(demoId);
+      if (!basePath) {
+        const config = getDemoConfig(demoId);
+        if (!config) {
+          setDemoLoadError(`Unknown demo: ${demoId}`);
+        } else {
+          setDemoLoadError('Demo storage not configured. Please check VITE_R2_BUCKET_URL.');
+        }
+        return;
+      }
+
+      try {
+        await storeLoadSimulation(basePath);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load demo';
+        setDemoLoadError(message);
+      }
+    };
+
+    loadDemo();
+  }, [demoId, demoLoadAttempted, isLoaded, storeLoadSimulation]);
+
+  // Get demo title for header
+  const demoConfig = demoId ? getDemoConfig(demoId) : null;
 
   // Store selectors
   const pressure = useCurrentPressure();
@@ -152,13 +219,19 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   const setDownsampleMethod = useSimulationStore((s) => s.setDownsampleMethod);
   const setShowPerformanceMetrics = useSimulationStore((s) => s.setShowPerformanceMetrics);
   const updatePerformanceMetrics = useSimulationStore((s) => s.updatePerformanceMetrics);
+  const storeLoadSnapshot = useSimulationStore((s) => s.loadSnapshot);
 
   // Load snapshot when frame changes
   useEffect(() => {
     if (isLoaded && totalFrames > 0) {
-      loadTimestep(currentFrame);
+      // Use HDF5 timestep loading for file uploads, store loading for demos
+      if (isHDF5Loaded) {
+        loadTimestep(currentFrame);
+      } else if (storeManifest) {
+        storeLoadSnapshot(currentFrame);
+      }
     }
-  }, [currentFrame, isLoaded, totalFrames, loadTimestep]);
+  }, [currentFrame, isLoaded, totalFrames, loadTimestep, isHDF5Loaded, storeManifest, storeLoadSnapshot]);
 
 
   // Playback animation loop
@@ -291,7 +364,7 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
     [loadURL]
   );
 
-  // If not loaded, show file upload UI
+  // If not loaded, show file upload UI or demo loading state
   if (!isLoaded) {
     return (
       <div className="h-screen w-screen flex flex-col bg-background">
@@ -304,24 +377,82 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
               </Button>
             )}
             <div>
-              <h1 className="text-lg font-bold">Simulation Viewer</h1>
+              <h1 className="text-lg font-bold">
+                {demoConfig ? demoConfig.title : 'Simulation Viewer'}
+              </h1>
               <p className="text-sm text-muted-foreground">
-                Load HDF5 simulation results
+                {demoConfig
+                  ? demoConfig.description
+                  : 'Load HDF5 simulation results'}
               </p>
             </div>
           </div>
         </header>
 
-        {/* File upload area */}
+        {/* File upload area or demo loading state */}
         <main className="flex-1 flex items-center justify-center p-8">
-          <FileUpload
-            onFile={handleLoadFile}
-            onURL={handleLoadURL}
-            isLoading={isLoading}
-            progress={progress}
-            error={error}
-            className="w-full"
-          />
+          {demoId && isLoading ? (
+            // Demo loading state
+            <div className="text-center space-y-4">
+              <div className="animate-pulse">
+                <div className="h-16 w-16 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
+                  <Waves className="h-8 w-8 text-primary animate-pulse" />
+                </div>
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">Loading Demo</h2>
+                <p className="text-sm text-muted-foreground">
+                  {demoConfig?.title || demoId}
+                </p>
+              </div>
+              <div className="w-64 mx-auto">
+                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: `${progress * 100}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {Math.round(progress * 100)}%
+                </p>
+              </div>
+            </div>
+          ) : demoId && error ? (
+            // Demo error state
+            <div className="text-center space-y-4 max-w-md">
+              <div className="h-16 w-16 mx-auto rounded-full bg-destructive/20 flex items-center justify-center">
+                <Info className="h-8 w-8 text-destructive" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">Failed to Load Demo</h2>
+                <p className="text-sm text-muted-foreground mt-1">{error}</p>
+              </div>
+              <div className="flex gap-2 justify-center">
+                {onBack && (
+                  <Button variant="outline" onClick={onBack}>
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Gallery
+                  </Button>
+                )}
+                <Button onClick={() => {
+                  setDemoLoadAttempted(false);
+                  setDemoLoadError(null);
+                }}>
+                  Retry
+                </Button>
+              </div>
+            </div>
+          ) : (
+            // File upload UI (when no demoId or as fallback)
+            <FileUpload
+              onFile={handleLoadFile}
+              onURL={handleLoadURL}
+              isLoading={isLoading}
+              progress={progress}
+              error={error}
+              className="w-full"
+            />
+          )}
         </main>
       </div>
     );
@@ -334,8 +465,12 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-bold text-foreground">Simulation Viewer</h1>
-              <p className="text-sm text-muted-foreground">HDF5 Visualization</p>
+              <h1 className="text-lg font-bold text-foreground">
+                {demoConfig?.title || 'Simulation Viewer'}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {demoConfig ? demoConfig.category : 'HDF5 Visualization'}
+              </p>
             </div>
             {onBack && (
               <Button variant="ghost" size="icon" onClick={onBack}>
