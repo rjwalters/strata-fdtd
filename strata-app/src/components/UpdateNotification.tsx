@@ -26,7 +26,7 @@ export function UpdateNotification() {
     })
 
     return () => {
-      unlisten.then((fn) => fn())
+      unlisten.then((fn) => fn()).catch(() => {})
     }
   }, [])
 
@@ -127,7 +127,7 @@ export function UpdateNotification() {
 
             {updateState === "ready" && (
               <p className="text-xs text-muted-foreground mt-1">
-                The update has been downloaded. Restart to apply.
+                Update installed. The app will restart automatically.
               </p>
             )}
 
