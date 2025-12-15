@@ -117,3 +117,5 @@ markers = [
     "slow: marks tests as slow",
     "gpu: requires GPU support",
 ]
+# Note: OpenMP conflict between PyTorch and native kernels is resolved in
+# tests/conftest.py by setting KMP_DUPLICATE_LIB_OK=TRUE. See issue #10.
