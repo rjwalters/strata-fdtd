@@ -2,7 +2,7 @@
  * Simulation Builder page - Script editor with live 3D preview
  */
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { ArrowLeft, HelpCircle, Eye, EyeOff, Ruler, Layers, Play, Pause, Grid3x3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -89,6 +89,38 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
       }
     }
   }, [viewOptions.isAnimating, viewOptions.sliceAxis, viewOptions.animationSpeed, setSlicePosition])
+
+  // Calculate absolute position in meters for display
+  const slicePositionInMeters = useMemo(() => {
+    if (!ast?.grid || viewOptions.sliceAxis === 'none') return null
+
+    const axisIndex = viewOptions.sliceAxis === 'yz' ? 0
+                    : viewOptions.sliceAxis === 'xz' ? 1
+                    : 2
+
+    return ast.grid.extent[axisIndex] * viewOptions.slicePosition
+  }, [ast, viewOptions.sliceAxis, viewOptions.slicePosition])
+
+  // Calculate absolute positions for dual slice mode
+  const slice1PositionInMeters = useMemo(() => {
+    if (!ast?.grid || viewOptions.sliceAxis === 'none') return null
+
+    const axisIndex = viewOptions.sliceAxis === 'yz' ? 0
+                    : viewOptions.sliceAxis === 'xz' ? 1
+                    : 2
+
+    return ast.grid.extent[axisIndex] * viewOptions.slice1Position
+  }, [ast, viewOptions.sliceAxis, viewOptions.slice1Position])
+
+  const slice2PositionInMeters = useMemo(() => {
+    if (!ast?.grid || viewOptions.sliceAxis === 'none') return null
+
+    const axisIndex = viewOptions.sliceAxis === 'yz' ? 0
+                    : viewOptions.sliceAxis === 'xz' ? 1
+                    : 2
+
+    return ast.grid.extent[axisIndex] * viewOptions.slice2Position
+  }, [ast, viewOptions.sliceAxis, viewOptions.slice2Position])
 
   // Auto-pause animation when user manually adjusts slider
   const handleSliderChange = (value: number[]) => {
@@ -281,8 +313,11 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
                         step={1}
                         className="w-24"
                       />
-                      <span className="text-xs text-blue-400 w-10">
+                      <span className="text-xs text-blue-400 w-28">
                         {Math.round(viewOptions.slice1Position * 100)}%
+                        {slice1PositionInMeters !== null && (
+                          <span className="text-blue-500"> ({slice1PositionInMeters.toFixed(3)} m)</span>
+                        )}
                       </span>
 
                       {/* Slice 2 position */}
@@ -295,8 +330,11 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
                         step={1}
                         className="w-24"
                       />
-                      <span className="text-xs text-pink-400 w-10">
+                      <span className="text-xs text-pink-400 w-28">
                         {Math.round(viewOptions.slice2Position * 100)}%
+                        {slice2PositionInMeters !== null && (
+                          <span className="text-pink-500"> ({slice2PositionInMeters.toFixed(3)} m)</span>
+                        )}
                       </span>
                     </>
                   ) : (
@@ -311,8 +349,11 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
                         step={1}
                         className="w-32"
                       />
-                      <span className="text-xs text-gray-400 w-12">
+                      <span className="text-xs text-gray-400 w-28">
                         {Math.round(viewOptions.slicePosition * 100)}%
+                        {slicePositionInMeters !== null && (
+                          <span className="text-gray-500"> ({slicePositionInMeters.toFixed(3)} m)</span>
+                        )}
                       </span>
 
                       {/* Animation controls */}
