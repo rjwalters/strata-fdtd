@@ -10,6 +10,7 @@ import { MaterialRegion } from './MaterialRegion'
 import { SourceMarker } from './SourceMarker'
 import { ProbeMarker } from './ProbeMarker'
 import { SlicePlane } from './SlicePlane'
+import { SlicePlaneGrid } from './SlicePlaneGrid'
 import { MeasurementLine } from './MeasurementLine'
 import { useBuilderStore, type MeasurementPoint } from '@/stores/builderStore'
 import type { SimulationAST } from '@/lib/scriptParser'
@@ -27,6 +28,7 @@ interface Preview3DProps {
   dualSliceMode: boolean
   slice1Position: number
   slice2Position: number
+  showSliceGrid: boolean
 }
 
 function Scene({
@@ -42,6 +44,7 @@ function Scene({
   dualSliceMode,
   slice1Position,
   slice2Position,
+  showSliceGrid,
 }: Preview3DProps) {
   const addMeasurementPoint = useBuilderStore((s) => s.addMeasurementPoint)
 
@@ -105,15 +108,35 @@ function Scene({
             measurementMode={measurementMode}
             color="#4a90e2"
           />
-          {dualSliceMode && (
-            <SlicePlane
+          {showSliceGrid && (
+            <SlicePlaneGrid
               axis={sliceAxis}
-              position={slice2Position}
+              position={dualSliceMode ? slice1Position : slicePosition}
               extent={grid.extent}
-              onClick={handleSliceClick}
-              measurementMode={measurementMode}
-              color="#e24a90"
+              color="#4a90e2"
+              opacity={0.4}
             />
+          )}
+          {dualSliceMode && (
+            <>
+              <SlicePlane
+                axis={sliceAxis}
+                position={slice2Position}
+                extent={grid.extent}
+                onClick={handleSliceClick}
+                measurementMode={measurementMode}
+                color="#e24a90"
+              />
+              {showSliceGrid && (
+                <SlicePlaneGrid
+                  axis={sliceAxis}
+                  position={slice2Position}
+                  extent={grid.extent}
+                  color="#e24a90"
+                  opacity={0.4}
+                />
+              )}
+            </>
           )}
         </>
       )}

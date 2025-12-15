@@ -18,6 +18,7 @@ interface ViewOptions {
   dualSliceMode: boolean
   slice1Position: number
   slice2Position: number
+  showSliceGrid: boolean
 }
 
 export interface MeasurementPoint {
@@ -114,6 +115,7 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     dualSliceMode: false,
     slice1Position: 0.33,
     slice2Position: 0.67,
+    showSliceGrid: false,
   },
 
   measurementPoints: [],
@@ -157,9 +159,10 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
       viewOptions: {
         ...state.viewOptions,
         sliceAxis: axis,
-        // Disable measurement mode and dual slice mode when disabling slice
+        // Disable measurement mode, dual slice mode, and slice grid when disabling slice
         measurementMode: axis === 'none' ? false : state.viewOptions.measurementMode,
         dualSliceMode: axis === 'none' ? false : state.viewOptions.dualSliceMode,
+        showSliceGrid: axis === 'none' ? false : state.viewOptions.showSliceGrid,
       },
       // Clear measurements when switching slice axis
       measurementPoints: [],
