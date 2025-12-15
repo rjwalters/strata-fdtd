@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useRef } from 'react'
-import { ArrowLeft, HelpCircle, Eye, EyeOff, Ruler, Layers, Play, Pause } from 'lucide-react'
+import { ArrowLeft, HelpCircle, Eye, EyeOff, Ruler, Layers, Play, Pause, Grid3x3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
@@ -258,6 +258,17 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
                     Dual Slice
                   </Button>
 
+                  {/* Slice grid toggle */}
+                  <Button
+                    variant={viewOptions.showSliceGrid ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => toggleViewOption('showSliceGrid')}
+                    className="gap-1.5 text-xs h-7"
+                  >
+                    <Grid3x3 className="h-3 w-3" />
+                    Slice Grid
+                  </Button>
+
                   {viewOptions.dualSliceMode ? (
                     <>
                       {/* Slice 1 position */}
@@ -362,6 +373,7 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
               dualSliceMode={viewOptions.dualSliceMode}
               slice1Position={viewOptions.slice1Position}
               slice2Position={viewOptions.slice2Position}
+              showSliceGrid={viewOptions.showSliceGrid}
             />
           </div>
 
