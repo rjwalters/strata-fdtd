@@ -13,3 +13,10 @@ export {
   type GeometryMode,
   type VoxelGeometry,
 } from "./simulationStore";
+
+export {
+  useBuilderStore,
+  type BuilderState,
+  type MeasurementPoint,
+  type AnimationSpeed,
+} from "./builderStore";
