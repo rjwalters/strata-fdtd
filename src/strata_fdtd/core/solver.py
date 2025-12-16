@@ -1231,18 +1231,89 @@ class FDTDSolver:
             self._boundary_cells = _kernels.precompute_boundary_cells(self.geometry)
 
     def add_source(self, source: GaussianPulse) -> None:
-        """Add an acoustic source to the simulation."""
+        """Add an acoustic source to the simulation.
+
+        The source position can be specified in either:
+        - Physical coordinates (meters): floats like (0.025, 0.05, 0.05)
+        - Grid indices: integers like (25, 50, 50)
+
+        Physical coordinates are automatically converted to grid indices.
+
+        Args:
+            source: GaussianPulse source to add
+        """
+        # Convert physical coordinates (meters) to grid indices if needed
+        if source.source_type == "point":
+            pos = source.position
+            # Check if position looks like physical coordinates (has floats < grid size)
+            # or grid indices (integers or floats that look like indices)
+            if isinstance(pos, tuple) and len(pos) == 3:
+                # If any coordinate is a float and small (likely meters), convert
+                is_physical = any(
+                    isinstance(p, float) and p < max(self.shape)
+                    for p in pos
+                )
+                if is_physical:
+                    # Convert meters to grid indices
+                    grid_pos = (
+                        int(round(pos[0] / self.dx)),
+                        int(round(pos[1] / self.dx)),
+                        int(round(pos[2] / self.dx)),
+                    )
+                    # Validate bounds
+                    for i, (idx, dim) in enumerate(zip(grid_pos, self.shape)):
+                        if not 0 <= idx < dim:
+                            axis = ['x', 'y', 'z'][i]
+                            raise ValueError(
+                                f"Source {axis} position {pos[i]:.4f}m "
+                                f"(index {idx}) is outside grid (0-{dim-1})"
+                            )
+                    source.position = grid_pos
+
         self._sources.append(source)
 
-    def add_probe(self, name: str, position: tuple[int, int, int]) -> None:
+    def add_probe(
+        self,
+        name: str,
+        position: tuple[int, int, int] | tuple[float, float, float],
+    ) -> None:
         """Add a pressure recording probe.
+
+        The position can be specified in either:
+        - Physical coordinates (meters): floats like (0.025, 0.05, 0.05)
+        - Grid indices: integers like (25, 50, 50)
+
+        Physical coordinates are automatically converted to grid indices.
 
         Args:
             name: Unique identifier for this probe
-            position: Grid coordinates (i, j, k)
+            position: Location as grid indices (i, j, k) or physical coords (x, y, z) in meters
         """
         if name in self._probes:
             raise ValueError(f"Probe '{name}' already exists")
+
+        # Convert physical coordinates (meters) to grid indices if needed
+        if isinstance(position, tuple) and len(position) == 3:
+            is_physical = any(
+                isinstance(p, float) and p < max(self.shape)
+                for p in position
+            )
+            if is_physical:
+                grid_pos = (
+                    int(round(position[0] / self.dx)),
+                    int(round(position[1] / self.dx)),
+                    int(round(position[2] / self.dx)),
+                )
+                # Validate bounds
+                for i, (idx, dim) in enumerate(zip(grid_pos, self.shape)):
+                    if not 0 <= idx < dim:
+                        axis = ['x', 'y', 'z'][i]
+                        raise ValueError(
+                            f"Probe {axis} position {position[i]:.4f}m "
+                            f"(index {idx}) is outside grid (0-{dim-1})"
+                        )
+                position = grid_pos
+
         self._probes[name] = Probe(name=name, position=position)
 
     def add_microphone(

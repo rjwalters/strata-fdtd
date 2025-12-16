@@ -19,9 +19,9 @@ fdtd-compute examples/basic_pulse.py
 | Example | Description | Grid Size | Runtime | Features |
 |---------|-------------|-----------|---------|----------|
 | `basic_pulse.py` | Gaussian pulse in free field | 100³ | ~30s | Basic FDTD, source, probe |
-| `multiple_probes.py` | Distance-dependent arrival times | 100³ | ~30s | Multiple probes, analysis |
-| `material_sphere.py` | Scattering from water sphere | 100³ | ~45s | Materials, scattering |
-| `nonuniform_grid.py` | Adaptive resolution demonstration | 100³ | ~40s | Nonuniform grids |
+| `multiple_probes.py` | Distance-dependent arrival times | 100³ | ~30s | Multiple probes, arrival time analysis |
+| `material_sphere.py` | Scattering from water sphere | 100³ | ~45s | Materials, scattering, impedance |
+| `nonuniform_grid.py` | Adaptive resolution demonstration | 80³ | ~40s | Nonuniform grids, memory savings |
 
 ### Loudspeaker Design Examples
 
@@ -35,12 +35,12 @@ fdtd-compute examples/basic_pulse.py
 
 ### Advanced Examples
 
-| Example | Description | Grid Size | Features |
-|---------|-------------|-----------|----------|
-| `pzt_transducer.py` | Piezoelectric transducer array | 150³ | PZT materials, arrays |
-| `organ_pipes.py` | Helmholtz resonator array | 200³ | Resonator arrays, harmonics |
-| `waveguide.py` | Rectangular acoustic waveguide | 64×64×256 | Waveguide modes |
-| `frequency_sweep.py` | Chirp source for bandwidth test | 100³ | Chirp source, FFT analysis |
+| Example | Description | Grid Size | Runtime | Features |
+|---------|-------------|-----------|---------|----------|
+| `pzt_transducer.py` | Phased transducer array | 150×100×100 | ~60s | Beam steering, directivity |
+| `organ_pipes.py` | Quarter-wave resonator array | 120×120×200 | ~90s | Resonators, standing waves |
+| `waveguide.py` | Rectangular acoustic waveguide | 64×64×256 | ~45s | Waveguide modes, cutoff frequencies |
+| `frequency_sweep.py` | Chirp source for bandwidth test | 100³ | ~30s | Chirp source, FFT analysis |
 
 ## Example Categories
 
@@ -58,8 +58,10 @@ Learn how to build 3D structures.
 
 ### 3. Advanced Techniques
 - **nonuniform_grid.py** - Memory-efficient simulations
-- **pzt_transducer.py** - Frequency-dependent materials
-- **organ_pipes.py** - Resonant systems
+- **pzt_transducer.py** - Phased arrays and beam steering
+- **organ_pipes.py** - Resonant systems and standing waves
+- **waveguide.py** - Waveguide modes and cutoff frequencies
+- **frequency_sweep.py** - Broadband frequency analysis
 
 Explore advanced solver features.
 
@@ -96,7 +98,6 @@ solver.add_source(GaussianPulse(
 solver.add_probe("probe1", position=(0.075, 0.05, 0.05))
 
 # 3. Run simulation
-print(f"Estimated memory: {solver.estimate_memory_mb():.1f} MB")
 solver.run(duration=0.001, output_file="results.h5")
 
 print("✓ Simulation complete!")
@@ -137,4 +138,4 @@ To contribute a new example:
 
 ---
 
-**Note**: Some examples listed above are planned but not yet implemented. Check the actual files in this directory for currently available examples.
+**Note**: All basic and advanced examples listed above are implemented and ready to run. Loudspeaker design examples may require additional dependencies.
