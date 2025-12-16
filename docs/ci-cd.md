@@ -5,7 +5,7 @@ This document describes the continuous integration, deployment, and release infr
 ## Overview
 
 The project uses GitHub Actions for CI/CD with workflows for:
-- **Web UI**: Automated deployment to Cloudflare Pages
+- **Web UI**: Manual deployment to Cloudflare Pages (via local scripts)
 - **Python CLI**: Multi-platform testing and coverage reporting
 - **Desktop App**: Build and release automation
 
@@ -30,9 +30,6 @@ Use the provided helper scripts to configure secrets:
 # Validate current configuration
 scripts/validate-secrets.sh
 
-# Configure Cloudflare Pages deployment (required)
-scripts/setup-cloudflare.sh
-
 # Configure Codecov reporting (required)
 scripts/setup-codecov.sh
 
@@ -46,13 +43,6 @@ scripts/setup-tauri-signing.sh
 ### Required Secrets
 
 These secrets are required for CI/CD to function:
-
-#### Web Deployment (Cloudflare Pages)
-
-| Secret | Description | How to Get |
-|--------|-------------|------------|
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API token | https://dash.cloudflare.com/profile/api-tokens (use "Edit Cloudflare Workers" template) |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID | Dashboard sidebar or URL: `dash.cloudflare.com/{account-id}` |
 
 #### Coverage Reporting
 
@@ -104,68 +94,43 @@ Required only for auto-update functionality:
 
 ## Web UI Deployment
 
-The Web UI is deployed automatically to Cloudflare Pages on every push to the main branch.
+The Web UI is deployed manually to Cloudflare Pages using local scripts.
 
-### Setup
+### First-Time Setup
 
-1. **Configure GitHub Secrets**
-
-   Use the helper script (recommended):
+1. **Login to Cloudflare**
    ```bash
-   scripts/setup-cloudflare.sh
+   cd strata-web
+   pnpm exec wrangler login
    ```
 
-   Or manually configure secrets:
+2. **Create the Pages Project** (first time only)
    ```bash
-   gh secret set CLOUDFLARE_API_TOKEN
-   gh secret set CLOUDFLARE_ACCOUNT_ID
+   pnpm exec wrangler pages project create strata-web --production-branch=main
    ```
 
-   The script will also offer to create the Cloudflare Pages project via wrangler.
+### Deploying
 
-2. **Trigger First Deployment**
-
-   Push a commit to trigger the workflow. The workflow automatically creates the
-   Cloudflare Pages project if it doesn't exist:
-   ```bash
-   git commit --allow-empty -m "Trigger web deployment"
-   git push
-   ```
-
-3. **Verify Deployment**
-   - Check Actions tab for deployment status
-   - Visit https://strata-web.pages.dev to verify
-
-**Alternative: Manual Project Creation**
-
-If you prefer to create the project manually:
-
+From the repository root:
 ```bash
-# Via Wrangler CLI
-npm i -g wrangler
-wrangler login
-wrangler pages project create strata-web --production-branch=main
-
-# Or via Cloudflare Dashboard
-# Go to: https://dash.cloudflare.com > Workers & Pages > Create > Pages
+pnpm install
+pnpm --filter @strata/ui build
+pnpm --filter strata-web build
+pnpm --filter strata-web pages:deploy
 ```
 
-### Preview Deployments
-
-Pull requests automatically get preview deployments:
-- Each PR gets a unique preview URL based on branch name
-- Preview URL is commented on the PR
-- Updates automatically on new commits
-- Format: `https://{branch}.strata-web.pages.dev`
-
-### Manual Deployment
-
-Deploy manually if needed:
+Or from the strata-web directory:
 ```bash
 cd strata-web
 pnpm build
-wrangler pages deploy dist --project-name strata-web
+pnpm pages:deploy
 ```
+
+The deploy script runs: `wrangler pages deploy dist --project-name strata-web`
+
+### Production URL
+
+After deployment: https://strata-web.pages.dev
 
 ### Build Configuration
 
@@ -175,8 +140,6 @@ The project uses these Cloudflare Pages settings (configured in `wrangler.toml`)
 |---------|-------|
 | Project name | `strata-web` |
 | Output directory | `dist` |
-| Node.js version | 20 |
-| Build command | `pnpm --filter strata-web build` |
 
 ### Headers and Redirects
 
@@ -323,20 +286,6 @@ For Tauri auto-update functionality:
 
 ## Workflows
 
-### Web UI Deploy (`.github/workflows/web-deploy.yml`)
-
-Triggers: Push to `main` (with path filters), pull requests, manual dispatch
-
-Path filters: `strata-web/**`, `strata-ui/**`, `shared/**`
-
-Steps:
-1. Install dependencies
-2. Run type checking
-3. Build strata-ui (shared components)
-4. Build strata-web
-5. Deploy to Cloudflare Pages
-6. Comment preview URL on PRs
-
 ### CLI CI (`.github/workflows/cli-ci.yml`)
 
 Triggers: Push to `main`, pull requests
@@ -393,11 +342,10 @@ scripts/validate-secrets.sh
 
 ### Common Issues
 
-**Deployment Fails**
-- Check Cloudflare API token is valid and has Pages edit permissions
-- Verify project exists in Cloudflare dashboard
-- Check build logs in GitHub Actions
-- Verify `CLOUDFLARE_ACCOUNT_ID` is correct
+**Web Deployment Fails**
+- Run `wrangler login` to re-authenticate
+- Verify the Pages project exists: `wrangler pages project list`
+- Check build output in `strata-web/dist` exists
 
 **Coverage Upload Fails**
 - Verify Codecov token is set
