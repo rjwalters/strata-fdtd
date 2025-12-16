@@ -9,6 +9,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 export interface SnapshotInfo {
   time: number
@@ -34,6 +40,8 @@ export interface PlaybackControlsProps {
   snapshots?: SnapshotInfo[]
   /** Callback for frame preloading */
   onPreloadFrames?: (frames: number[]) => void
+  /** Show rich tooltips on buttons (default: true) */
+  showTooltips?: boolean
 }
 
 const SPEED_OPTIONS = [
@@ -54,6 +62,7 @@ export function PlaybackControls({
   disabled = false,
   snapshots,
   onPreloadFrames,
+  showTooltips = true,
 }: PlaybackControlsProps = {}) {
   // Use internal state if no external control
   const [internalFrame, setInternalFrame] = useState(0)
@@ -210,7 +219,18 @@ export function PlaybackControls({
   // Memoize slider value to prevent new array creation on each render
   const sliderValue = useMemo(() => [currentFrame], [currentFrame])
 
-  return (
+  // Helper to wrap button with tooltip
+  const withTooltip = (button: React.ReactNode, tooltip: string) => {
+    if (!showTooltips) return button
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent>{tooltip}</TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  const content = (
     <div
       ref={containerRef}
       className="flex items-center gap-3"
@@ -218,55 +238,65 @@ export function PlaybackControls({
     >
       {/* Transport controls */}
       <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCurrentFrame(0)}
-          title="Jump to start (Home)"
-          disabled={disabled}
-        >
-          <SkipBack className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCurrentFrame(currentFrame - 1)}
-          title="Previous frame (Left Arrow)"
-          disabled={disabled}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="default"
-          size="icon"
-          onClick={() => setIsPlaying(!isPlaying)}
-          title={isPlaying ? "Pause (Space)" : "Play (Space)"}
-          disabled={disabled}
-        >
-          {isPlaying ? (
-            <Pause className="h-4 w-4" />
-          ) : (
-            <Play className="h-4 w-4" />
-          )}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCurrentFrame(currentFrame + 1)}
-          title="Next frame (Right Arrow)"
-          disabled={disabled}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCurrentFrame(totalFrames - 1)}
-          title="Jump to end (End)"
-          disabled={disabled}
-        >
-          <SkipForward className="h-4 w-4" />
-        </Button>
+        {withTooltip(
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCurrentFrame(0)}
+            disabled={disabled}
+          >
+            <SkipBack className="h-4 w-4" />
+          </Button>,
+          "Jump to start (Home)"
+        )}
+        {withTooltip(
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCurrentFrame(currentFrame - 1)}
+            disabled={disabled}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>,
+          "Previous frame (←)"
+        )}
+        {withTooltip(
+          <Button
+            variant="default"
+            size="icon"
+            onClick={() => setIsPlaying(!isPlaying)}
+            disabled={disabled}
+          >
+            {isPlaying ? (
+              <Pause className="h-4 w-4" />
+            ) : (
+              <Play className="h-4 w-4" />
+            )}
+          </Button>,
+          isPlaying ? "Pause (Space)" : "Play (Space)"
+        )}
+        {withTooltip(
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCurrentFrame(currentFrame + 1)}
+            disabled={disabled}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>,
+          "Next frame (→)"
+        )}
+        {withTooltip(
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCurrentFrame(totalFrames - 1)}
+            disabled={disabled}
+          >
+            <SkipForward className="h-4 w-4" />
+          </Button>,
+          "Jump to end (End)"
+        )}
       </div>
 
       {/* Scrubber slider */}
@@ -293,33 +323,68 @@ export function PlaybackControls({
       )}
 
       {/* Loop toggle */}
-      <Button
-        variant={loop ? "secondary" : "ghost"}
-        size="icon"
-        onClick={() => setLoop(!loop)}
-        title={loop ? "Loop enabled" : "Loop disabled"}
-        disabled={disabled}
-      >
-        <Repeat className="h-4 w-4" />
-      </Button>
+      {withTooltip(
+        <Button
+          variant={loop ? "secondary" : "ghost"}
+          size="icon"
+          onClick={() => setLoop(!loop)}
+          disabled={disabled}
+        >
+          <Repeat className="h-4 w-4" />
+        </Button>,
+        loop ? "Loop enabled (click to disable)" : "Loop disabled (click to enable)"
+      )}
 
       {/* Speed selector */}
-      <Select
-        value={speed.toString()}
-        onValueChange={(value) => setSpeed(parseFloat(value))}
-        disabled={disabled}
-      >
-        <SelectTrigger className="w-20">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {SPEED_OPTIONS.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {showTooltips ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <Select
+                value={speed.toString()}
+                onValueChange={(value) => setSpeed(parseFloat(value))}
+                disabled={disabled}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SPEED_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>Playback speed (+/-)</TooltipContent>
+        </Tooltip>
+      ) : (
+        <Select
+          value={speed.toString()}
+          onValueChange={(value) => setSpeed(parseFloat(value))}
+          disabled={disabled}
+        >
+          <SelectTrigger className="w-20">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SPEED_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
     </div>
   )
+
+  // Wrap in TooltipProvider if tooltips are enabled
+  if (showTooltips) {
+    return <TooltipProvider delayDuration={300}>{content}</TooltipProvider>
+  }
+
+  return content
 }
