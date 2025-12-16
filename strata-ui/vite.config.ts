@@ -33,12 +33,23 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      // Externalize peer dependencies
+      // Externalize peer dependencies and heavy libs for better chunking in consuming apps
       external: [
         'react',
         'react-dom',
         'react/jsx-runtime',
         'react-router-dom',
+        // Heavy deps - let consuming apps chunk these
+        'three',
+        '@react-three/fiber',
+        '@react-three/drei',
+        'd3',
+        'skulpt',
+        'gif.js',
+        'jszip',
+        'h5wasm',
+        'zustand',
+        'lucide-react',
       ],
       output: {
         globals: {
