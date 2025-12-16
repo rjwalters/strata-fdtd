@@ -108,48 +108,47 @@ The Web UI is deployed automatically to Cloudflare Pages on every push to the ma
 
 ### Setup
 
-1. **Create Cloudflare Pages Project**
+1. **Configure GitHub Secrets**
 
-   **Option A: Via Cloudflare Dashboard (Recommended)**
-   1. Go to https://dash.cloudflare.com
-   2. Navigate to "Workers & Pages"
-   3. Click "Create application" > "Pages" > "Connect to Git"
-   4. Authorize Cloudflare Pages GitHub app
-   5. Select `rjwalters/strata-fdtd` repository
-   6. Configure build settings:
-      - **Production branch**: `main`
-      - **Build command**: `pnpm --filter strata-web build`
-      - **Build output directory**: `strata-web/dist`
-      - **Root directory**: `/` (repository root)
-
-   **Option B: Via Wrangler CLI**
+   Use the helper script (recommended):
    ```bash
-   # Install Wrangler CLI
-   npm i -g wrangler
-
-   # Login to Cloudflare
-   wrangler login
-
-   # Build and deploy
-   cd strata-web
-   pnpm build
-   wrangler pages deploy dist --project-name strata-web
+   scripts/setup-cloudflare.sh
    ```
 
-2. **Configure GitHub Secrets**
+   Or manually configure secrets:
    ```bash
-   # Use helper script
-   scripts/setup-cloudflare.sh
-
-   # Or manually:
    gh secret set CLOUDFLARE_API_TOKEN
    gh secret set CLOUDFLARE_ACCOUNT_ID
    ```
 
+   The script will also offer to create the Cloudflare Pages project via wrangler.
+
+2. **Trigger First Deployment**
+
+   Push a commit to trigger the workflow. The workflow automatically creates the
+   Cloudflare Pages project if it doesn't exist:
+   ```bash
+   git commit --allow-empty -m "Trigger web deployment"
+   git push
+   ```
+
 3. **Verify Deployment**
-   - Push a commit to trigger workflow
    - Check Actions tab for deployment status
    - Visit https://strata-web.pages.dev to verify
+
+**Alternative: Manual Project Creation**
+
+If you prefer to create the project manually:
+
+```bash
+# Via Wrangler CLI
+npm i -g wrangler
+wrangler login
+wrangler pages project create strata-web --production-branch=main
+
+# Or via Cloudflare Dashboard
+# Go to: https://dash.cloudflare.com > Workers & Pages > Create > Pages
+```
 
 ### Preview Deployments
 
