@@ -117,6 +117,19 @@ export interface HDF5LoadOptions {
   maxFileSize?: number;
 }
 
+/**
+ * Result from loading HDF5 from URL, including both parsed data and raw buffer.
+ * The buffer can be reused for timestep loading without re-fetching.
+ */
+export interface HDF5URLLoadResult {
+  /** Parsed simulation data */
+  data: HDF5SimulationData;
+  /** Raw file buffer for subsequent timestep loading */
+  buffer: Uint8Array;
+  /** Filename extracted from URL */
+  filename: string;
+}
+
 // =============================================================================
 // Module State
 // =============================================================================
@@ -169,14 +182,17 @@ export async function loadHDF5File(
 /**
  * Load simulation data from a URL.
  *
+ * Returns both the parsed data and the raw buffer to avoid needing to
+ * re-fetch the file for subsequent timestep loading.
+ *
  * @param url - URL to HDF5 file
  * @param options - Loading options
- * @returns Parsed simulation data
+ * @returns Parsed simulation data, raw buffer, and filename
  */
 export async function loadHDF5FromURL(
   url: string,
   options: HDF5LoadOptions = {}
-): Promise<HDF5SimulationData> {
+): Promise<HDF5URLLoadResult> {
   const response = await fetch(url, { signal: options.signal });
 
   if (!response.ok) {
@@ -193,11 +209,14 @@ export async function loadHDF5FromURL(
     );
   }
 
+  const filename = url.split("/").pop() || "simulation.h5";
+
   if (!response.body) {
     // Fallback for browsers without ReadableStream support
-    const buffer = await response.arrayBuffer();
-    const filename = url.split("/").pop() || "simulation.h5";
-    return parseHDF5Buffer(new Uint8Array(buffer), filename);
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
+    const data = await parseHDF5Buffer(buffer, filename);
+    return { data, buffer, filename };
   }
 
   // Stream with progress
@@ -225,8 +244,8 @@ export async function loadHDF5FromURL(
     offset += chunk.length;
   }
 
-  const filename = url.split("/").pop() || "simulation.h5";
-  return parseHDF5Buffer(buffer, filename);
+  const data = await parseHDF5Buffer(buffer, filename);
+  return { data, buffer, filename };
 }
 
 /**

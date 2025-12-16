@@ -155,22 +155,19 @@ export function useHDF5Simulation(): UseHDF5SimulationResult {
       setError(null);
 
       try {
-        const data = await loadHDF5FromURL(url, {
+        // loadHDF5FromURL now returns both data and buffer, avoiding double fetch
+        const { data, buffer, filename } = await loadHDF5FromURL(url, {
           onProgress: handleProgress,
         });
 
-        // For URL loading, we need to fetch the file again for timestep access
-        const response = await fetch(url);
-        const buffer = await response.arrayBuffer();
-        fileBufferRef.current = new Uint8Array(buffer);
-        const filename = url.split("/").pop() || "simulation.h5";
+        fileBufferRef.current = buffer;
         filenameRef.current = filename;
 
         // Write to virtual FS and keep file open
         await ensureH5wasmReady();
         if (h5wasmFS) {
           const virtualPath = `/${filename}`;
-          h5wasmFS.writeFile(virtualPath, fileBufferRef.current);
+          h5wasmFS.writeFile(virtualPath, buffer);
           h5fileRef.current = new h5wasm.File(virtualPath, "r");
         }
 
