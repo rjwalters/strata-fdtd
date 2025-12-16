@@ -7,12 +7,26 @@
  * - URL input for remote files
  * - Loading progress indicator
  * - Error display
+ * - Quick-load sample files
  */
 
 import { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, Link2, Loader2, FileWarning, HardDrive } from "lucide-react";
+import { Upload, Link2, Loader2, FileWarning, HardDrive, Beaker } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+/**
+ * Available sample files for quick loading.
+ */
+const SAMPLE_FILES = [
+  {
+    id: "simple-pulse",
+    name: "Simple Pulse",
+    description: "Gaussian pulse propagation in air",
+    url: "/samples/simple-pulse.h5",
+    size: "~0.7 MB",
+  },
+] as const;
 
 export interface FileUploadProps {
   /** Called when a file is selected or URL is submitted */
@@ -187,14 +201,16 @@ export function FileUpload({
 
             {/* URL input toggle */}
             {!showUrlInput ? (
-              <Button
-                variant="outline"
-                onClick={() => setShowUrlInput(true)}
-                className="gap-2"
-              >
-                <Link2 className="h-4 w-4" />
-                Load from URL
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowUrlInput(true)}
+                  className="gap-2"
+                >
+                  <Link2 className="h-4 w-4" />
+                  Load from URL
+                </Button>
+              </div>
             ) : (
               <form
                 onSubmit={handleURLSubmit}
@@ -222,6 +238,35 @@ export function FileUpload({
                   Cancel
                 </Button>
               </form>
+            )}
+
+            {/* Sample files section */}
+            {SAMPLE_FILES.length > 0 && (
+              <>
+                <div className="flex items-center gap-4 w-full max-w-xs">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-xs text-muted-foreground">OR TRY A SAMPLE</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {SAMPLE_FILES.map((sample) => (
+                    <Button
+                      key={sample.id}
+                      variant="secondary"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => onURL(sample.url)}
+                    >
+                      <Beaker className="h-3 w-3" />
+                      {sample.name}
+                      <span className="text-xs text-muted-foreground">
+                        ({sample.size})
+                      </span>
+                    </Button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
