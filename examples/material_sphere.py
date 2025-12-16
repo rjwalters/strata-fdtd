@@ -63,8 +63,8 @@ sphere_mask = sdf_values < 0  # True inside the sphere
 # Using SimpleMaterial for a constant-property material
 water = SimpleMaterial(
     name="water",
-    density=1000.0,  # kg/m³
-    speed_of_sound=1480.0,  # m/s
+    _rho=1000.0,  # kg/m³
+    _c=1480.0,  # m/s (speed of sound)
 )
 
 mat_id = solver.register_material(water)
@@ -121,14 +121,14 @@ print(f"  Background (air):")
 print(f"    Speed of sound: {solver.c:.0f} m/s")
 print(f"    Density: {solver.rho:.1f} kg/m³")
 print(f"  Sphere (water):")
-print(f"    Speed of sound: {water.speed_of_sound:.0f} m/s")
-print(f"    Density: {water.density:.0f} kg/m³")
+print(f"    Speed of sound: {water.c_inf:.0f} m/s")
+print(f"    Density: {water.rho_inf:.0f} kg/m³")
 print(f"    Diameter: {sphere_radius*2*1e3:.0f} mm")
 print(f"    Center: ({sphere_center[0]*1e3:.0f}, {sphere_center[1]*1e3:.0f}, {sphere_center[2]*1e3:.0f}) mm")
 print()
 print("Acoustic impedance:")
 Z_air = solver.rho * solver.c
-Z_water = water.density * water.speed_of_sound
+Z_water = water.rho_inf * water.c_inf
 R = (Z_water - Z_air) / (Z_water + Z_air)
 T = 2 * Z_air / (Z_water + Z_air)
 print(f"  Z_air = {Z_air:.1f} Pa·s/m")
