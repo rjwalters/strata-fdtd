@@ -24,6 +24,7 @@ import {
   Button,
   Badge,
   Slider,
+  ViewerHelpModal,
   useSimulationStore,
   useCurrentPressure,
   usePlaybackState,
@@ -799,9 +800,7 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
               <Button variant="ghost" size="icon" title="Settings">
                 <Settings className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" title="Info">
-                <Info className="h-4 w-4" />
-              </Button>
+              <ViewerHelpModal />
             </div>
           </div>
         </div>

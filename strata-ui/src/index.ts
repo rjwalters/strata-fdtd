@@ -19,6 +19,24 @@ export {
   SelectTrigger,
   SelectValue,
 } from './components/ui/select'
+export {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './components/ui/tooltip'
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogTrigger,
+} from './components/ui/dialog'
 
 // =============================================================================
 // Visualization Components
@@ -34,6 +52,8 @@ export { OptimizedVoxelRenderer } from './components/visualization/OptimizedVoxe
 export type { VoxelRendererHandle, OptimizedVoxelRendererProps } from './components/visualization/OptimizedVoxelRenderer'
 export { PerformanceMetrics } from './components/visualization/PerformanceMetrics'
 export { PlaybackControls } from './components/visualization/PlaybackControls'
+export { ViewerHelpModal } from './components/visualization/ViewerHelpModal'
+export { BuilderHelpModal } from './components/visualization/BuilderHelpModal'
 export { Spectrogram } from './components/visualization/Spectrogram'
 export { SpectrumPlot } from './components/visualization/SpectrumPlot'
 export { ThreeViewer } from './components/visualization/ThreeViewer'

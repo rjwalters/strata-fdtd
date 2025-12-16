@@ -3,8 +3,8 @@
  */
 
 import { useEffect, useMemo, useRef } from 'react'
-import { ArrowLeft, HelpCircle, Eye, EyeOff, Ruler, Layers, Play, Pause, Grid3x3 } from 'lucide-react'
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Slider } from '@strata/ui'
+import { ArrowLeft, Eye, EyeOff, Ruler, Layers, Play, Pause, Grid3x3 } from 'lucide-react'
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Slider, BuilderHelpModal } from '@strata/ui'
 import { ScriptEditor, type ScriptEditorHandle } from '../components/ScriptEditor'
 import { Preview3D } from '../components/builder/Preview3D'
 import { TemplateBar } from '../components/builder/TemplateBar'
@@ -174,13 +174,7 @@ export function SimulationBuilder({ onBack }: SimulationBuilderProps) {
           Reset to Default
         </Button>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          title="Help"
-        >
-          <HelpCircle className="h-4 w-4" />
-        </Button>
+        <BuilderHelpModal />
       </header>
 
       {/* Main content - Split pane */}
