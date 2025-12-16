@@ -452,6 +452,28 @@ export function ExamplesGallery() {
           </div>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border mt-12">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+            <div>
+              <a
+                href="https://github.com/rjwalters/strata-fdtd"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground transition-colors"
+              >
+                Strata FDTD
+              </a>
+              {' '}— Open source acoustic simulation
+            </div>
+            <div className="font-mono text-xs">
+              Build {__GIT_HASH__}
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
