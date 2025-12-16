@@ -54,7 +54,9 @@ z = np.arange(100) * 1e-3 + 0.5e-3
 X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
 
 # SDF: negative inside, positive outside
-sdf_values = sphere.sdf(X, Y, Z)
+# Stack grid points into (N, 3) array for SDF evaluation
+points = np.column_stack([X.ravel(), Y.ravel(), Z.ravel()])
+sdf_values = sphere.sdf(points).reshape(X.shape)
 sphere_mask = sdf_values < 0  # True inside the sphere
 
 # Register water as a material and assign to the sphere region

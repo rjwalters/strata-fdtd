@@ -61,6 +61,11 @@ class ChirpSource:
         self.amplitude = amplitude
         self.source_type = "point"  # For solver compatibility
 
+    @property
+    def frequency(self) -> float:
+        """Center frequency of the chirp (for HDF5 metadata compatibility)."""
+        return (self.start_freq + self.end_freq) / 2
+
     def waveform(self, t: np.ndarray, dt: float) -> np.ndarray:
         """Generate chirp waveform at given times.
 
