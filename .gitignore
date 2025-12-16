@@ -25,6 +25,11 @@ env/
 ENV/
 .venv/
 
+# Environment files
+.env
+.env.local
+.env.*.local
+
 # Node.js / pnpm monorepo
 node_modules/
 dist/
@@ -55,6 +60,7 @@ CMakeFiles/
 .loom/worktrees/
 .loom/*.log
 .loom/*.sock
+*/.loom/
 
 # Tauri
 strata-app/src-tauri/target/
