@@ -5,7 +5,7 @@ This document describes the continuous integration, deployment, and release infr
 ## Overview
 
 The project uses GitHub Actions for CI/CD with workflows for:
-- **Web UI**: Automated deployment to Vercel
+- **Web UI**: Manual deployment to Cloudflare Pages (via local scripts)
 - **Python CLI**: Multi-platform testing and coverage reporting
 - **Desktop App**: Build and release automation
 
@@ -30,9 +30,6 @@ Use the provided helper scripts to configure secrets:
 # Validate current configuration
 scripts/validate-secrets.sh
 
-# Configure Vercel deployment (required)
-scripts/setup-vercel.sh
-
 # Configure Codecov reporting (required)
 scripts/setup-codecov.sh
 
@@ -46,14 +43,6 @@ scripts/setup-tauri-signing.sh
 ### Required Secrets
 
 These secrets are required for CI/CD to function:
-
-#### Web Deployment
-
-| Secret | Description | How to Get |
-|--------|-------------|------------|
-| `VERCEL_TOKEN` | Vercel authentication token | https://vercel.com/account/tokens |
-| `VERCEL_ORG_ID` | Vercel organization ID | Run `vercel link` in `web-ui/` |
-| `VERCEL_PROJECT_ID` | Vercel project ID | Run `vercel link` in `web-ui/` |
 
 #### Coverage Reporting
 
@@ -70,7 +59,7 @@ These secrets enable additional features but are not required:
 | Secret | Description | Example |
 |--------|-------------|---------|
 | `VITE_API_URL` | Production API endpoint | `https://api.example.com` |
-| `DEPLOYED_URL` | Production URL for smoke tests | `https://fdtd-simulator.vercel.app` |
+| `DEPLOYED_URL` | Production URL for smoke tests | `https://strata-web.pages.dev` |
 
 #### macOS Code Signing (Optional)
 
@@ -105,51 +94,59 @@ Required only for auto-update functionality:
 
 ## Web UI Deployment
 
-The Web UI is deployed automatically to Vercel on every push to the main branch.
+The Web UI is deployed manually to Cloudflare Pages using local scripts.
 
-### Setup
+### First-Time Setup
 
-1. **Create Vercel Project**
+1. **Login to Cloudflare**
    ```bash
-   # Install Vercel CLI
-   npm i -g vercel
-
-   # Link project
-   cd web-ui
-   vercel link
+   cd strata-web
+   pnpm exec wrangler login
    ```
 
-2. **Configure Secrets**
+2. **Create the Pages Project** (first time only)
    ```bash
-   # Use helper script
-   scripts/setup-vercel.sh
-
-   # Or manually:
-   gh secret set VERCEL_TOKEN
-   gh secret set VERCEL_ORG_ID
-   gh secret set VERCEL_PROJECT_ID
+   pnpm exec wrangler pages project create strata-web --production-branch=main
    ```
 
-3. **Verify Deployment**
-   - Push a commit to trigger workflow
-   - Check Actions tab for deployment status
-   - Visit deployed URL to verify
+### Deploying
 
-### Preview Deployments
-
-Pull requests automatically get preview deployments:
-- Each PR gets a unique preview URL
-- Preview URL is commented on the PR
-- Updates automatically on new commits
-
-### Manual Deployment
-
-Deploy manually if needed:
+From the repository root:
 ```bash
-cd web-ui
-vercel --prod  # Production deployment
-vercel         # Preview deployment
+pnpm install
+pnpm --filter @strata/ui build
+pnpm --filter strata-web build
+pnpm --filter strata-web pages:deploy
 ```
+
+Or from the strata-web directory:
+```bash
+cd strata-web
+pnpm build
+pnpm pages:deploy
+```
+
+The deploy script runs: `wrangler pages deploy dist --project-name strata-web`
+
+### Production URL
+
+After deployment: https://strata-web.pages.dev
+
+### Build Configuration
+
+The project uses these Cloudflare Pages settings (configured in `wrangler.toml`):
+
+| Setting | Value |
+|---------|-------|
+| Project name | `strata-web` |
+| Output directory | `dist` |
+
+### Headers and Redirects
+
+Static configuration files in `strata-web/public/`:
+
+- **`_headers`**: Sets Cross-Origin headers for SharedArrayBuffer support (required for WASM)
+- **`_redirects`**: SPA routing fallback to `index.html`
 
 ## Coverage Reporting
 
@@ -289,18 +286,6 @@ For Tauri auto-update functionality:
 
 ## Workflows
 
-### Web UI CI (`.github/workflows/web-ui-ci.yml`)
-
-Triggers: Push to `main`, pull requests
-
-Steps:
-1. Install dependencies
-2. Build web UI
-3. Run type checking
-4. Run tests
-5. Deploy to Vercel (main branch only)
-6. Smoke test deployment
-
 ### CLI CI (`.github/workflows/cli-ci.yml`)
 
 Triggers: Push to `main`, pull requests
@@ -357,10 +342,10 @@ scripts/validate-secrets.sh
 
 ### Common Issues
 
-**Deployment Fails**
-- Check Vercel token is valid
-- Verify project is linked correctly
-- Check build logs for errors
+**Web Deployment Fails**
+- Run `wrangler login` to re-authenticate
+- Verify the Pages project exists: `wrangler pages project list`
+- Check build output in `strata-web/dist` exists
 
 **Coverage Upload Fails**
 - Verify Codecov token is set
@@ -439,7 +424,8 @@ gh secret delete SECRET_NAME
 ## References
 
 - **GitHub Actions Documentation**: https://docs.github.com/en/actions
-- **Vercel Documentation**: https://vercel.com/docs
+- **Cloudflare Pages Documentation**: https://developers.cloudflare.com/pages/
+- **Wrangler CLI Documentation**: https://developers.cloudflare.com/workers/wrangler/
 - **Codecov Documentation**: https://docs.codecov.com
 - **Tauri Documentation**: https://tauri.app/v1/guides/distribution/updater
 - **Apple Developer Documentation**: https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution
