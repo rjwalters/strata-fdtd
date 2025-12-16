@@ -81,6 +81,7 @@ export {
 // HDF5 loader
 export {
   loadHDF5File,
+  loadHDF5FromBuffer,
   loadHDF5FromURL,
   loadTimestep,
   toSimulationMetadata,

@@ -53,6 +53,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useHDF5Simulation } from "../hooks/useHDF5Simulation";
+import { useTauri } from "../hooks/useTauri";
 
 // =============================================================================
 // Types
@@ -61,6 +62,10 @@ import { useHDF5Simulation } from "../hooks/useHDF5Simulation";
 interface ViewerPageProps {
   /** Callback to navigate back to home */
   onBack?: () => void;
+  /** Initial file path to load automatically (Tauri only) */
+  initialFilePath?: string | null;
+  /** Callback when initial file path has been consumed */
+  onInitialFileConsumed?: () => void;
 }
 
 // =============================================================================
@@ -91,7 +96,10 @@ const TARGET_VOXEL_PRESETS = [
 // Main Component
 // =============================================================================
 
-export default function ViewerPage({ onBack }: ViewerPageProps) {
+export default function ViewerPage({ onBack, initialFilePath, onInitialFileConsumed }: ViewerPageProps) {
+  // Tauri integration
+  const { isTauri, openFileDialog } = useTauri();
+
   // HDF5 loading state
   const {
     isLoaded,
@@ -101,6 +109,7 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
     hdf5Data,
     loadFile,
     loadURL,
+    loadPath,
     loadTimestep,
     reset,
   } = useHDF5Simulation();
@@ -152,6 +161,17 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   const setDownsampleMethod = useSimulationStore((s) => s.setDownsampleMethod);
   const setShowPerformanceMetrics = useSimulationStore((s) => s.setShowPerformanceMetrics);
   const updatePerformanceMetrics = useSimulationStore((s) => s.updatePerformanceMetrics);
+
+  // Auto-load initial file path if provided (from Tauri events)
+  useEffect(() => {
+    if (initialFilePath && !isLoaded && !isLoading) {
+      loadPath(initialFilePath).then(() => {
+        onInitialFileConsumed?.();
+      }).catch(() => {
+        onInitialFileConsumed?.();
+      });
+    }
+  }, [initialFilePath, isLoaded, isLoading, loadPath, onInitialFileConsumed]);
 
   // Load snapshot when frame changes
   useEffect(() => {
@@ -268,7 +288,7 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
     };
   }, [threshold, displayFill, voxelGeometry, geometryMode, showGrid, showAxes, currentFrame, totalFrames, shape, resolution]);
 
-  // Handle file/URL loading with error handling
+  // Handle file/URL/path loading with error handling
   const handleLoadFile = useCallback(
     async (file: File) => {
       try {
@@ -289,6 +309,17 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
       }
     },
     [loadURL]
+  );
+
+  const handleLoadPath = useCallback(
+    async (path: string) => {
+      try {
+        await loadPath(path);
+      } catch {
+        // Error is already set in the hook
+      }
+    },
+    [loadPath]
   );
 
   // If not loaded, show file upload UI
@@ -317,6 +348,9 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
           <FileUpload
             onFile={handleLoadFile}
             onURL={handleLoadURL}
+            onPath={handleLoadPath}
+            isTauri={isTauri}
+            openNativeDialog={openFileDialog}
             isLoading={isLoading}
             progress={progress}
             error={error}

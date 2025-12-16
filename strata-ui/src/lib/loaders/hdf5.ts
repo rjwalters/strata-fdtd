@@ -180,6 +180,22 @@ export async function loadHDF5File(
 }
 
 /**
+ * Load simulation data from a raw buffer.
+ *
+ * Used when file data is already in memory (e.g., from Tauri's fs.readBinaryFile).
+ *
+ * @param buffer - File content as Uint8Array
+ * @param filename - Name for the virtual file
+ * @returns Parsed simulation data
+ */
+export async function loadHDF5FromBuffer(
+  buffer: Uint8Array,
+  filename: string = "simulation.h5"
+): Promise<HDF5SimulationData> {
+  return parseHDF5Buffer(buffer, filename);
+}
+
+/**
  * Load simulation data from a URL.
  *
  * Returns both the parsed data and the raw buffer to avoid needing to
