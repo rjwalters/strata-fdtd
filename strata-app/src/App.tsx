@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from "react"
 import * as THREE from "three"
 import { UpdateNotification } from "./components/UpdateNotification"
+import { useTauriFileOpen, useTauriNavigate } from "./hooks/useTauri"
 import {
   Layout,
   Panel,
@@ -87,6 +88,31 @@ const TARGET_VOXEL_PRESETS = [
 
 function App() {
   const [page, setPage] = useState<Page>("home")
+  const [pendingFilePath, setPendingFilePath] = useState<string | null>(null)
+
+  // Listen for file open events from Tauri (system tray, deep links, etc.)
+  useTauriFileOpen(useCallback((path: string) => {
+    setPendingFilePath(path)
+    setPage("viewer")
+  }, []))
+
+  // Listen for navigation events from Tauri
+  useTauriNavigate(useCallback((route: string) => {
+    if (route === "/viewer") {
+      setPage("viewer")
+    } else if (route === "/builder") {
+      setPage("builder")
+    } else if (route === "/organ-pipes") {
+      setPage("organ-pipes")
+    } else {
+      setPage("home")
+    }
+  }, []))
+
+  // Clear pending file path when consumed
+  const handleInitialFileConsumed = useCallback(() => {
+    setPendingFilePath(null)
+  }, [])
 
   // Optimized selectors for minimal re-renders
   const pressure = useCurrentPressure()
@@ -356,7 +382,11 @@ function App() {
       <>
         <UpdateNotification />
         <Suspense fallback={<PageLoadingFallback />}>
-          <ViewerPage onBack={() => setPage("home")} />
+          <ViewerPage
+            onBack={() => setPage("home")}
+            initialFilePath={pendingFilePath}
+            onInitialFileConsumed={handleInitialFileConsumed}
+          />
         </Suspense>
       </>
     )

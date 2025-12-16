@@ -33,6 +33,12 @@ export interface FileUploadProps {
   onFile: (file: File) => Promise<void>;
   /** Called when a URL is submitted */
   onURL: (url: string) => Promise<void>;
+  /** Called when a file is selected via native picker (path-based, Tauri only) */
+  onPath?: (path: string) => Promise<void>;
+  /** Whether running in Tauri environment */
+  isTauri?: boolean;
+  /** Function to open native file dialog (Tauri only) */
+  openNativeDialog?: () => Promise<string | null>;
   /** Current loading state */
   isLoading?: boolean;
   /** Loading progress (0-1) */
@@ -50,6 +56,9 @@ export interface FileUploadProps {
 export function FileUpload({
   onFile,
   onURL,
+  onPath,
+  isTauri = false,
+  openNativeDialog,
   isLoading = false,
   progress = 0,
   error = null,
@@ -116,6 +125,19 @@ export function FileUpload({
     [urlInput, onURL]
   );
 
+  const handleBrowseClick = useCallback(async () => {
+    // Use native dialog in Tauri mode if available
+    if (isTauri && openNativeDialog && onPath) {
+      const path = await openNativeDialog();
+      if (path) {
+        await onPath(path);
+      }
+    } else {
+      // Fall back to web file input
+      fileInputRef.current?.click();
+    }
+  }, [isTauri, openNativeDialog, onPath]);
+
   const formatBytes = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -174,7 +196,7 @@ export function FileUpload({
                 <button
                   type="button"
                   className="text-primary hover:underline"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={handleBrowseClick}
                 >
                   browse
                 </button>

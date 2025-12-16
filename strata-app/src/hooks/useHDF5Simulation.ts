@@ -7,8 +7,10 @@
 
 import { useState, useCallback, useRef } from "react";
 import * as h5wasm from "h5wasm";
+import { readFile } from "@tauri-apps/plugin-fs";
 import {
   loadHDF5File,
+  loadHDF5FromBuffer,
   loadHDF5FromURL,
   toSimulationMetadata,
   useSimulationStore,
@@ -30,6 +32,8 @@ export interface UseHDF5SimulationResult {
   loadFile: (file: File) => Promise<void>;
   /** Load from a URL */
   loadURL: (url: string) => Promise<void>;
+  /** Load from a file path (Tauri desktop only) */
+  loadPath: (path: string) => Promise<void>;
   /** Load a specific timestep */
   loadTimestep: (step: number) => Promise<Float32Array | null>;
   /** Reset/unload the current data */
@@ -186,6 +190,48 @@ export function useHDF5Simulation(): UseHDF5SimulationResult {
     [handleProgress, initializeStore]
   );
 
+  const loadPath = useCallback(
+    async (path: string) => {
+      setIsLoading(true);
+      setProgress(0);
+      setError(null);
+
+      try {
+        // Read file from filesystem using Tauri's fs plugin
+        const buffer = await readFile(path);
+
+        // Extract filename from path
+        const filename = path.split("/").pop() || path.split("\\").pop() || "simulation.h5";
+
+        // Parse HDF5 data from buffer
+        const data = await loadHDF5FromBuffer(buffer, filename);
+
+        fileBufferRef.current = buffer;
+        filenameRef.current = filename;
+
+        // Write to virtual FS and keep file open for timestep loading
+        await ensureH5wasmReady();
+        if (h5wasmFS) {
+          const virtualPath = `/${filename}`;
+          h5wasmFS.writeFile(virtualPath, buffer);
+          h5fileRef.current = new h5wasm.File(virtualPath, "r");
+        }
+
+        setHDF5Data(data);
+        initializeStore(data);
+        setProgress(1);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to load HDF5 from path";
+        setError(message);
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [initializeStore]
+  );
+
   const loadTimestep = useCallback(
     async (step: number): Promise<Float32Array | null> => {
       if (!h5fileRef.current || !hdf5Data) {
@@ -269,6 +315,7 @@ export function useHDF5Simulation(): UseHDF5SimulationResult {
     hdf5Data,
     loadFile,
     loadURL,
+    loadPath,
     loadTimestep,
     reset,
   };
