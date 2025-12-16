@@ -1,6 +1,6 @@
 # CI/CD and Deployment Infrastructure
 
-This document describes the continuous integration, deployment, and release infrastructure for the ML Audio Codecs project.
+This document describes the continuous integration, deployment, and release infrastructure for the strata-fdtd project.
 
 ## Overview
 
@@ -83,6 +83,16 @@ Required only for signed macOS releases:
 | `APPLE_SIGNING_IDENTITY` | Certificate identity | `security find-identity -v -p codesigning` |
 | `APPLE_ID` | Apple ID for notarization | Your Apple Developer account email |
 | `APPLE_PASSWORD` | App-specific password | https://appleid.apple.com |
+| `APPLE_TEAM_ID` | Apple Developer Team ID | Apple Developer account settings |
+
+#### Windows Code Signing (Optional)
+
+Required only for signed Windows releases:
+
+| Secret | Description | How to Get |
+|--------|-------------|------------|
+| `WINDOWS_CERTIFICATE` | Base64-encoded .pfx certificate | Export from certificate store, encode with `base64` |
+| `WINDOWS_CERTIFICATE_PASSWORD` | Certificate password | Set when exporting .pfx |
 
 #### Tauri Auto-Update (Optional)
 
@@ -90,8 +100,8 @@ Required only for auto-update functionality:
 
 | Secret | Description | How to Get |
 |--------|-------------|------------|
-| `TAURI_PRIVATE_KEY` | Base64-encoded signing key | `tauri signer generate` then encode |
-| `TAURI_KEY_PASSWORD` | Key password (if set) | Password used during key generation |
+| `TAURI_SIGNING_PRIVATE_KEY` | Tauri updater signing key | `pnpm tauri signer generate` |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Key password (if set) | Password used during key generation |
 
 ## Web UI Deployment
 
@@ -150,7 +160,7 @@ Test coverage is automatically reported to Codecov for all CI runs.
 1. **Link Repository**
    - Go to https://codecov.io
    - Sign in with GitHub
-   - Add repository: `rjwalters/ml-audio-codecs`
+   - Add repository: `rjwalters/strata-fdtd`
 
 2. **Configure Token**
    ```bash
@@ -162,7 +172,7 @@ Test coverage is automatically reported to Codecov for all CI runs.
    ```
 
 3. **View Reports**
-   - Visit https://app.codecov.io/gh/rjwalters/ml-audio-codecs
+   - Visit https://app.codecov.io/gh/rjwalters/strata-fdtd
    - Reports update automatically on each CI run
    - Coverage changes shown on pull requests
 
@@ -174,33 +184,56 @@ Test coverage is automatically reported to Codecov for all CI runs.
 
 ## Desktop Releases
 
-Desktop builds are created automatically on version tags.
+Desktop builds are created automatically on version tags using the `desktop-release.yml` workflow.
 
 ### Creating a Release
 
-1. **Update Version**
-   ```bash
-   # Update version in Cargo.toml or package.json
-   git add -u
-   git commit -m "Bump version to v1.2.3"
-   ```
+**Option 1: Use the Version Bump Workflow (Recommended)**
 
-2. **Create Tag**
-   ```bash
-   git tag v1.2.3
-   git push origin v1.2.3
-   ```
+1. Go to **Actions → Version Bump** in GitHub
+2. Click **Run workflow**
+3. Enter the new version (e.g., `0.2.0`)
+4. Check "Create and push tag" (default: true)
+5. Click **Run workflow**
 
-3. **Wait for Build**
-   - GitHub Actions builds for all platforms
-   - Artifacts uploaded to release
-   - Release notes auto-generated
+This automatically:
+- Updates all package versions (package.json, Cargo.toml, tauri.conf.json, pyproject.toml)
+- Commits the changes
+- Creates and pushes the version tag
+- Triggers the desktop release workflow
+
+**Option 2: Manual Workflow**
+
+```bash
+# Update versions manually across all packages
+# strata-app/package.json
+# strata-web/package.json
+# strata-ui/package.json
+# strata-app/src-tauri/Cargo.toml
+# strata-app/src-tauri/tauri.conf.json
+# pyproject.toml
+
+git add -u
+git commit -m "chore: bump version to v1.2.3"
+git tag v1.2.3
+git push origin main --tags
+```
+
+### Release Process
+
+1. Tag triggers `desktop-release.yml` workflow
+2. GitHub Actions builds for all platforms in parallel
+3. Builds are code-signed (if secrets are configured)
+4. Draft release is created with all installers attached
+5. Maintainer reviews and publishes the release
 
 ### Supported Platforms
 
-- macOS (Intel and Apple Silicon)
-- Linux (x86_64)
-- Windows (x86_64)
+| Platform | Architecture | Installer Format |
+|----------|--------------|------------------|
+| macOS | Universal (Intel + Apple Silicon) | `.dmg` |
+| Linux | x86_64 | `.AppImage`, `.deb` |
+| Windows | x86_64 | `.msi`, `.exe` |
 
 ### Signed Builds (macOS)
 
@@ -284,17 +317,34 @@ Platforms:
 - macOS (latest)
 - Windows (latest)
 
-### Desktop Build (`.github/workflows/desktop-build.yml`)
+### Desktop Release (`.github/workflows/desktop-release.yml`)
 
-Triggers: Tags matching `v*`
+Triggers: Tags matching `v*.*.*`, manual dispatch
 
 Steps:
-1. Build for all platforms
-2. Sign builds (if configured)
-3. Notarize macOS builds (if configured)
-4. Create GitHub release
-5. Upload artifacts
-6. Generate auto-update manifest
+1. Create draft GitHub release
+2. Build for all platforms (macOS, Linux, Windows) in parallel
+3. Sign builds (if code signing secrets are configured)
+4. Notarize macOS builds (if Apple secrets are configured)
+5. Upload installers to release
+6. Generate auto-update manifest (if Tauri signing key is configured)
+
+### Version Bump (`.github/workflows/version-bump.yml`)
+
+Triggers: Manual dispatch only
+
+Steps:
+1. Validate version format (semver)
+2. Update all package versions:
+   - strata-app/package.json
+   - strata-web/package.json
+   - strata-ui/package.json
+   - strata-app/src-tauri/Cargo.toml
+   - strata-app/src-tauri/tauri.conf.json
+   - pyproject.toml
+3. Commit version changes
+4. Create and push tag (optional)
+5. Tag automatically triggers desktop-release workflow
 
 ## Troubleshooting
 

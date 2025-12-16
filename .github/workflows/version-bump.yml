@@ -1,0 +1,109 @@
+name: Version Bump
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version (e.g., 0.2.0) - without the v prefix'
+        required: true
+        type: string
+      create_tag:
+        description: 'Create and push tag after version bump'
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate version format
+        run: |
+          if ! [[ "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Version must be in semver format (e.g., 0.2.0)"
+            exit 1
+          fi
+
+      - name: Update strata-app package.json
+        run: |
+          cd strata-app
+          npm version ${{ inputs.version }} --no-git-tag-version
+          echo "Updated strata-app/package.json to ${{ inputs.version }}"
+
+      - name: Update strata-web package.json
+        run: |
+          cd strata-web
+          npm version ${{ inputs.version }} --no-git-tag-version
+          echo "Updated strata-web/package.json to ${{ inputs.version }}"
+
+      - name: Update strata-ui package.json
+        run: |
+          cd strata-ui
+          npm version ${{ inputs.version }} --no-git-tag-version
+          echo "Updated strata-ui/package.json to ${{ inputs.version }}"
+
+      - name: Update Cargo.toml version
+        run: |
+          cd strata-app/src-tauri
+          sed -i 's/^version = ".*"/version = "${{ inputs.version }}"/' Cargo.toml
+          echo "Updated strata-app/src-tauri/Cargo.toml to ${{ inputs.version }}"
+
+      - name: Update tauri.conf.json version
+        run: |
+          cd strata-app/src-tauri
+          # Use jq to update the version field
+          jq '.version = "${{ inputs.version }}"' tauri.conf.json > tmp.json
+          mv tmp.json tauri.conf.json
+          echo "Updated strata-app/src-tauri/tauri.conf.json to ${{ inputs.version }}"
+
+      - name: Update pyproject.toml version
+        run: |
+          sed -i 's/^version = ".*"/version = "${{ inputs.version }}"/' pyproject.toml
+          echo "Updated pyproject.toml to ${{ inputs.version }}"
+
+      - name: Commit version changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: bump version to v${{ inputs.version }}"
+          git push origin main
+
+      - name: Create and push tag
+        if: ${{ inputs.create_tag }}
+        run: |
+          git tag v${{ inputs.version }}
+          git push origin v${{ inputs.version }}
+          echo "Created and pushed tag v${{ inputs.version }}"
+
+      - name: Summary
+        run: |
+          echo "## Version Bump Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **New Version**: v${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag Created**: ${{ inputs.create_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Files Updated" >> $GITHUB_STEP_SUMMARY
+          echo "- strata-app/package.json" >> $GITHUB_STEP_SUMMARY
+          echo "- strata-web/package.json" >> $GITHUB_STEP_SUMMARY
+          echo "- strata-ui/package.json" >> $GITHUB_STEP_SUMMARY
+          echo "- strata-app/src-tauri/Cargo.toml" >> $GITHUB_STEP_SUMMARY
+          echo "- strata-app/src-tauri/tauri.conf.json" >> $GITHUB_STEP_SUMMARY
+          echo "- pyproject.toml" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.create_tag }}" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The tag v${{ inputs.version }} will trigger the Desktop App Release workflow." >> $GITHUB_STEP_SUMMARY
+          fi
