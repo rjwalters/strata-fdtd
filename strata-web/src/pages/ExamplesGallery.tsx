@@ -6,19 +6,14 @@ import {
   Waves,
   Volume2,
   Code2,
-  Award,
-  Play,
-  Eye,
   BookOpen,
   Zap,
   Target,
   Radio,
   Grid3x3,
+  Eye,
 } from 'lucide-react'
-import { LearningPathSelector } from '../components/tutorial'
-import { useLearningPath } from '../hooks/useLearningPath'
 import { CodeViewerModal } from '../components/examples'
-import type { LearningPath } from '../config/learning-paths'
 
 // =============================================================================
 // Types
@@ -28,9 +23,7 @@ interface Demo {
   id: string
   title: string
   description: string
-  thumbnail?: string
   category: string
-  path: string
 }
 
 interface ExampleScript {
@@ -59,7 +52,6 @@ const DEMOS: Demo[] = [
     description:
       'Acoustic simulation of an open-ended pipe showing standing wave patterns and harmonics.',
     category: 'Acoustics',
-    path: '/demos/organ-pipes/open-pipe',
   },
   {
     id: 'closed-pipe',
@@ -67,7 +59,6 @@ const DEMOS: Demo[] = [
     description:
       'Acoustic simulation of a closed pipe demonstrating odd harmonic patterns.',
     category: 'Acoustics',
-    path: '/demos/organ-pipes/closed-pipe',
   },
   {
     id: 'half-open-pipe',
@@ -75,7 +66,6 @@ const DEMOS: Demo[] = [
     description:
       'Acoustic simulation showing the behavior of a pipe with one open and one closed end.',
     category: 'Acoustics',
-    path: '/demos/organ-pipes/half-open-pipe',
   },
 ]
 
@@ -101,18 +91,12 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 
 export function ExamplesGallery() {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState<'demos' | 'scripts'>('demos')
-  const [selectedCategory, setSelectedCategory] = useState<string>('All')
-  const [showLearningPaths, setShowLearningPaths] = useState(true)
   const [exampleScripts, setExampleScripts] = useState<ExampleScript[]>([])
   const [codeModal, setCodeModal] = useState<{
     isOpen: boolean
     title: string
     filename: string
   }>({ isOpen: false, title: '', filename: '' })
-
-  const { paths, progress, startPath, newBadges, clearNewBadges } =
-    useLearningPath()
 
   // Load example scripts from index.json
   useEffect(() => {
@@ -130,31 +114,6 @@ export function ExamplesGallery() {
     loadExamples()
   }, [])
 
-  // Get categories based on active tab
-  const demoCategories = ['All', ...new Set(DEMOS.map((d) => d.category))]
-  const scriptCategories = [
-    'All',
-    ...new Set(exampleScripts.map((s) => s.category)),
-  ]
-  const categories = activeTab === 'demos' ? demoCategories : scriptCategories
-
-  // Filter based on category
-  const filteredDemos =
-    selectedCategory === 'All'
-      ? DEMOS
-      : DEMOS.filter((d) => d.category === selectedCategory)
-
-  const filteredScripts =
-    selectedCategory === 'All'
-      ? exampleScripts
-      : exampleScripts.filter((s) => s.category === selectedCategory)
-
-  // Reset category when switching tabs
-  const handleTabChange = (tab: 'demos' | 'scripts') => {
-    setActiveTab(tab)
-    setSelectedCategory('All')
-  }
-
   const handleViewDemo = (demo: Demo) => {
     navigate(`/viewer/${demo.id}`)
   }
@@ -167,14 +126,6 @@ export function ExamplesGallery() {
     })
   }
 
-  const handleSelectPath = (path: LearningPath) => {
-    startPath(path.id)
-  }
-
-  const handleBrowseAll = () => {
-    setShowLearningPaths(false)
-  }
-
   return (
     <div className="min-h-screen bg-background">
       {/* Code Viewer Modal */}
@@ -184,26 +135,6 @@ export function ExamplesGallery() {
         title={codeModal.title}
         filename={codeModal.filename}
       />
-
-      {/* New badge notification */}
-      {newBadges.length > 0 && (
-        <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-2">
-          <div className="bg-card border border-border rounded-lg p-4 shadow-lg max-w-sm">
-            <div className="flex items-center gap-3">
-              <div className="text-3xl">{newBadges[0].icon}</div>
-              <div className="flex-1">
-                <p className="font-semibold text-foreground">Badge Earned!</p>
-                <p className="text-sm text-muted-foreground">
-                  {newBadges[0].name}
-                </p>
-              </div>
-              <Button variant="ghost" size="sm" onClick={clearNewBadges}>
-                Dismiss
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Navigation Header */}
       <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
@@ -222,7 +153,7 @@ export function ExamplesGallery() {
                   to="/examples"
                   className="px-3 py-1.5 text-sm font-medium text-foreground bg-primary/10 rounded-md"
                 >
-                  Examples
+                  Demos
                 </Link>
                 <Link
                   to="/viewer"
@@ -232,15 +163,6 @@ export function ExamplesGallery() {
                 </Link>
               </div>
             </div>
-            {progress.badges.length > 0 && (
-              <div className="flex items-center gap-2">
-                <Award className="h-5 w-5 text-yellow-500" />
-                <span className="text-sm text-muted-foreground">
-                  {progress.badges.length} badge
-                  {progress.badges.length !== 1 ? 's' : ''}
-                </span>
-              </div>
-            )}
           </div>
         </div>
       </nav>
@@ -249,86 +171,33 @@ export function ExamplesGallery() {
       <header className="border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <h1 className="text-3xl font-bold text-foreground">
-            Example Simulations
+            Strata FDTD Demos
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Explore pre-computed demos or browse example Python scripts
+            Explore interactive acoustic simulations and learn to build your own
           </p>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Learning path selector */}
-        {showLearningPaths && activeTab === 'demos' && (
-          <LearningPathSelector
-            paths={paths}
-            progress={progress}
-            onSelectPath={handleSelectPath}
-            onBrowseAll={handleBrowseAll}
-          />
-        )}
+      <main className="max-w-7xl mx-auto px-6 py-8 space-y-12">
+        {/* Live Demos Section */}
+        <section>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-foreground">Interactive Demos</h2>
+            <p className="mt-1 text-muted-foreground">
+              Experience real-time FDTD simulations of acoustic wave behavior in pipes
+            </p>
+          </div>
 
-        {/* Show learning paths toggle if hidden */}
-        {!showLearningPaths && activeTab === 'demos' && (
-          <Button
-            variant="outline"
-            onClick={() => setShowLearningPaths(true)}
-            className="mb-6"
-          >
-            Show Learning Paths
-          </Button>
-        )}
-
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-2 mb-6">
-          <Button
-            variant={activeTab === 'demos' ? 'default' : 'outline'}
-            onClick={() => handleTabChange('demos')}
-            className="gap-2"
-          >
-            <Play className="h-4 w-4" />
-            Live Demos ({DEMOS.length})
-          </Button>
-          <Button
-            variant={activeTab === 'scripts' ? 'default' : 'outline'}
-            onClick={() => handleTabChange('scripts')}
-            className="gap-2"
-          >
-            <Code2 className="h-4 w-4" />
-            Example Scripts ({exampleScripts.length})
-          </Button>
-        </div>
-
-        {/* Category filters */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          {categories.map((cat) => (
-            <Badge
-              key={cat}
-              variant={selectedCategory === cat ? 'default' : 'secondary'}
-              className="cursor-pointer px-4 py-2"
-              onClick={() => setSelectedCategory(cat)}
-            >
-              {cat !== 'All' && CATEGORY_ICONS[cat]}
-              {cat}
-            </Badge>
-          ))}
-        </div>
-
-        {/* Demos Grid */}
-        {activeTab === 'demos' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDemos.map((demo) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {DEMOS.map((demo) => (
               <div
                 key={demo.id}
                 className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
               >
                 {/* Thumbnail placeholder */}
                 <div className="h-48 bg-secondary/30 flex items-center justify-center">
-                  <div className="text-4xl">
-                    {CATEGORY_ICONS[demo.category] || (
-                      <Waves className="h-12 w-12 text-muted-foreground" />
-                    )}
-                  </div>
+                  <Volume2 className="h-12 w-12 text-muted-foreground" />
                 </div>
 
                 {/* Content */}
@@ -354,21 +223,20 @@ export function ExamplesGallery() {
                 </div>
               </div>
             ))}
-
-            {filteredDemos.length === 0 && (
-              <div className="col-span-full text-center py-12">
-                <p className="text-lg text-muted-foreground">
-                  No demos found in this category
-                </p>
-              </div>
-            )}
           </div>
-        )}
+        </section>
 
-        {/* Scripts Grid */}
-        {activeTab === 'scripts' && (
+        {/* Example Scripts Section */}
+        <section>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-foreground">Example Scripts</h2>
+            <p className="mt-1 text-muted-foreground">
+              Learn to program your own simulations with these Python examples
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredScripts.map((script) => (
+            {exampleScripts.map((script) => (
               <div
                 key={script.id}
                 className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
@@ -441,16 +309,8 @@ export function ExamplesGallery() {
                 </div>
               </div>
             ))}
-
-            {filteredScripts.length === 0 && (
-              <div className="col-span-full text-center py-12">
-                <p className="text-lg text-muted-foreground">
-                  No scripts found in this category
-                </p>
-              </div>
-            )}
           </div>
-        )}
+        </section>
       </main>
 
       {/* Footer */}
@@ -467,9 +327,6 @@ export function ExamplesGallery() {
                 Strata FDTD
               </a>
               {' '}— Open source acoustic simulation
-            </div>
-            <div className="font-mono text-xs">
-              Build {__GIT_HASH__}
             </div>
           </div>
         </div>
