@@ -207,6 +207,167 @@ class GaussianPulse:
 
 
 @dataclass
+class MembraneSource:
+    """Spatially-distributed source with modal excitation pattern.
+
+    The pressure injection at each grid cell is modulated by the mode
+    shape function, which depends on the membrane geometry. Subclasses
+    implement specific geometries (circular, rectangular).
+
+    Args:
+        center: Physical coordinates (x, y, z) of membrane center in meters
+        normal_axis: Axis perpendicular to membrane plane ('x', 'y', or 'z')
+        waveform: Temporal waveform object (must have .waveform(t, dt) method)
+        mode: Mode indices (m, n) - meaning depends on shape
+        injection_type: 'pressure' or 'velocity' (default: 'pressure')
+
+    Example:
+        >>> from strata_fdtd import GaussianPulse
+        >>> from strata_fdtd.core.solver import CircularMembraneSource
+        >>> waveform = GaussianPulse(position=(0,0,0), frequency=200)
+        >>> membrane = CircularMembraneSource(
+        ...     center=(0.05, 0.05, 0.01),
+        ...     normal_axis='z',
+        ...     radius=0.02,
+        ...     waveform=waveform,
+        ...     mode=(0, 1),
+        ... )
+    """
+
+    center: tuple[float, float, float]
+    normal_axis: Literal['x', 'y', 'z']
+    waveform: GaussianPulse  # Or any object with .waveform(t, dt) method
+    mode: tuple[int, int] = (0, 1)  # Fundamental mode
+    injection_type: Literal['pressure', 'velocity'] = 'pressure'
+    source_type: Literal['membrane'] = field(default='membrane', init=False)
+
+    # Cached injection data (computed on first use)
+    _cached_weights: NDArray[np.floating] | None = field(
+        default=None, repr=False, init=False
+    )
+    _cached_mask: NDArray[np.bool_] | None = field(
+        default=None, repr=False, init=False
+    )
+
+    def mode_shape(self, r: NDArray, theta: NDArray) -> NDArray:
+        """Compute mode shape value at given coordinates.
+
+        Override in subclasses for specific geometries.
+        Returns values in [0, 1] where 1 is maximum displacement.
+
+        Args:
+            r: Radial distance from membrane center (normalized)
+            theta: Angle in radians (for non-axisymmetric modes)
+
+        Returns:
+            Mode shape values at each point
+        """
+        raise NotImplementedError("Subclasses must implement mode_shape()")
+
+    def get_injection_mask(self, grid: UniformGrid | NonuniformGrid) -> NDArray[np.bool_]:
+        """Return boolean mask of grid cells belonging to membrane.
+
+        Args:
+            grid: The simulation grid
+
+        Returns:
+            3D boolean array with True for cells inside membrane boundary
+        """
+        raise NotImplementedError("Subclasses must implement get_injection_mask()")
+
+    def get_injection_weights(
+        self, grid: UniformGrid | NonuniformGrid
+    ) -> NDArray[np.floating]:
+        """Return array of mode shape values at each grid cell.
+
+        Shape matches grid.shape, values are 0 outside membrane,
+        mode_shape value inside.
+
+        Args:
+            grid: The simulation grid
+
+        Returns:
+            3D array of weights with mode shape values
+        """
+        raise NotImplementedError("Subclasses must implement get_injection_weights()")
+
+    def _grid_to_membrane_coords(
+        self, grid: UniformGrid | NonuniformGrid
+    ) -> tuple[NDArray, NDArray, int]:
+        """Convert grid coordinates to membrane-local (r, theta) coordinates.
+
+        Args:
+            grid: The simulation grid
+
+        Returns:
+            Tuple of (r, theta, plane_idx) where:
+            - r: 3D array of distances from membrane center
+            - theta: 3D array of angles from center
+            - plane_idx: Grid index of the plane containing the membrane
+        """
+        x, y, z = np.meshgrid(
+            grid.x_coords, grid.y_coords, grid.z_coords, indexing='ij'
+        )
+
+        cx, cy, cz = self.center
+
+        if self.normal_axis == 'z':
+            # Membrane in x-y plane
+            dx = x - cx
+            dy = y - cy
+            r = np.sqrt(dx**2 + dy**2)
+            theta = np.arctan2(dy, dx)
+            plane_idx = int(np.argmin(np.abs(grid.z_coords - cz)))
+        elif self.normal_axis == 'y':
+            # Membrane in x-z plane
+            dx = x - cx
+            dz = z - cz
+            r = np.sqrt(dx**2 + dz**2)
+            theta = np.arctan2(dz, dx)
+            plane_idx = int(np.argmin(np.abs(grid.y_coords - cy)))
+        else:  # normal_axis == 'x'
+            # Membrane in y-z plane
+            dy = y - cy
+            dz = z - cz
+            r = np.sqrt(dy**2 + dz**2)
+            theta = np.arctan2(dz, dy)
+            plane_idx = int(np.argmin(np.abs(grid.x_coords - cx)))
+
+        return r, theta, plane_idx
+
+    def _check_grid_alignment(self, grid: UniformGrid | NonuniformGrid) -> None:
+        """Warn if membrane center is significantly off-grid.
+
+        Args:
+            grid: The simulation grid
+        """
+        cx, cy, cz = self.center
+
+        # Find nearest grid plane
+        if self.normal_axis == 'z':
+            plane_idx = int(np.argmin(np.abs(grid.z_coords - cz)))
+            offset = abs(grid.z_coords[plane_idx] - cz)
+            spacing = grid.dz[plane_idx] if hasattr(grid.dz, '__getitem__') else grid.min_spacing
+        elif self.normal_axis == 'y':
+            plane_idx = int(np.argmin(np.abs(grid.y_coords - cy)))
+            offset = abs(grid.y_coords[plane_idx] - cy)
+            spacing = grid.dy[plane_idx] if hasattr(grid.dy, '__getitem__') else grid.min_spacing
+        else:  # x
+            plane_idx = int(np.argmin(np.abs(grid.x_coords - cx)))
+            offset = abs(grid.x_coords[plane_idx] - cx)
+            spacing = grid.dx[plane_idx] if hasattr(grid.dx, '__getitem__') else grid.min_spacing
+
+        # Warn if offset is more than half a cell
+        if offset > 0.5 * spacing:
+            warnings.warn(
+                f"MembraneSource center {self.center} is {offset:.4f}m "
+                f"({offset/spacing:.1f} cells) off-grid in {self.normal_axis}-direction. "
+                f"Source will be placed at nearest grid plane.",
+                stacklevel=3,
+            )
+
+
+@dataclass
 class Probe:
     """Pressure recording probe at a specific location.
 
@@ -1230,20 +1391,39 @@ class FDTDSolver:
         if self._use_native and _kernels is not None:
             self._boundary_cells = _kernels.precompute_boundary_cells(self.geometry)
 
-    def add_source(self, source: GaussianPulse) -> None:
+    def add_source(self, source: GaussianPulse | MembraneSource) -> None:
         """Add an acoustic source to the simulation.
 
-        The source position can be specified in either:
+        For point/plane sources (GaussianPulse), the position can be specified in either:
         - Physical coordinates (meters): floats like (0.025, 0.05, 0.05)
         - Grid indices: integers like (25, 50, 50)
 
         Physical coordinates are automatically converted to grid indices.
 
+        For membrane sources, the center is always specified in physical coordinates
+        (meters) and validated against the grid bounds.
+
         Args:
-            source: GaussianPulse source to add
+            source: GaussianPulse or MembraneSource to add
         """
-        # Convert physical coordinates (meters) to grid indices if needed
-        if source.source_type == "point":
+        if source.source_type == "membrane":
+            # Validate membrane center is within grid bounds
+            cx, cy, cz = source.center
+            extent = self._grid.physical_extent()
+            if not (0 <= cx <= extent[0]):
+                raise ValueError(
+                    f"Membrane center x={cx:.4f}m is outside grid (0-{extent[0]:.4f}m)"
+                )
+            if not (0 <= cy <= extent[1]):
+                raise ValueError(
+                    f"Membrane center y={cy:.4f}m is outside grid (0-{extent[1]:.4f}m)"
+                )
+            if not (0 <= cz <= extent[2]):
+                raise ValueError(
+                    f"Membrane center z={cz:.4f}m is outside grid (0-{extent[2]:.4f}m)"
+                )
+        elif source.source_type == "point":
+            # Convert physical coordinates (meters) to grid indices if needed
             pos = source.position
             # Check if position looks like physical coordinates (has floats < grid size)
             # or grid indices (integers or floats that look like indices)
@@ -1818,25 +1998,51 @@ class FDTDSolver:
     def _inject_sources(self) -> None:
         """Inject source waveforms into the pressure field."""
         for source in self._sources:
-            # Compute waveform value at current time
-            waveform_val = source.waveform(np.array([self._time]), self.dt)[0]
+            if source.source_type == "membrane":
+                # For membrane sources, the waveform is a separate object
+                waveform_val = source.waveform.waveform(np.array([self._time]), self.dt)[0]
 
-            if source.source_type == "point":
-                i, j, k = source.position
-                if self.geometry[i, j, k]:  # Only inject in air
-                    self.p[i, j, k] += waveform_val
-            else:  # plane source
-                axis = source.position["axis"]
-                idx = source.position["index"]
-                if axis == 0:
-                    mask = self.geometry[idx, :, :]
-                    self.p[idx, :, :][mask] += waveform_val
-                elif axis == 1:
-                    mask = self.geometry[:, idx, :]
-                    self.p[:, idx, :][mask] += waveform_val
-                else:  # axis == 2
-                    mask = self.geometry[:, :, idx]
-                    self.p[:, :, idx][mask] += waveform_val
+                # Compute weights once and cache
+                if source._cached_weights is None:
+                    source._check_grid_alignment(self._grid)
+                    source._cached_weights = source.get_injection_weights(self._grid)
+                    source._cached_mask = source._cached_weights > 0
+
+                # Apply mode-weighted injection (respect geometry mask)
+                weights = source._cached_weights
+                mask = source._cached_mask & self.geometry
+
+                if source.injection_type == 'pressure':
+                    self.p[mask] += waveform_val * weights[mask]
+                else:  # velocity injection
+                    # Inject normal velocity component
+                    if source.normal_axis == 'x':
+                        self.vx[mask] += waveform_val * weights[mask]
+                    elif source.normal_axis == 'y':
+                        self.vy[mask] += waveform_val * weights[mask]
+                    else:  # z
+                        self.vz[mask] += waveform_val * weights[mask]
+
+            else:
+                # Point or plane sources: waveform method is on the source itself
+                waveform_val = source.waveform(np.array([self._time]), self.dt)[0]
+
+                if source.source_type == "point":
+                    i, j, k = source.position
+                    if self.geometry[i, j, k]:  # Only inject in air
+                        self.p[i, j, k] += waveform_val
+                else:  # plane source
+                    axis = source.position["axis"]
+                    idx = source.position["index"]
+                    if axis == 0:
+                        mask = self.geometry[idx, :, :]
+                        self.p[idx, :, :][mask] += waveform_val
+                    elif axis == 1:
+                        mask = self.geometry[:, idx, :]
+                        self.p[:, idx, :][mask] += waveform_val
+                    else:  # axis == 2
+                        mask = self.geometry[:, :, idx]
+                        self.p[:, :, idx][mask] += waveform_val
 
     def _record_probes(self) -> None:
         """Record pressure at all probe locations."""

@@ -4,7 +4,8 @@ Strata FDTD - FDTD acoustic simulation toolchain.
 Main exports:
 - FDTDSolver: Core 3D acoustic FDTD solver
 - GPUFDTDSolver: GPU-accelerated solver
-- GaussianPulse: Acoustic source
+- GaussianPulse: Point/plane acoustic source
+- MembraneSource: Spatially-distributed source with modal patterns
 - PML: Absorbing boundary
 - Materials: Acoustic material library
 """
@@ -21,6 +22,7 @@ from strata_fdtd.core.solver import (
     POLAR_PATTERNS,
     FDTDSolver,
     GaussianPulse,
+    MembraneSource,
     Microphone,
     Probe,
     has_native_kernels,
@@ -63,6 +65,7 @@ __all__ = [
     "GPUFDTDSolver",
     "BatchedGPUFDTDSolver",
     "GaussianPulse",
+    "MembraneSource",
     "Probe",
     "Microphone",
     "POLAR_PATTERNS",
