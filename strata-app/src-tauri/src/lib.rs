@@ -1,4 +1,5 @@
-use tauri::Emitter;
+use std::path::PathBuf;
+use tauri::{DragDropEvent, Emitter, Manager};
 use tauri_plugin_updater::UpdaterExt;
 
 /// Open a native file dialog for selecting HDF5 files
@@ -152,6 +153,89 @@ pub fn run() {
                     });
                 });
             }
+
+            // Set up drag and drop handler for HDF5 files
+            let main_window = app.get_webview_window("main").unwrap();
+            let app_handle = app.handle().clone();
+
+            main_window.on_window_event(move |event| {
+                if let tauri::WindowEvent::DragDrop(drag_drop_event) = event {
+                    match drag_drop_event {
+                        DragDropEvent::Enter { paths, position: _ } => {
+                            // Filter to .h5/.hdf5 files
+                            let h5_files: Vec<&PathBuf> = paths
+                                .iter()
+                                .filter(|p| {
+                                    p.extension()
+                                        .map(|e| {
+                                            let ext = e.to_string_lossy().to_lowercase();
+                                            ext == "h5" || ext == "hdf5"
+                                        })
+                                        .unwrap_or(false)
+                                })
+                                .collect();
+
+                            // Emit drag-enter event to frontend with file count
+                            let _ = app_handle.emit(
+                                "drag-enter",
+                                serde_json::json!({
+                                    "fileCount": paths.len(),
+                                    "h5FileCount": h5_files.len(),
+                                }),
+                            );
+                        }
+                        DragDropEvent::Over { position: _ } => {
+                            // Could emit position updates if needed for visual feedback
+                        }
+                        DragDropEvent::Drop { paths, position: _ } => {
+                            // Filter to .h5/.hdf5 files
+                            let h5_files: Vec<&PathBuf> = paths
+                                .iter()
+                                .filter(|p| {
+                                    p.extension()
+                                        .map(|e| {
+                                            let ext = e.to_string_lossy().to_lowercase();
+                                            ext == "h5" || ext == "hdf5"
+                                        })
+                                        .unwrap_or(false)
+                                })
+                                .collect();
+
+                            if h5_files.len() > 1 {
+                                // Multiple HDF5 files dropped - emit list for picker
+                                let file_paths: Vec<String> = h5_files
+                                    .iter()
+                                    .map(|p| p.to_string_lossy().to_string())
+                                    .collect();
+
+                                let _ = app_handle.emit(
+                                    "multiple-files-dropped",
+                                    serde_json::json!({ "files": file_paths }),
+                                );
+                            } else if let Some(first_file) = h5_files.first() {
+                                // Single HDF5 file - open directly
+                                let _ = app_handle.emit(
+                                    "open-file",
+                                    serde_json::json!({ "path": first_file.to_string_lossy() }),
+                                );
+
+                                // Navigate to viewer
+                                let _ = app_handle.emit(
+                                    "navigate",
+                                    serde_json::json!({ "route": "/viewer" }),
+                                );
+                            }
+
+                            // Always emit drag-leave to reset overlay
+                            let _ = app_handle.emit("drag-leave", serde_json::json!({}));
+                        }
+                        DragDropEvent::Leave => {
+                            let _ = app_handle.emit("drag-leave", serde_json::json!({}));
+                        }
+                        _ => {}
+                    }
+                }
+            });
 
             Ok(())
         })
