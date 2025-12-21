@@ -16,6 +16,9 @@ import {
   Panel,
   FileUpload,
   OptimizedVoxelRenderer,
+  SliceRenderer,
+  SliceControlPanel,
+  ViewModePanel,
   PlaybackControls,
   BackgroundLoadingIndicator,
   TimeSeriesPlot,
@@ -36,6 +39,7 @@ import {
 } from "@strata/ui";
 import type {
   VoxelRendererHandle,
+  SliceRendererHandle,
   VoxelGeometry,
   DownsampleMethod,
   ViewState,
@@ -208,8 +212,16 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
     showPerformanceMetrics,
   } = usePerformanceSettings();
 
+  // Slice view state
+  const mainViewMode = useSimulationStore((s) => s.viewMode);
+  const sliceAxis = useSimulationStore((s) => s.sliceAxis);
+  const slicePosition = useSimulationStore((s) => s.slicePosition);
+  const setMainViewMode = useSimulationStore((s) => s.setViewMode);
+  const setSliceAxis = useSimulationStore((s) => s.setSliceAxis);
+  const setSlicePosition = useSimulationStore((s) => s.setSlicePosition);
+
   // Local state
-  const [viewMode, setViewMode] = useState<"time" | "spectrum">("time");
+  const [bottomViewMode, setBottomViewMode] = useState<"time" | "spectrum">("time");
   const [showMetadata, setShowMetadata] = useState(false);
 
   // Derive selected probe from probe data
@@ -218,8 +230,9 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   const selectedProbe = selectedProbeOverride ?? probeNames[0] ?? null;
   const setSelectedProbe = (name: string | null) => setSelectedProbeOverride(name);
 
-  // Renderer ref for export
-  const rendererRef = useRef<VoxelRendererHandle>(null);
+  // Renderer refs for export
+  const voxelRendererRef = useRef<VoxelRendererHandle>(null);
+  const sliceRendererRef = useRef<SliceRendererHandle>(null);
 
   // Export hook
   const [exportState, exportActions] = useExport();
@@ -287,16 +300,23 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
 
   // Export callbacks
   const getCanvas = useCallback(() => {
-    return rendererRef.current?.getCanvas() ?? null;
-  }, []);
+    if (mainViewMode === "slice") {
+      return sliceRendererRef.current?.getCanvas() ?? null;
+    }
+    return voxelRendererRef.current?.getCanvas() ?? null;
+  }, [mainViewMode]);
 
   const renderFrameForExport = useCallback(
     async (frameIndex: number) => {
       await loadTimestep(frameIndex);
       await new Promise((resolve) => setTimeout(resolve, 50));
-      rendererRef.current?.render();
+      if (mainViewMode === "slice") {
+        sliceRendererRef.current?.render();
+      } else {
+        voxelRendererRef.current?.render();
+      }
     },
-    [loadTimestep]
+    [loadTimestep, mainViewMode]
   );
 
   const getViewState = useCallback((): ViewState => {
@@ -565,6 +585,24 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
             </Button>
           </Panel>
 
+          {/* View Mode (3D / Slice) */}
+          <ViewModePanel
+            mode={mainViewMode}
+            onModeChange={setMainViewMode}
+          />
+
+          {/* Slice Controls (visible when in slice mode) */}
+          {mainViewMode === "slice" && (
+            <SliceControlPanel
+              axis={sliceAxis}
+              position={slicePosition}
+              shape={shape}
+              resolution={resolution}
+              onAxisChange={setSliceAxis}
+              onPositionChange={setSlicePosition}
+            />
+          )}
+
           {/* Boundary Display */}
           <Panel title="Boundary Display">
             <div className="space-y-3">
@@ -747,25 +785,36 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
         </div>
       }
       main={
-        <OptimizedVoxelRenderer
-          ref={rendererRef}
-          pressure={pressure}
-          shape={shape}
-          resolution={resolution}
-          geometry={voxelGeometry}
-          threshold={threshold}
-          displayFill={displayFill}
-          showGrid={showGrid}
-          showAxes={showAxes}
-          showWireframe={showWireframe}
-          boundaryOpacity={boundaryOpacity}
-          demoType={"helmholtz" as DemoGeometryType}
-          enableDownsampling={enableDownsampling}
-          targetVoxels={targetVoxels}
-          downsampleMethod={downsampleMethod}
-          showPerformanceMetrics={showPerformanceMetrics}
-          onPerformanceUpdate={updatePerformanceMetrics}
-        />
+        mainViewMode === "slice" ? (
+          <SliceRenderer
+            ref={sliceRendererRef}
+            pressure={pressure}
+            shape={shape}
+            resolution={resolution}
+            axis={sliceAxis}
+            position={slicePosition}
+          />
+        ) : (
+          <OptimizedVoxelRenderer
+            ref={voxelRendererRef}
+            pressure={pressure}
+            shape={shape}
+            resolution={resolution}
+            geometry={voxelGeometry}
+            threshold={threshold}
+            displayFill={displayFill}
+            showGrid={showGrid}
+            showAxes={showAxes}
+            showWireframe={showWireframe}
+            boundaryOpacity={boundaryOpacity}
+            demoType={"helmholtz" as DemoGeometryType}
+            enableDownsampling={enableDownsampling}
+            targetVoxels={targetVoxels}
+            downsampleMethod={downsampleMethod}
+            showPerformanceMetrics={showPerformanceMetrics}
+            onPerformanceUpdate={updatePerformanceMetrics}
+          />
+        )
       }
       bottom={
         <BottomPanel
@@ -775,12 +824,12 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
           playbackSpeed={playbackSpeed}
           probeData={probeData}
           selectedProbe={selectedProbe}
-          viewMode={viewMode}
+          viewMode={bottomViewMode}
           currentTime={currentTime}
           onFrameChange={setCurrentFrame}
           onPlayingChange={handlePlayingChange}
           onTimeSelect={handleTimeSelect}
-          onViewModeChange={setViewMode}
+          onViewModeChange={setBottomViewMode}
           onSelectProbe={setSelectedProbe}
         />
       }
