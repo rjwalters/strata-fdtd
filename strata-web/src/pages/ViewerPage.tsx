@@ -40,6 +40,7 @@ import {
   useSourceData,
   usePerformanceSettings,
   useExport,
+  useSliceKeyboardNavigation,
 } from "@strata/ui";
 import type {
   VoxelRendererHandle,
@@ -241,6 +242,18 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
 
   // Geometry data
   const geometry = useSimulationStore((s) => s.geometry);
+
+  // Slice keyboard navigation
+  useSliceKeyboardNavigation({
+    enabled: mainViewMode === "slice" && isLoaded,
+    position: slicePosition,
+    axis: sliceAxis,
+    shape,
+    callbacks: {
+      onPositionChange: setSlicePosition,
+      onAxisChange: setSliceAxis,
+    },
+  });
 
   // Local state
   const [bottomViewMode, setBottomViewMode] = useState<"time" | "spectrum">("time");
