@@ -221,7 +221,7 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   const setSlicePosition = useSimulationStore((s) => s.setSlicePosition);
 
   // Local state
-  const [bottomViewMode, setBottomViewMode] = useState<"time" | "spectrum">("time");
+  const [bottomViewMode, setBottomViewMode] = useState<"time" | "spectrum" | "coherence">("time");
   const [showMetadata, setShowMetadata] = useState(false);
 
   // Derive selected probe from probe data
@@ -229,6 +229,18 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   const [selectedProbeOverride, setSelectedProbeOverride] = useState<string | null>(null);
   const selectedProbe = selectedProbeOverride ?? probeNames[0] ?? null;
   const setSelectedProbe = (name: string | null) => setSelectedProbeOverride(name);
+
+  // Coherence mode probe selection
+  const [referenceProbe, setReferenceProbe] = useState<string | null>(null);
+  const [measurementProbe, setMeasurementProbe] = useState<string | null>(null);
+
+  // Initialize coherence probes when probe data loads
+  useEffect(() => {
+    if (probeNames.length >= 2 && !referenceProbe && !measurementProbe) {
+      setReferenceProbe(probeNames[0]);
+      setMeasurementProbe(probeNames[1]);
+    }
+  }, [probeNames, referenceProbe, measurementProbe]);
 
   // Renderer refs for export
   const voxelRendererRef = useRef<VoxelRendererHandle>(null);
@@ -831,6 +843,10 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
           onTimeSelect={handleTimeSelect}
           onViewModeChange={setBottomViewMode}
           onSelectProbe={setSelectedProbe}
+          referenceProbe={referenceProbe}
+          measurementProbe={measurementProbe}
+          onReferenceProbeChange={setReferenceProbe}
+          onMeasurementProbeChange={setMeasurementProbe}
         />
       }
     />
@@ -947,13 +963,18 @@ interface BottomPanelProps {
   playbackSpeed: number;
   probeData: ReturnType<typeof useSimulationStore.getState>["probeData"];
   selectedProbe: string | null;
-  viewMode: "time" | "spectrum";
+  viewMode: "time" | "spectrum" | "coherence";
   currentTime?: number;
   onFrameChange: (frame: number) => void;
   onPlayingChange: (playing: boolean) => void;
   onTimeSelect: (time: number) => void;
-  onViewModeChange: (mode: "time" | "spectrum") => void;
+  onViewModeChange: (mode: "time" | "spectrum" | "coherence") => void;
   onSelectProbe: (name: string | null) => void;
+  // Coherence mode props
+  referenceProbe: string | null;
+  measurementProbe: string | null;
+  onReferenceProbeChange: (name: string) => void;
+  onMeasurementProbeChange: (name: string) => void;
 }
 
 function BottomPanel({
@@ -970,6 +991,10 @@ function BottomPanel({
   onTimeSelect,
   onViewModeChange,
   onSelectProbe,
+  referenceProbe,
+  measurementProbe,
+  onReferenceProbeChange,
+  onMeasurementProbeChange,
 }: BottomPanelProps) {
   const probeNames = probeData ? Object.keys(probeData.probes) : [];
 
@@ -992,6 +1017,16 @@ function BottomPanel({
             onClick={() => onViewModeChange("spectrum")}
           >
             Spectrum
+          </Button>
+          <Button
+            variant={viewMode === "coherence" ? "default" : "outline"}
+            size="sm"
+            className="text-xs h-6"
+            onClick={() => onViewModeChange("coherence")}
+            disabled={probeNames.length < 2}
+            title={probeNames.length < 2 ? "Requires 2+ probes" : ""}
+          >
+            Coherence
           </Button>
         </div>
         {viewMode === "spectrum" && probeNames.length > 0 && (
@@ -1022,6 +1057,17 @@ function BottomPanel({
             currentTime={currentTime}
             onTimeSelect={onTimeSelect}
           />
+        ) : viewMode === "coherence" ? (
+          <SpectrumPlot
+            data={new Float32Array(0)}
+            sampleRate={probeData.sampleRate}
+            analysisMode="coherence"
+            probes={probeData.probes}
+            referenceProbe={referenceProbe}
+            measurementProbe={measurementProbe}
+            onReferenceProbeChange={onReferenceProbeChange}
+            onMeasurementProbeChange={onMeasurementProbeChange}
+          />
         ) : (
           <SpectrumPlot
             data={
@@ -1030,6 +1076,7 @@ function BottomPanel({
                 : new Float32Array(0)
             }
             sampleRate={probeData.sampleRate}
+            analysisMode="spectrum"
           />
         )}
       </div>

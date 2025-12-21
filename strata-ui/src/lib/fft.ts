@@ -115,6 +115,240 @@ export function nextPowerOf2(n: number): number {
 }
 
 // =============================================================================
+// Welch's Method and Coherence Analysis
+// =============================================================================
+
+/**
+ * Result of coherence analysis between two signals.
+ */
+export interface CoherenceResult {
+  /** Frequency bins in Hz */
+  frequencies: Float32Array;
+  /** Coherence values (0-1) at each frequency */
+  coherence: Float32Array;
+  /** Transfer function magnitude at each frequency */
+  transferMagnitude: Float32Array;
+  /** Transfer function phase in radians at each frequency */
+  transferPhase: Float32Array;
+}
+
+/**
+ * Apply Hanning window to a segment of data.
+ * @param data - Input data segment
+ * @param output - Output array (same length as data)
+ */
+function applyHanningWindow(data: Float32Array, output: Float32Array): void {
+  const n = data.length;
+  for (let i = 0; i < n; i++) {
+    const window = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (n - 1)));
+    output[i] = data[i] * window;
+  }
+}
+
+/**
+ * Compute FFT of real-valued Float32Array input.
+ * Returns complex output as interleaved [re0, im0, re1, im1, ...] array.
+ */
+function realFFTFloat32(input: Float32Array, n: number): Float32Array {
+  // Pad or truncate to size n
+  const padded = new Float32Array(n);
+  for (let i = 0; i < Math.min(input.length, n); i++) {
+    padded[i] = input[i];
+  }
+
+  // Bit-reversal permutation
+  const bits = Math.log2(n);
+  const re = new Float32Array(n);
+  const im = new Float32Array(n);
+
+  for (let i = 0; i < n; i++) {
+    const j = bitReverse(i, bits);
+    re[j] = padded[i];
+  }
+
+  // Cooley-Tukey FFT
+  for (let size = 2; size <= n; size *= 2) {
+    const halfSize = size / 2;
+    const angleStep = (-2 * Math.PI) / size;
+
+    for (let i = 0; i < n; i += size) {
+      for (let j = 0; j < halfSize; j++) {
+        const angle = angleStep * j;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+
+        const evenIdx = i + j;
+        const oddIdx = i + j + halfSize;
+
+        const tRe = cos * re[oddIdx] - sin * im[oddIdx];
+        const tIm = sin * re[oddIdx] + cos * im[oddIdx];
+
+        re[oddIdx] = re[evenIdx] - tRe;
+        im[oddIdx] = im[evenIdx] - tIm;
+        re[evenIdx] = re[evenIdx] + tRe;
+        im[evenIdx] = im[evenIdx] + tIm;
+      }
+    }
+  }
+
+  // Interleave real and imaginary parts
+  const out = new Float32Array(n * 2);
+  for (let i = 0; i < n; i++) {
+    out[2 * i] = re[i];
+    out[2 * i + 1] = im[i];
+  }
+
+  return out;
+}
+
+/**
+ * Compute coherence function between two signals using Welch's method.
+ *
+ * Coherence γ²(f) measures the linear relationship between input and output:
+ * γ²(f) = |Sxy(f)|² / (Sxx(f) * Syy(f))
+ *
+ * Where:
+ * - Sxy(f) = Cross-spectral density between x and y
+ * - Sxx(f) = Power spectral density of x (reference/input)
+ * - Syy(f) = Power spectral density of y (measurement/output)
+ *
+ * @param reference - Reference signal (input/source) as Float32Array
+ * @param measurement - Measurement signal (output/probe) as Float32Array
+ * @param sampleRate - Sample rate in Hz
+ * @param segmentSize - Size of each segment for Welch's method (default: 4096)
+ * @param overlap - Overlap ratio between segments (default: 0.5 = 50%)
+ * @returns Coherence result with frequencies, coherence, and transfer function
+ */
+export function computeCoherence(
+  reference: Float32Array,
+  measurement: Float32Array,
+  sampleRate: number,
+  segmentSize: number = 4096,
+  overlap: number = 0.5
+): CoherenceResult {
+  // Ensure segment size is power of 2
+  const nfft = nextPowerOf2(segmentSize);
+  const hopSize = Math.floor(nfft * (1 - overlap));
+
+  // Determine number of segments (use shorter signal length)
+  const signalLength = Math.min(reference.length, measurement.length);
+  const numSegments = Math.max(1, Math.floor((signalLength - nfft) / hopSize) + 1);
+
+  // Number of positive frequencies (up to Nyquist)
+  const numFreqs = nfft / 2;
+
+  // Accumulators for spectral estimates (complex for Sxy, real for Sxx/Syy)
+  const SxxSum = new Float32Array(numFreqs);
+  const SyySum = new Float32Array(numFreqs);
+  const SxyRealSum = new Float32Array(numFreqs);
+  const SxyImagSum = new Float32Array(numFreqs);
+
+  // Temporary arrays for windowed segments
+  const windowedRef = new Float32Array(nfft);
+  const windowedMeas = new Float32Array(nfft);
+
+  // Process each segment
+  for (let seg = 0; seg < numSegments; seg++) {
+    const start = seg * hopSize;
+
+    // Extract and window segments
+    const refSegment = reference.subarray(start, start + nfft);
+    const measSegment = measurement.subarray(start, start + nfft);
+
+    // Apply Hanning window
+    applyHanningWindow(refSegment, windowedRef);
+    applyHanningWindow(measSegment, windowedMeas);
+
+    // Compute FFTs
+    const refFFT = realFFTFloat32(windowedRef, nfft);
+    const measFFT = realFFTFloat32(windowedMeas, nfft);
+
+    // Accumulate spectral estimates for positive frequencies
+    for (let i = 0; i < numFreqs; i++) {
+      const refRe = refFFT[2 * i];
+      const refIm = refFFT[2 * i + 1];
+      const measRe = measFFT[2 * i];
+      const measIm = measFFT[2 * i + 1];
+
+      // Sxx = |X|² = X * conj(X)
+      SxxSum[i] += refRe * refRe + refIm * refIm;
+
+      // Syy = |Y|² = Y * conj(Y)
+      SyySum[i] += measRe * measRe + measIm * measIm;
+
+      // Sxy = Y * conj(X) = (measRe + j*measIm) * (refRe - j*refIm)
+      // Real part: measRe*refRe + measIm*refIm
+      // Imag part: measIm*refRe - measRe*refIm
+      SxyRealSum[i] += measRe * refRe + measIm * refIm;
+      SxyImagSum[i] += measIm * refRe - measRe * refIm;
+    }
+  }
+
+  // Compute final results
+  const frequencies = new Float32Array(numFreqs);
+  const coherence = new Float32Array(numFreqs);
+  const transferMagnitude = new Float32Array(numFreqs);
+  const transferPhase = new Float32Array(numFreqs);
+
+  const epsilon = 1e-10; // Small value to avoid division by zero
+
+  for (let i = 0; i < numFreqs; i++) {
+    frequencies[i] = (i * sampleRate) / nfft;
+
+    const Sxx = SxxSum[i] / numSegments;
+    const Syy = SyySum[i] / numSegments;
+    const SxyReal = SxyRealSum[i] / numSegments;
+    const SxyImag = SxyImagSum[i] / numSegments;
+
+    // |Sxy|² = SxyReal² + SxyImag²
+    const SxyMagSq = SxyReal * SxyReal + SxyImag * SxyImag;
+
+    // γ²(f) = |Sxy|² / (Sxx * Syy)
+    const denominator = Sxx * Syy;
+    if (denominator > epsilon) {
+      coherence[i] = SxyMagSq / denominator;
+      // Clamp to [0, 1] to handle numerical errors
+      coherence[i] = Math.max(0, Math.min(1, coherence[i]));
+    } else {
+      coherence[i] = 0;
+    }
+
+    // Transfer function H(f) = Sxy / Sxx
+    if (Sxx > epsilon) {
+      const HReal = SxyReal / Sxx;
+      const HImag = SxyImag / Sxx;
+      transferMagnitude[i] = Math.sqrt(HReal * HReal + HImag * HImag);
+      transferPhase[i] = Math.atan2(HImag, HReal);
+    } else {
+      transferMagnitude[i] = 0;
+      transferPhase[i] = 0;
+    }
+  }
+
+  return {
+    frequencies,
+    coherence,
+    transferMagnitude,
+    transferPhase,
+  };
+}
+
+/**
+ * Compute transfer function magnitude in decibels.
+ * @param transferMagnitude - Linear magnitude from computeCoherence
+ * @returns Magnitude in dB (20 * log10(magnitude))
+ */
+export function transferMagnitudeToDb(
+  transferMagnitude: Float32Array
+): Float32Array {
+  const db = new Float32Array(transferMagnitude.length);
+  for (let i = 0; i < transferMagnitude.length; i++) {
+    db[i] = 20 * Math.log10(Math.max(transferMagnitude[i], 1e-10));
+  }
+  return db;
+}
+
+// =============================================================================
 // Web Worker Support
 // =============================================================================
 

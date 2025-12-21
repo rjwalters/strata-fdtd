@@ -65,6 +65,7 @@ export { ViewerHelpModal } from './components/visualization/ViewerHelpModal'
 export { BuilderHelpModal } from './components/visualization/BuilderHelpModal'
 export { Spectrogram } from './components/visualization/Spectrogram'
 export { SpectrumPlot } from './components/visualization/SpectrumPlot'
+export type { SpectrumPlotProps, FrequencyMarker, AnalysisMode, ProbeRecord } from './components/visualization/SpectrumPlot'
 export { ThreeViewer } from './components/visualization/ThreeViewer'
 export { TimeSeriesPlot } from './components/visualization/TimeSeriesPlot'
 // VideoExportButton moved to strata-web (requires useVideoExport/FFmpeg)
@@ -142,6 +143,10 @@ export {
   nextPowerOf2,
   terminateFFTWorker,
   hasWorkerSupport as fftHasWorkerSupport,
+  // Coherence analysis
+  computeCoherence,
+  transferMagnitudeToDb,
+  type CoherenceResult,
 } from './lib/fft'
 
 // Export utilities

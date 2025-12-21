@@ -1,6 +1,6 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import * as d3 from "d3";
-import { computeSpectrum, computeSpectrumAsync } from "@/lib/fft";
+import { computeSpectrum, computeSpectrumAsync, computeCoherence, type CoherenceResult } from "@/lib/fft";
 import { logBinDownsample, WORKER_THRESHOLD } from "@/lib/downsample";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,12 +11,38 @@ export interface FrequencyMarker {
   label: string;
 }
 
-export interface SpectrumPlotProps {
+/** Analysis mode for the spectrum plot */
+export type AnalysisMode = "spectrum" | "coherence";
+
+/** Probe data structure for coherence analysis */
+export interface ProbeRecord {
+  position: [number, number, number];
   data: Float32Array;
+}
+
+export interface SpectrumPlotProps {
+  /** Single probe data for spectrum mode */
+  data: Float32Array;
+  /** Sample rate in Hz */
   sampleRate: number;
+  /** FFT size (defaults to next power of 2) */
   nfft?: number;
+  /** Use logarithmic (dB) scale */
   logScale?: boolean;
+  /** Frequency markers to display */
   markers?: FrequencyMarker[];
+  /** Analysis mode: spectrum or coherence */
+  analysisMode?: AnalysisMode;
+  /** All available probes for coherence analysis */
+  probes?: Record<string, ProbeRecord>;
+  /** Selected reference probe name for coherence */
+  referenceProbe?: string | null;
+  /** Selected measurement probe name for coherence */
+  measurementProbe?: string | null;
+  /** Callback when reference probe changes */
+  onReferenceProbeChange?: (name: string) => void;
+  /** Callback when measurement probe changes */
+  onMeasurementProbeChange?: (name: string) => void;
 }
 
 const MARGIN = { top: 10, right: 20, bottom: 30, left: 50 };
@@ -107,6 +133,12 @@ export function SpectrumPlot({
   nfft,
   logScale: initialLogScale = true,
   markers = [],
+  analysisMode = "spectrum",
+  probes,
+  referenceProbe,
+  measurementProbe,
+  onReferenceProbeChange,
+  onMeasurementProbeChange,
 }: SpectrumPlotProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -118,12 +150,20 @@ export function SpectrumPlot({
     frequencies: Float32Array;
     magnitude: Float32Array;
   } | null>(null);
+  const [coherenceResult, setCoherenceResult] = useState<CoherenceResult | null>(null);
   const [isComputing, setIsComputing] = useState(false);
   // Track brush state to suppress tooltip during drag
   const isBrushingRef = useRef(false);
 
-  // Compute spectrum - use async for large datasets
+  // Available probe names for coherence mode
+  const probeNames = useMemo(() => probes ? Object.keys(probes) : [], [probes]);
+
+  // Compute spectrum - use async for large datasets (spectrum mode only)
   useEffect(() => {
+    if (analysisMode !== "spectrum") {
+      return;
+    }
+
     if (data.length === 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSpectrum(null);
@@ -158,7 +198,53 @@ export function SpectrumPlot({
     return () => {
       cancelled = true;
     };
-  }, [data, sampleRate, nfft]);
+  }, [data, sampleRate, nfft, analysisMode]);
+
+  // Compute coherence (coherence mode only)
+  useEffect(() => {
+    if (analysisMode !== "coherence") {
+      setCoherenceResult(null);
+      return;
+    }
+
+    if (!probes || !referenceProbe || !measurementProbe) {
+      setCoherenceResult(null);
+      return;
+    }
+
+    const refProbe = probes[referenceProbe];
+    const measProbe = probes[measurementProbe];
+
+    if (!refProbe || !measProbe || refProbe.data.length === 0 || measProbe.data.length === 0) {
+      setCoherenceResult(null);
+      return;
+    }
+
+    setIsComputing(true);
+
+    // Use requestAnimationFrame to avoid blocking main thread
+    const frameId = requestAnimationFrame(() => {
+      try {
+        const result = computeCoherence(
+          refProbe.data,
+          measProbe.data,
+          sampleRate,
+          4096, // segment size
+          0.5   // 50% overlap
+        );
+        setCoherenceResult(result);
+      } catch (error) {
+        console.error("Coherence computation error:", error);
+        setCoherenceResult(null);
+      } finally {
+        setIsComputing(false);
+      }
+    });
+
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [analysisMode, probes, referenceProbe, measurementProbe, sampleRate]);
 
   // Find peaks (cached based on spectrum)
   const [peaks, setPeaks] = useState<PeakInfo[]>([]);
@@ -567,7 +653,353 @@ export function SpectrumPlot({
       .on("dblclick", () => {
         setZoomDomain(null);
       });
-  }, [dimensions, spectrum, logScale, markers, peaks, showPeaks, sampleRate, zoomDomain]);
+  }, [dimensions, spectrum, logScale, markers, peaks, showPeaks, sampleRate, zoomDomain, analysisMode]);
+
+  // Render coherence chart (coherence mode)
+  useEffect(() => {
+    if (analysisMode !== "coherence") return;
+    if (!svgRef.current || dimensions.width === 0 || !coherenceResult) return;
+
+    const svg = d3.select(svgRef.current);
+    svg.selectAll("*").remove();
+
+    const width = dimensions.width - MARGIN.left - MARGIN.right;
+    const height = dimensions.height - MARGIN.top - MARGIN.bottom;
+
+    if (width <= 0 || height <= 0) return;
+
+    const { frequencies, coherence, transferMagnitude } = coherenceResult;
+
+    // Default frequency range (audible or simulation range)
+    const defaultMaxFreq = Math.min(sampleRate / 2, 20000);
+    const defaultMinFreq = 20;
+    const [minFreq, maxFreq] = zoomDomain ?? [defaultMinFreq, defaultMaxFreq];
+
+    // Find indices for frequency range
+    let startIdx = 0;
+    let endIdx = frequencies.length - 1;
+    for (let i = 0; i < frequencies.length; i++) {
+      if (frequencies[i] >= minFreq) {
+        startIdx = i;
+        break;
+      }
+    }
+    for (let i = frequencies.length - 1; i >= 0; i--) {
+      if (frequencies[i] <= maxFreq) {
+        endIdx = i;
+        break;
+      }
+    }
+
+    // Create scales
+    const xScale = d3
+      .scaleLog()
+      .domain([Math.max(minFreq, frequencies[startIdx] || 1), maxFreq])
+      .range([0, width])
+      .clamp(true);
+
+    // Coherence scale: 0-1 (left axis)
+    const yScaleCoherence = d3.scaleLinear().domain([0, 1]).range([height, 0]);
+
+    // Transfer function scale: dB (right axis)
+    const refMag = Math.max(...transferMagnitude.subarray(startIdx, endIdx + 1));
+    const transferDb = Float32Array.from(transferMagnitude, (v) =>
+      20 * Math.log10(Math.max(v / refMag, 1e-10))
+    );
+    const yScaleTransfer = d3.scaleLinear().domain([-40, 10]).range([height, 0]);
+
+    // Create main group
+    const g = svg
+      .append("g")
+      .attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
+
+    // X-axis
+    const xAxis = d3
+      .axisBottom(xScale)
+      .ticks(5, ",.0f")
+      .tickFormat((d) => {
+        const val = +d;
+        if (val >= 1000) return `${val / 1000}k`;
+        return `${val}`;
+      });
+
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(xAxis)
+      .selectAll("text")
+      .style("fill", "hsl(var(--muted-foreground))");
+
+    // X-axis label
+    g.append("text")
+      .attr("x", width / 2)
+      .attr("y", height + 25)
+      .attr("text-anchor", "middle")
+      .attr("fill", "hsl(var(--muted-foreground))")
+      .attr("font-size", "10px")
+      .text("Frequency (Hz)");
+
+    // Left Y-axis (Coherence)
+    const yAxisCoherence = d3
+      .axisLeft(yScaleCoherence)
+      .ticks(5)
+      .tickFormat((d) => `${(+d * 100).toFixed(0)}%`);
+
+    g.append("g")
+      .call(yAxisCoherence)
+      .selectAll("text")
+      .style("fill", "hsl(var(--primary))");
+
+    // Right Y-axis (Transfer function)
+    const yAxisTransfer = d3
+      .axisRight(yScaleTransfer)
+      .ticks(5)
+      .tickFormat((d) => `${d}dB`);
+
+    g.append("g")
+      .attr("transform", `translate(${width},0)`)
+      .call(yAxisTransfer)
+      .selectAll("text")
+      .style("fill", "hsl(var(--accent-foreground))");
+
+    // Style axis lines
+    g.selectAll(".domain, .tick line").style("stroke", "hsl(var(--border))");
+
+    // Add grid lines (based on coherence scale)
+    g.append("g")
+      .attr("class", "grid")
+      .selectAll("line")
+      .data(yScaleCoherence.ticks(5))
+      .join("line")
+      .attr("x1", 0)
+      .attr("x2", width)
+      .attr("y1", (d) => yScaleCoherence(d))
+      .attr("y2", (d) => yScaleCoherence(d))
+      .attr("stroke", "hsl(var(--border))")
+      .attr("stroke-opacity", 0.3);
+
+    // Build coherence path data
+    const coherencePathData: [number, number][] = [];
+    for (let i = startIdx; i <= endIdx; i++) {
+      const x = xScale(frequencies[i]);
+      const y = yScaleCoherence(coherence[i]);
+      if (isFinite(x) && isFinite(y)) {
+        coherencePathData.push([x, y]);
+      }
+    }
+
+    // Build transfer function path data
+    const transferPathData: [number, number][] = [];
+    for (let i = startIdx; i <= endIdx; i++) {
+      const x = xScale(frequencies[i]);
+      const y = yScaleTransfer(transferDb[i]);
+      if (isFinite(x) && isFinite(y)) {
+        transferPathData.push([x, y]);
+      }
+    }
+
+    const line = d3.line().x((d) => d[0]).y((d) => d[1]);
+
+    // Draw transfer function line (secondary, behind coherence)
+    g.append("path")
+      .attr("fill", "none")
+      .attr("stroke", "hsl(var(--accent))")
+      .attr("stroke-width", 1)
+      .attr("stroke-opacity", 0.6)
+      .attr("d", line(transferPathData));
+
+    // Draw coherence line (primary)
+    g.append("path")
+      .attr("fill", "none")
+      .attr("stroke", "hsl(var(--primary))")
+      .attr("stroke-width", 2)
+      .attr("d", line(coherencePathData));
+
+    // Add threshold line at 0.5 coherence
+    g.append("line")
+      .attr("x1", 0)
+      .attr("x2", width)
+      .attr("y1", yScaleCoherence(0.5))
+      .attr("y2", yScaleCoherence(0.5))
+      .attr("stroke", "hsl(var(--warning, var(--destructive)))")
+      .attr("stroke-width", 1)
+      .attr("stroke-dasharray", "4,4")
+      .attr("stroke-opacity", 0.5);
+
+    // Create tooltip
+    const tooltip = g
+      .append("g")
+      .attr("class", "tooltip")
+      .style("display", "none");
+
+    tooltip
+      .append("rect")
+      .attr("fill", "hsl(var(--popover))")
+      .attr("stroke", "hsl(var(--border))")
+      .attr("rx", 4)
+      .attr("ry", 4);
+
+    const tooltipText = tooltip
+      .append("text")
+      .attr("fill", "hsl(var(--popover-foreground))")
+      .attr("font-size", "11px")
+      .attr("font-family", "monospace");
+
+    const hoverLine = g
+      .append("line")
+      .attr("stroke", "hsl(var(--muted-foreground))")
+      .attr("stroke-width", 1)
+      .attr("stroke-dasharray", "2,2")
+      .style("display", "none");
+
+    // Helper to find values at frequency
+    const getValuesAtFreq = (freq: number) => {
+      let closestIdx = startIdx;
+      let minDiff = Math.abs(frequencies[startIdx] - freq);
+      for (let i = startIdx; i <= endIdx; i++) {
+        const diff = Math.abs(frequencies[i] - freq);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIdx = i;
+        }
+      }
+      return {
+        coherence: coherence[closestIdx],
+        transferDb: transferDb[closestIdx],
+      };
+    };
+
+    // Brush for zoom
+    const brush = d3
+      .brushX<unknown>()
+      .extent([
+        [0, 0],
+        [width, height],
+      ])
+      .on("start", () => {
+        isBrushingRef.current = true;
+        tooltip.style("display", "none");
+        hoverLine.style("display", "none");
+      })
+      .on("end", (event: d3.D3BrushEvent<unknown>) => {
+        isBrushingRef.current = false;
+        if (!event.selection) return;
+        const [x0, x1] = (event.selection as [number, number]).map(xScale.invert);
+        if (Math.abs((event.selection as [number, number])[1] - (event.selection as [number, number])[0]) > 5) {
+          setZoomDomain([x0, x1]);
+        }
+        g.select<SVGGElement>(".brush").call(brush.move, null);
+      });
+
+    g.append("g")
+      .attr("class", "brush")
+      .call(brush)
+      .selectAll(".selection")
+      .style("fill", "hsl(var(--primary))")
+      .style("fill-opacity", 0.2)
+      .style("stroke", "hsl(var(--primary))");
+
+    // Interaction overlay
+    g.append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("fill", "transparent")
+      .style("cursor", "crosshair")
+      .style("pointer-events", "all")
+      .lower()
+      .on("mousemove", (event) => {
+        if (isBrushingRef.current) return;
+
+        const [x] = d3.pointer(event);
+        const freq = xScale.invert(x);
+
+        if (freq < minFreq || freq > maxFreq) {
+          tooltip.style("display", "none");
+          hoverLine.style("display", "none");
+          return;
+        }
+
+        hoverLine
+          .attr("x1", x)
+          .attr("x2", x)
+          .attr("y1", 0)
+          .attr("y2", height)
+          .style("display", null);
+
+        const values = getValuesAtFreq(freq);
+        const freqStr = freq >= 1000 ? `${(freq / 1000).toFixed(2)} kHz` : `${freq.toFixed(1)} Hz`;
+        const coherenceStr = `γ²: ${(values.coherence * 100).toFixed(1)}%`;
+        const transferStr = `H: ${values.transferDb.toFixed(1)} dB`;
+
+        tooltipText.selectAll("tspan").remove();
+        [freqStr, coherenceStr, transferStr].forEach((line, i) => {
+          tooltipText
+            .append("tspan")
+            .attr("x", 8)
+            .attr("dy", i === 0 ? 14 : 14)
+            .text(line);
+        });
+
+        const textBox = (tooltipText.node() as SVGTextElement).getBBox();
+        tooltip
+          .select("rect")
+          .attr("width", textBox.width + 16)
+          .attr("height", textBox.height + 8)
+          .attr("y", 2);
+
+        const tooltipWidth = textBox.width + 16;
+        const tooltipX = x + 15 + tooltipWidth > width ? x - tooltipWidth - 10 : x + 15;
+        const tooltipY = Math.min(10, height - textBox.height - 20);
+        tooltip.attr("transform", `translate(${tooltipX},${tooltipY})`).style("display", null);
+      })
+      .on("mouseleave", () => {
+        tooltip.style("display", "none");
+        hoverLine.style("display", "none");
+      })
+      .on("dblclick", () => {
+        setZoomDomain(null);
+      });
+
+    // Legend
+    const legend = g
+      .append("g")
+      .attr("class", "legend")
+      .attr("transform", `translate(${width - 100}, 10)`);
+
+    legend
+      .append("line")
+      .attr("x1", 0)
+      .attr("x2", 20)
+      .attr("y1", 0)
+      .attr("y2", 0)
+      .attr("stroke", "hsl(var(--primary))")
+      .attr("stroke-width", 2);
+
+    legend
+      .append("text")
+      .attr("x", 25)
+      .attr("y", 4)
+      .attr("fill", "hsl(var(--foreground))")
+      .attr("font-size", "10px")
+      .text("Coherence");
+
+    legend
+      .append("line")
+      .attr("x1", 0)
+      .attr("x2", 20)
+      .attr("y1", 15)
+      .attr("y2", 15)
+      .attr("stroke", "hsl(var(--accent))")
+      .attr("stroke-width", 1)
+      .attr("stroke-opacity", 0.6);
+
+    legend
+      .append("text")
+      .attr("x", 25)
+      .attr("y", 19)
+      .attr("fill", "hsl(var(--foreground))")
+      .attr("font-size", "10px")
+      .text("Transfer Fn");
+  }, [dimensions, coherenceResult, sampleRate, zoomDomain, analysisMode]);
 
   // Format frequency for display
   const formatFreq = useCallback((freq: number) => {
@@ -580,11 +1012,19 @@ export function SpectrumPlot({
     setZoomDomain(null);
   }, []);
 
+  // Title based on mode
+  const title = analysisMode === "coherence" ? "Coherence Analysis" : "Frequency Spectrum";
+
+  // Whether coherence mode is ready (has required probes selected)
+  const coherenceReady = analysisMode === "coherence" &&
+    referenceProbe && measurementProbe &&
+    referenceProbe !== measurementProbe;
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-muted-foreground">Frequency Spectrum</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground">{title}</h3>
           {zoomDomain && (
             <Badge
               variant="outline"
@@ -595,41 +1035,101 @@ export function SpectrumPlot({
             </Badge>
           )}
         </div>
-        <div className="flex gap-1">
-          <Button
-            variant={logScale ? "default" : "outline"}
-            size="sm"
-            className="text-xs h-6 px-2"
-            onClick={() => setLogScale(true)}
-          >
-            dB
-          </Button>
-          <Button
-            variant={!logScale ? "default" : "outline"}
-            size="sm"
-            className="text-xs h-6 px-2"
-            onClick={() => setLogScale(false)}
-          >
-            Linear
-          </Button>
-          <Button
-            variant={showPeaks ? "default" : "outline"}
-            size="sm"
-            className="text-xs h-6 px-2"
-            onClick={() => setShowPeaks(!showPeaks)}
-          >
-            Peaks
-          </Button>
-        </div>
+        {analysisMode === "spectrum" && (
+          <div className="flex gap-1">
+            <Button
+              variant={logScale ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-6 px-2"
+              onClick={() => setLogScale(true)}
+            >
+              dB
+            </Button>
+            <Button
+              variant={!logScale ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-6 px-2"
+              onClick={() => setLogScale(false)}
+            >
+              Linear
+            </Button>
+            <Button
+              variant={showPeaks ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-6 px-2"
+              onClick={() => setShowPeaks(!showPeaks)}
+            >
+              Peaks
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* Coherence mode: probe selection */}
+      {analysisMode === "coherence" && probeNames.length >= 2 && (
+        <div className="flex items-center gap-4 mb-2 text-xs">
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Reference:</span>
+            <div className="flex gap-1">
+              {probeNames.map((name) => (
+                <Badge
+                  key={`ref-${name}`}
+                  variant={referenceProbe === name ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => onReferenceProbeChange?.(name)}
+                >
+                  {name}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">Measurement:</span>
+            <div className="flex gap-1">
+              {probeNames.map((name) => (
+                <Badge
+                  key={`meas-${name}`}
+                  variant={measurementProbe === name ? "default" : "outline"}
+                  className={`cursor-pointer ${name === referenceProbe ? "opacity-50" : ""}`}
+                  onClick={() => name !== referenceProbe && onMeasurementProbeChange?.(name)}
+                >
+                  {name}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Coherence mode: not enough probes warning */}
+      {analysisMode === "coherence" && probeNames.length < 2 && (
+        <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
+          Coherence analysis requires at least 2 probes
+        </div>
+      )}
+
+      {/* Coherence mode: same probe selected warning */}
+      {analysisMode === "coherence" && referenceProbe && measurementProbe && referenceProbe === measurementProbe && (
+        <div className="flex items-center justify-center py-2 text-xs text-warning">
+          Select different probes for reference and measurement
+        </div>
+      )}
+
       <div ref={containerRef} className="flex-1 min-h-0 relative">
         <svg ref={svgRef} width={dimensions.width} height={dimensions.height} />
         {isComputing && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/50">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">Computing spectrum...</span>
+              <span className="text-sm">
+                {analysisMode === "coherence" ? "Computing coherence..." : "Computing spectrum..."}
+              </span>
             </div>
+          </div>
+        )}
+        {analysisMode === "coherence" && !coherenceReady && !isComputing && probeNames.length >= 2 && (
+          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
+            Select reference and measurement probes above
           </div>
         )}
       </div>
