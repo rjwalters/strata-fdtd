@@ -20,6 +20,7 @@ from strata_fdtd.boundaries import PML, RadiationImpedance, RigidBoundary
 from strata_fdtd.core.grid import NonuniformGrid, UniformGrid
 from strata_fdtd.core.solver import (
     POLAR_PATTERNS,
+    CircularMembraneSource,
     FDTDSolver,
     GaussianPulse,
     MembraneSource,
@@ -66,6 +67,7 @@ __all__ = [
     "BatchedGPUFDTDSolver",
     "GaussianPulse",
     "MembraneSource",
+    "CircularMembraneSource",
     "Probe",
     "Microphone",
     "POLAR_PATTERNS",
