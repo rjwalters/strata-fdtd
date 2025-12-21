@@ -554,6 +554,207 @@ class CircularMembraneSource(MembraneSource):
         return weights
 
 
+@dataclass(kw_only=True)
+class RectangularMembraneSource(MembraneSource):
+    """Rectangular membrane source with sinusoidal mode shapes.
+
+    Models square/rectangular vibrating panels, planar drivers,
+    and rectangular acoustic elements. The pressure injection at each
+    grid cell is modulated by sinusoidal mode shapes, which accurately
+    represent how rectangular membranes vibrate when clamped at all edges.
+
+    Physics:
+        A rectangular membrane clamped at all edges has displacement:
+
+            u(x, y, t) = sin(mπx/Lx) · sin(nπy/Ly) · cos(ωₘₙ t)
+
+        Where:
+        - Lx, Ly are the membrane dimensions
+        - m, n are mode indices (m >= 1, n >= 1)
+        - Origin at membrane center for this implementation
+
+        For the fundamental mode (1,1):
+        - Maximum at center: u(0, 0) = sin(π/2) * sin(π/2) = 1
+        - Zero at all four edges
+
+    Args:
+        center: Physical coordinates (x, y, z) of membrane center in meters
+        size: (width, height) dimensions in meters, in the membrane plane
+        normal_axis: Axis perpendicular to membrane plane ('x', 'y', or 'z')
+        waveform: Temporal waveform object (must have .waveform(t, dt) method)
+        mode: Mode indices (m, n) where m, n >= 1. Default (1, 1) fundamental
+        injection_type: 'pressure' or 'velocity' (default: 'pressure')
+
+    Example:
+        >>> from strata_fdtd import GaussianPulse
+        >>> from strata_fdtd.core.solver import RectangularMembraneSource
+        >>> # Planar subwoofer driver (20cm x 20cm)
+        >>> driver = RectangularMembraneSource(
+        ...     center=(0.15, 0.01, 0.15),
+        ...     size=(0.20, 0.20),
+        ...     normal_axis='y',
+        ...     waveform=GaussianPulse(position=(0,0,0), frequency=60),
+        ... )
+        >>> # Rectangular wall panel (60cm x 90cm)
+        >>> panel = RectangularMembraneSource(
+        ...     center=(2.0, 0.0, 1.5),
+        ...     size=(0.6, 0.9),
+        ...     normal_axis='y',
+        ...     waveform=GaussianPulse(position=(0,0,0), frequency=100),
+        ... )
+    """
+
+    size: tuple[float, float]  # (width, height) in membrane plane
+    mode: tuple[int, int] = (1, 1)  # Override default to (1, 1) for rectangular
+
+    def __post_init__(self) -> None:
+        """Validate mode indices for rectangular membrane."""
+        m, n = self.mode
+        if m < 1:
+            raise ValueError(f"Mode index m must be >= 1, got {m}")
+        if n < 1:
+            raise ValueError(f"Mode index n must be >= 1, got {n}")
+
+    def _grid_to_rectangular_coords(
+        self, grid: UniformGrid | NonuniformGrid
+    ) -> tuple[NDArray, NDArray, int]:
+        """Convert grid coordinates to membrane-local (u, v) coordinates.
+
+        Args:
+            grid: The simulation grid
+
+        Returns:
+            Tuple of (u, v, plane_idx) where:
+            - u: 3D array of offsets in first membrane axis (meters)
+            - v: 3D array of offsets in second membrane axis (meters)
+            - plane_idx: Grid index of the plane containing the membrane
+        """
+        x, y, z = np.meshgrid(
+            grid.x_coords, grid.y_coords, grid.z_coords, indexing='ij'
+        )
+
+        cx, cy, cz = self.center
+
+        if self.normal_axis == 'z':
+            # Membrane in x-y plane
+            u = x - cx
+            v = y - cy
+            plane_idx = int(np.argmin(np.abs(grid.z_coords - cz)))
+        elif self.normal_axis == 'y':
+            # Membrane in x-z plane
+            u = x - cx
+            v = z - cz
+            plane_idx = int(np.argmin(np.abs(grid.y_coords - cy)))
+        else:  # normal_axis == 'x'
+            # Membrane in y-z plane
+            u = y - cy
+            v = z - cz
+            plane_idx = int(np.argmin(np.abs(grid.x_coords - cx)))
+
+        return u, v, plane_idx
+
+    def mode_shape(self, u: NDArray, v: NDArray) -> NDArray:
+        """Compute sinusoidal mode shape at local coordinates.
+
+        The mode shape uses sin functions with the origin at the membrane
+        center. For mode (m, n), the shape is:
+            sin(m * π * (u/Lx + 0.5)) * sin(n * π * (v/Ly + 0.5))
+
+        This places the fundamental (1,1) mode maximum at the center.
+
+        Args:
+            u: Offset in first membrane axis from center (meters)
+            v: Offset in second membrane axis from center (meters)
+
+        Returns:
+            Mode shape values in [0, 1], normalized to maximum
+        """
+        m, n = self.mode
+        Lx, Ly = self.size
+
+        # Convert from center-relative to normalized [0, 1] coordinates
+        # u is in [-Lx/2, Lx/2], we need x_norm in [0, 1]
+        x_norm = u / Lx + 0.5  # Maps [-Lx/2, Lx/2] to [0, 1]
+        y_norm = v / Ly + 0.5  # Maps [-Ly/2, Ly/2] to [0, 1]
+
+        # Sinusoidal mode shape: sin(m*π*x) * sin(n*π*y)
+        # At edges (x_norm=0 or 1), sin(m*π*0) = 0 and sin(m*π*1) = 0
+        # At center (x_norm=0.5), sin(m*π*0.5) = sin(m*π/2)
+        shape = np.sin(m * np.pi * x_norm) * np.sin(n * np.pi * y_norm)
+
+        # Zero outside membrane boundary
+        inside = (np.abs(u) <= Lx / 2) & (np.abs(v) <= Ly / 2)
+        shape = np.where(inside, shape, 0.0)
+
+        # Take absolute value and normalize to [0, 1]
+        shape = np.abs(shape)
+        max_val = np.max(shape)
+        if max_val > 1e-10:
+            shape = shape / max_val
+        else:
+            shape = np.zeros_like(shape)
+
+        return shape
+
+    def get_injection_mask(self, grid: UniformGrid | NonuniformGrid) -> NDArray[np.bool_]:
+        """Return boolean mask of grid cells within the membrane rectangle.
+
+        The mask is True for cells that are:
+        1. In the plane containing the membrane (nearest to center)
+        2. Within the membrane rectangle
+
+        Args:
+            grid: The simulation grid
+
+        Returns:
+            3D boolean array with True for cells inside membrane
+        """
+        u, v, plane_idx = self._grid_to_rectangular_coords(grid)
+        mask = np.zeros(grid.shape, dtype=bool)
+
+        Lx, Ly = self.size
+
+        # Cells within rectangle on the membrane plane
+        within_rect = (np.abs(u) <= Lx / 2) & (np.abs(v) <= Ly / 2)
+
+        if self.normal_axis == 'z':
+            mask[:, :, plane_idx] = within_rect[:, :, plane_idx]
+        elif self.normal_axis == 'y':
+            mask[:, plane_idx, :] = within_rect[:, plane_idx, :]
+        else:  # x
+            mask[plane_idx, :, :] = within_rect[plane_idx, :, :]
+
+        return mask
+
+    def get_injection_weights(
+        self, grid: UniformGrid | NonuniformGrid
+    ) -> NDArray[np.floating]:
+        """Return array of mode shape weights at each grid cell.
+
+        The weights represent the relative amplitude of the membrane
+        displacement at each cell, based on the sinusoidal mode shape.
+
+        Args:
+            grid: The simulation grid
+
+        Returns:
+            3D array of weights with mode shape values (0 outside membrane)
+        """
+        # Check grid alignment and warn if off-grid
+        self._check_grid_alignment(grid)
+
+        u, v, plane_idx = self._grid_to_rectangular_coords(grid)
+        weights = np.zeros(grid.shape, dtype=np.float64)
+
+        # Get mask and compute mode shape only for cells within membrane
+        mask = self.get_injection_mask(grid)
+
+        # Compute mode shape for all cells in the mask
+        weights[mask] = self.mode_shape(u[mask], v[mask])
+
+        return weights
+
+
 @dataclass
 class Probe:
     """Pressure recording probe at a specific location.
