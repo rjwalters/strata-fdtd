@@ -5,6 +5,7 @@ Main exports:
 - FDTDSolver: Core 3D acoustic FDTD solver
 - GPUFDTDSolver: GPU-accelerated solver
 - GaussianPulse: Point/plane acoustic source
+- AudioFileWaveform: Audio file source waveform
 - MembraneSource: Spatially-distributed source with modal patterns
 - PML: Absorbing boundary
 - Materials: Acoustic material library
@@ -34,6 +35,7 @@ from strata_fdtd.core.solver_gpu import (
     GPUFDTDSolver,
     has_gpu_support,
 )
+from strata_fdtd.core.waveforms import AudioFileWaveform
 
 # Re-export common geometry classes for convenience
 from strata_fdtd.geometry import (
@@ -67,6 +69,7 @@ __all__ = [
     "GPUFDTDSolver",
     "BatchedGPUFDTDSolver",
     "GaussianPulse",
+    "AudioFileWaveform",
     "MembraneSource",
     "CircularMembraneSource",
     "RectangularMembraneSource",

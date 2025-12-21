@@ -14,12 +14,14 @@ from strata_fdtd.core.solver_gpu import (
     GPUFDTDSolver,
     has_gpu_support,
 )
+from strata_fdtd.core.waveforms import AudioFileWaveform
 
 __all__ = [
     "FDTDSolver",
     "GPUFDTDSolver",
     "BatchedGPUFDTDSolver",
     "GaussianPulse",
+    "AudioFileWaveform",
     "Probe",
     "Microphone",
     "POLAR_PATTERNS",
