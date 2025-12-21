@@ -15,6 +15,13 @@ import {
 import { logBinDownsample, WORKER_THRESHOLD } from "@/lib/downsample";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
 export type PhaseViewMode = "phase" | "groupDelay";
@@ -186,6 +193,7 @@ export function SpectrumPlot({
   const [isComputing, setIsComputing] = useState(false);
   // Welch averaging options
   const [useAveraging, setUseAveraging] = useState(false);
+  const [segmentSize, setSegmentSize] = useState(4096);
   const [welchResult, setWelchResult] = useState<WelchPSDResult | null>(null);
   // Phase display options
   const [showPhase, setShowPhase] = useState(false);
@@ -220,7 +228,7 @@ export function SpectrumPlot({
       const frameId = requestAnimationFrame(() => {
         if (cancelled) return;
         try {
-          const result = welchPSD(data, sampleRate, { segmentSize: 4096, overlap: 0.5 });
+          const result = welchPSD(data, sampleRate, { segmentSize, overlap: 0.5 });
           if (!cancelled) {
             // Convert PSD to magnitude for display compatibility
             const magnitude = new Float32Array(result.psd.length);
@@ -281,7 +289,7 @@ export function SpectrumPlot({
     return () => {
       cancelled = true;
     };
-  }, [data, sampleRate, nfft, analysisMode, useAveraging]);
+  }, [data, sampleRate, nfft, analysisMode, useAveraging, segmentSize]);
 
   // Compute coherence (coherence mode only)
   useEffect(() => {
@@ -1453,6 +1461,23 @@ export function SpectrumPlot({
             >
               Avg
             </Button>
+            {useAveraging && (
+              <Select
+                value={String(segmentSize)}
+                onValueChange={(value) => setSegmentSize(Number(value))}
+              >
+                <SelectTrigger className="h-6 w-[90px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1024">1024</SelectItem>
+                  <SelectItem value="2048">2048</SelectItem>
+                  <SelectItem value="4096">4096</SelectItem>
+                  <SelectItem value="8192">8192</SelectItem>
+                  <SelectItem value="16384">16384</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             {isTransferMode && (
               <Button
                 variant={showPhase ? "default" : "outline"}
