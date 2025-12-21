@@ -58,15 +58,19 @@ export { FlowParticleRenderer } from './components/visualization/FlowParticleRen
 export * from './components/visualization/GeometryOverlay'
 export { Layout, Panel } from './components/visualization/Layout'
 export { OptimizedVoxelRenderer } from './components/visualization/OptimizedVoxelRenderer'
-export type { VoxelRendererHandle, OptimizedVoxelRendererProps } from './components/visualization/OptimizedVoxelRenderer'
+export type { VoxelRendererHandle, OptimizedVoxelRendererProps, ProbeMarkerData, SourceMarkerData } from './components/visualization/OptimizedVoxelRenderer'
 export { PerformanceMetrics } from './components/visualization/PerformanceMetrics'
 export { PlaybackControls } from './components/visualization/PlaybackControls'
+export { ProbesPanel } from './components/visualization/ProbesPanel'
+export { SourcesPanel } from './components/visualization/SourcesPanel'
 export { ViewerHelpModal } from './components/visualization/ViewerHelpModal'
 export { BuilderHelpModal } from './components/visualization/BuilderHelpModal'
 export { Spectrogram } from './components/visualization/Spectrogram'
 export { SpectrumPlot } from './components/visualization/SpectrumPlot'
+export type { SpectrumMode } from './components/visualization/SpectrumPlot'
 export { ThreeViewer } from './components/visualization/ThreeViewer'
 export { TimeSeriesPlot } from './components/visualization/TimeSeriesPlot'
+export type { SourceTimeSeries } from './components/visualization/TimeSeriesPlot'
 // VideoExportButton moved to strata-web (requires useVideoExport/FFmpeg)
 export { VisualizationModePanel } from './components/visualization/VisualizationModePanel'
 export { VoxelRenderer } from './components/visualization/VoxelRenderer'
@@ -94,6 +98,8 @@ export {
   useGridInfo,
   useLoadingState,
   useProbeData,
+  useProbeVisibility,
+  useSourceData,
   usePerformanceSettings,
   useBackgroundLoadingState,
 } from './stores/simulationStore'
@@ -104,6 +110,7 @@ export type {
   DownsampleMethod,
   VisualizationMode,
   FlowParticleConfig,
+  SourceData,
 } from './stores/simulationStore'
 
 // =============================================================================

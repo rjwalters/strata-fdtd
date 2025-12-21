@@ -47,6 +47,12 @@ export interface VoxelRendererHandle {
   getScene: () => THREE.Scene | null;
 }
 
+/** Probe data for 3D marker visualization */
+export interface ProbeMarkerData {
+  name: string;
+  position: [number, number, number];
+}
+
 export interface OptimizedVoxelRendererProps {
   pressure: Float32Array | null;
   shape: [number, number, number];
@@ -68,6 +74,21 @@ export interface OptimizedVoxelRendererProps {
   downsampleMethod?: "nearest" | "average" | "max";
   showPerformanceMetrics?: boolean;
   onPerformanceUpdate?: (metrics: PerformanceMetrics) => void;
+  // Probe markers
+  probes?: ProbeMarkerData[];
+  hiddenProbes?: string[];
+  showProbeMarkers?: boolean;
+  // Source markers
+  sources?: SourceMarkerData[];
+  showSourceMarkers?: boolean;
+}
+
+/** Source data for 3D marker visualization */
+export interface SourceMarkerData {
+  name: string;
+  type: string;
+  position: [number, number, number];
+  frequency?: number;
 }
 
 // Pre-allocated objects for color updates
@@ -97,6 +118,11 @@ export const OptimizedVoxelRenderer = forwardRef<
     downsampleMethod = "average",
     showPerformanceMetrics = false,
     onPerformanceUpdate,
+    probes = [],
+    hiddenProbes = [],
+    showProbeMarkers = true,
+    sources = [],
+    showSourceMarkers = true,
   },
   ref
 ) {
@@ -110,6 +136,8 @@ export const OptimizedVoxelRenderer = forwardRef<
   const gridRef = useRef<THREE.GridHelper | null>(null);
   const axesRef = useRef<THREE.AxesHelper | null>(null);
   const boundaryMeshRef = useRef<THREE.Group | null>(null);
+  const probeMarkersRef = useRef<THREE.Group | null>(null);
+  const sourceMarkersRef = useRef<THREE.Group | null>(null);
   const animationIdRef = useRef<number>(0);
   const performanceTrackerRef = useRef(new PerformanceTracker());
   const lastRenderCountRef = useRef(0);
@@ -619,6 +647,201 @@ export const OptimizedVoxelRenderer = forwardRef<
       boundaryMeshRef.current = boundaryGroup;
     }
   }, [showWireframe, boundaryOpacity, demoType, shape, resolution]);
+
+  // d3.schemeCategory10 colors for consistent probe coloring
+  const PROBE_COLORS = useMemo(() => [
+    0x1f77b4, 0xff7f0e, 0x2ca02c, 0xd62728, 0x9467bd,
+    0x8c564b, 0xe377c2, 0x7f7f7f, 0xbcbd22, 0x17becf,
+  ], []);
+
+  // Update probe markers
+  useEffect(() => {
+    if (!sceneRef.current) return;
+    const scene = sceneRef.current;
+
+    // Remove old probe markers
+    if (probeMarkersRef.current) {
+      scene.remove(probeMarkersRef.current);
+      probeMarkersRef.current.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          if (child.material instanceof THREE.Material) {
+            child.material.dispose();
+          }
+        }
+      });
+      probeMarkersRef.current = null;
+    }
+
+    // Don't create markers if disabled or no probes
+    if (!showProbeMarkers || probes.length === 0) return;
+
+    const hiddenSet = new Set(hiddenProbes);
+    const visibleProbes = probes.filter(p => !hiddenSet.has(p.name));
+
+    if (visibleProbes.length === 0) return;
+
+    // Create group for probe markers
+    const probeGroup = new THREE.Group();
+    probeGroup.name = "probeMarkers";
+
+    // Calculate marker size based on grid
+    const markerRadius = resolution * 0.3;
+
+    // Calculate grid center offset (the voxel grid is centered around origin)
+    const gridCenterX = ((nx - 1) * resolution) / 2;
+    const gridCenterY = ((ny - 1) * resolution) / 2;
+    const gridCenterZ = ((nz - 1) * resolution) / 2;
+
+    visibleProbes.forEach((probe) => {
+      const originalIndex = probes.findIndex(p => p.name === probe.name);
+      const color = PROBE_COLORS[originalIndex % PROBE_COLORS.length];
+
+      // Create sphere marker
+      const sphereGeometry = new THREE.SphereGeometry(markerRadius, 16, 16);
+      const sphereMaterial = new THREE.MeshPhongMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.3,
+        transparent: true,
+        opacity: 0.9,
+      });
+      const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+
+      // Position at probe location
+      // Probe positions from HDF5 are in world coordinates (meters)
+      // We offset by grid center to match the centered voxel visualization
+      const [px, py, pz] = probe.position;
+      sphere.position.set(
+        px - gridCenterX,
+        py - gridCenterY,
+        pz - gridCenterZ
+      );
+
+      sphere.userData = { probeName: probe.name };
+      probeGroup.add(sphere);
+
+      // Create text label using a sprite
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        canvas.width = 128;
+        canvas.height = 32;
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 16px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(probe.name, canvas.width / 2, canvas.height / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(spriteMaterial);
+
+        // Position label above the sphere
+        sprite.position.copy(sphere.position);
+        sprite.position.y += markerRadius * 3;
+        sprite.scale.set(resolution * 2, resolution * 0.5, 1);
+
+        probeGroup.add(sprite);
+      }
+    });
+
+    scene.add(probeGroup);
+    probeMarkersRef.current = probeGroup;
+  }, [probes, hiddenProbes, showProbeMarkers, resolution, nx, ny, nz, PROBE_COLORS]);
+
+  // Update source markers
+  useEffect(() => {
+    if (!sceneRef.current) return;
+    const scene = sceneRef.current;
+
+    // Remove old source markers
+    if (sourceMarkersRef.current) {
+      scene.remove(sourceMarkersRef.current);
+      sourceMarkersRef.current.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry.dispose();
+          if (child.material instanceof THREE.Material) {
+            child.material.dispose();
+          }
+        }
+      });
+      sourceMarkersRef.current = null;
+    }
+
+    // Don't create markers if disabled or no sources
+    if (!showSourceMarkers || sources.length === 0) return;
+
+    // Create group for source markers
+    const sourceGroup = new THREE.Group();
+    sourceGroup.name = "sourceMarkers";
+
+    // Calculate marker size based on grid
+    const markerRadius = resolution * 0.4;
+
+    // Calculate grid center offset (the voxel grid is centered around origin)
+    const gridCenterX = ((nx - 1) * resolution) / 2;
+    const gridCenterY = ((ny - 1) * resolution) / 2;
+    const gridCenterZ = ((nz - 1) * resolution) / 2;
+
+    // Yellow/orange color for sources
+    const sourceColor = 0xffaa00;
+
+    sources.forEach((source) => {
+      // Create octahedron marker (distinct from probe spheres)
+      const octaGeometry = new THREE.OctahedronGeometry(markerRadius);
+      const octaMaterial = new THREE.MeshPhongMaterial({
+        color: sourceColor,
+        emissive: sourceColor,
+        emissiveIntensity: 0.4,
+        transparent: true,
+        opacity: 0.9,
+      });
+      const octahedron = new THREE.Mesh(octaGeometry, octaMaterial);
+
+      // Position at source location (world coordinates, centered)
+      const [px, py, pz] = source.position;
+      octahedron.position.set(
+        px - gridCenterX,
+        py - gridCenterY,
+        pz - gridCenterZ
+      );
+
+      octahedron.userData = { sourceName: source.name, sourceType: source.type };
+      sourceGroup.add(octahedron);
+
+      // Create text label using a sprite
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        canvas.width = 128;
+        canvas.height = 32;
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#ffaa00";
+        ctx.font = "bold 14px sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(source.type, canvas.width / 2, canvas.height / 2);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(spriteMaterial);
+
+        // Position label above the octahedron
+        sprite.position.copy(octahedron.position);
+        sprite.position.y += markerRadius * 3;
+        sprite.scale.set(resolution * 2, resolution * 0.5, 1);
+
+        sourceGroup.add(sprite);
+      }
+    });
+
+    scene.add(sourceGroup);
+    sourceMarkersRef.current = sourceGroup;
+  }, [sources, showSourceMarkers, resolution, nx, ny, nz]);
 
   // Memoize stats for display
   const stats = useMemo(() => {

@@ -98,6 +98,8 @@ export interface HDF5Source {
   frequency?: number;
   bandwidth?: number;
   amplitude?: number;
+  /** Source excitation waveform (time series) */
+  waveform?: Float32Array;
 }
 
 /**
@@ -672,12 +674,65 @@ function readSources(h5file: h5wasm.File): HDF5Source[] {
       }
     }
 
+    // Try to read waveform data
+    let waveform: Float32Array | undefined;
+
+    // Check if source itself is a dataset with waveform data
+    if (sourceEntity instanceof h5wasm.Dataset) {
+      const data = sourceEntity.value;
+      if (data instanceof Float32Array) {
+        waveform = data;
+      } else if (ArrayBuffer.isView(data)) {
+        waveform = new Float32Array((data as ArrayBufferView).buffer);
+      } else if (Array.isArray(data)) {
+        const flattened: number[] = [];
+        const flattenArr = (arr: unknown[]): void => {
+          for (const item of arr) {
+            if (Array.isArray(item)) {
+              flattenArr(item);
+            } else {
+              flattened.push(Number(item));
+            }
+          }
+        };
+        flattenArr(data);
+        waveform = new Float32Array(flattened);
+      }
+    }
+
+    // Check for waveform as a nested dataset within a group
+    if (!waveform && sourceEntity instanceof h5wasm.Group) {
+      const waveformEntity = h5file.get(`/sources/${key}/waveform`);
+      if (waveformEntity instanceof h5wasm.Dataset) {
+        const data = waveformEntity.value;
+        if (data instanceof Float32Array) {
+          waveform = data;
+        } else if (ArrayBuffer.isView(data)) {
+          waveform = new Float32Array((data as ArrayBufferView).buffer);
+        } else if (Array.isArray(data)) {
+          const flattened: number[] = [];
+          const flattenArr = (arr: unknown[]): void => {
+            for (const item of arr) {
+              if (Array.isArray(item)) {
+                flattenArr(item);
+              } else {
+                flattened.push(Number(item));
+              }
+            }
+          };
+          flattenArr(data);
+          waveform = new Float32Array(flattened);
+        }
+      }
+    }
+
     sources.push({
       type: getAttrString(attrs, "type") ?? "unknown",
       position,
       frequency: getAttrNumber(attrs, "frequency"),
       bandwidth: getAttrNumber(attrs, "bandwidth"),
       amplitude: getAttrNumber(attrs, "amplitude"),
+      waveform,
     });
   }
 

@@ -57,6 +57,24 @@ export interface FlowParticleConfig {
   trailLength: number;
 }
 
+/** Source data for visualization */
+export interface SourceData {
+  /** Source name/identifier */
+  name: string;
+  /** Source type (e.g., "gaussian", "point") */
+  type: string;
+  /** Position in world coordinates [x, y, z] in meters */
+  position: [number, number, number];
+  /** Frequency in Hz (optional) */
+  frequency?: number;
+  /** Bandwidth in Hz (optional) */
+  bandwidth?: number;
+  /** Amplitude (optional) */
+  amplitude?: number;
+  /** Source excitation waveform time series (optional) */
+  waveform?: Float32Array;
+}
+
 /** Simulation state interface */
 export interface SimulationState {
   // Data
@@ -97,6 +115,14 @@ export interface SimulationState {
   // Selection
   selectedProbes: string[];
   hoveredVoxel: [number, number, number] | null;
+
+  // Probe visibility
+  hiddenProbes: string[]; // Probes hidden from charts
+  showProbeMarkers: boolean; // Show probe markers in 3D view
+
+  // Sources data and visibility
+  sources: SourceData[];
+  showSourceMarkers: boolean; // Show source markers in 3D view
 
   // Loading state
   isLoading: boolean;
@@ -157,6 +183,16 @@ export interface SimulationActions {
   setSelectedProbes: (names: string[]) => void;
   setHoveredVoxel: (coords: [number, number, number] | null) => void;
 
+  // Probe visibility
+  toggleProbeVisibility: (name: string) => void;
+  setProbeVisible: (name: string, visible: boolean) => void;
+  showAllProbes: () => void;
+  hideAllProbes: () => void;
+  setShowProbeMarkers: (show: boolean) => void;
+
+  // Source visibility
+  setShowSourceMarkers: (show: boolean) => void;
+
   // Performance
   setEnableDownsampling: (enable: boolean) => void;
   setTargetVoxels: (target: number) => void;
@@ -215,7 +251,7 @@ const DEFAULT_STATE: SimulationState = {
   // View options
   colormap: "diverging",
   pressureRange: "auto",
-  voxelGeometry: "point",
+  voxelGeometry: "hidden",
   showWireframe: false,
   boundaryOpacity: 30, // Default to 30% opacity (transparent)
   threshold: 0,
@@ -226,6 +262,14 @@ const DEFAULT_STATE: SimulationState = {
   // Selection
   selectedProbes: [],
   hoveredVoxel: null,
+
+  // Probe visibility
+  hiddenProbes: [], // All probes visible by default
+  showProbeMarkers: true, // Show 3D markers by default
+
+  // Sources
+  sources: [],
+  showSourceMarkers: true, // Show source markers by default
 
   // Loading
   isLoading: false,
@@ -616,6 +660,48 @@ export const useSimulationStore = create<SimulationStore>()(
       set({ hoveredVoxel: coords }),
 
     // =========================================================================
+    // Probe Visibility
+    // =========================================================================
+
+    toggleProbeVisibility: (name: string) => {
+      set((state) => {
+        if (state.hiddenProbes.includes(name)) {
+          return { hiddenProbes: state.hiddenProbes.filter((p) => p !== name) };
+        }
+        return { hiddenProbes: [...state.hiddenProbes, name] };
+      });
+    },
+
+    setProbeVisible: (name: string, visible: boolean) => {
+      set((state) => {
+        if (visible) {
+          return { hiddenProbes: state.hiddenProbes.filter((p) => p !== name) };
+        }
+        if (!state.hiddenProbes.includes(name)) {
+          return { hiddenProbes: [...state.hiddenProbes, name] };
+        }
+        return state;
+      });
+    },
+
+    showAllProbes: () => set({ hiddenProbes: [] }),
+
+    hideAllProbes: () => {
+      set((state) => {
+        const probeNames = state.probeData ? Object.keys(state.probeData.probes) : [];
+        return { hiddenProbes: probeNames };
+      });
+    },
+
+    setShowProbeMarkers: (show: boolean) => set({ showProbeMarkers: show }),
+
+    // =========================================================================
+    // Source Visibility
+    // =========================================================================
+
+    setShowSourceMarkers: (show: boolean) => set({ showSourceMarkers: show }),
+
+    // =========================================================================
     // Performance
     // =========================================================================
 
@@ -872,6 +958,8 @@ export const selectLoadingProgress = (state: SimulationStore) => state.loadingPr
 export const selectError = (state: SimulationStore) => state.error;
 export const selectProbeData = (state: SimulationStore) => state.probeData;
 export const selectSelectedProbes = (state: SimulationStore) => state.selectedProbes;
+export const selectHiddenProbes = (state: SimulationStore) => state.hiddenProbes;
+export const selectShowProbeMarkers = (state: SimulationStore) => state.showProbeMarkers;
 export const selectVoxelGeometry = (state: SimulationStore) => state.voxelGeometry;
 export const selectThreshold = (state: SimulationStore) => state.threshold;
 export const selectDisplayFill = (state: SimulationStore) => state.displayFill;
@@ -941,6 +1029,30 @@ export const useProbeData = () =>
     useShallow((state) => ({
       probeData: state.probeData,
       selectedProbes: state.selectedProbes,
+    }))
+  );
+
+/** Hook for probe visibility state and actions */
+export const useProbeVisibility = () =>
+  useSimulationStore(
+    useShallow((state) => ({
+      hiddenProbes: state.hiddenProbes,
+      showProbeMarkers: state.showProbeMarkers,
+      toggleProbeVisibility: state.toggleProbeVisibility,
+      setProbeVisible: state.setProbeVisible,
+      showAllProbes: state.showAllProbes,
+      hideAllProbes: state.hideAllProbes,
+      setShowProbeMarkers: state.setShowProbeMarkers,
+    }))
+  );
+
+/** Hook for source data and visibility */
+export const useSourceData = () =>
+  useSimulationStore(
+    useShallow((state) => ({
+      sources: state.sources,
+      showSourceMarkers: state.showSourceMarkers,
+      setShowSourceMarkers: state.setShowSourceMarkers,
     }))
   );
 
