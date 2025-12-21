@@ -11,12 +11,20 @@ export interface FrequencyMarker {
   label: string;
 }
 
+export type SpectrumMode = "spectrum" | "transfer";
+
 export interface SpectrumPlotProps {
   data: Float32Array;
   sampleRate: number;
   nfft?: number;
   logScale?: boolean;
   markers?: FrequencyMarker[];
+  /** Display mode: 'spectrum' for power spectrum, 'transfer' for transfer function */
+  mode?: SpectrumMode;
+  /** Reference signal for transfer function (source waveform) */
+  referenceData?: Float32Array;
+  /** Name of the reference source for display */
+  referenceName?: string;
 }
 
 const MARGIN = { top: 10, right: 20, bottom: 30, left: 50 };
@@ -107,6 +115,9 @@ export function SpectrumPlot({
   nfft,
   logScale: initialLogScale = true,
   markers = [],
+  mode = "spectrum",
+  referenceData,
+  referenceName,
 }: SpectrumPlotProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -115,6 +126,10 @@ export function SpectrumPlot({
   const [showPeaks, setShowPeaks] = useState(true);
   const [zoomDomain, setZoomDomain] = useState<[number, number] | null>(null);
   const [spectrum, setSpectrum] = useState<{
+    frequencies: Float32Array;
+    magnitude: Float32Array;
+  } | null>(null);
+  const [referenceSpectrum, setReferenceSpectrum] = useState<{
     frequencies: Float32Array;
     magnitude: Float32Array;
   } | null>(null);
@@ -160,6 +175,38 @@ export function SpectrumPlot({
     };
   }, [data, sampleRate, nfft]);
 
+  // Compute reference spectrum for transfer function mode
+  useEffect(() => {
+    if (!referenceData || referenceData.length === 0 || mode !== "transfer") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setReferenceSpectrum(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    if (referenceData.length >= WORKER_THRESHOLD) {
+      computeSpectrumAsync(referenceData, sampleRate, nfft)
+        .then((result) => {
+          if (!cancelled) {
+            setReferenceSpectrum(result);
+          }
+        })
+        .catch((error) => {
+          console.error("Reference FFT computation error:", error);
+          if (!cancelled) {
+            setReferenceSpectrum(computeSpectrum(referenceData, sampleRate, nfft));
+          }
+        });
+    } else {
+      setReferenceSpectrum(computeSpectrum(referenceData, sampleRate, nfft));
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [referenceData, sampleRate, nfft, mode]);
+
   // Find peaks (cached based on spectrum)
   const [peaks, setPeaks] = useState<PeakInfo[]>([]);
   useEffect(() => {
@@ -190,6 +237,9 @@ export function SpectrumPlot({
   // Render chart
   useEffect(() => {
     if (!svgRef.current || dimensions.width === 0 || !spectrum) return;
+
+    // In transfer mode, need reference spectrum to display
+    const isTransferMode = mode === "transfer" && referenceSpectrum !== null;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
@@ -224,11 +274,49 @@ export function SpectrumPlot({
       }
     }
 
-    // Convert to dB if needed
-    const refMag = Math.max(...magnitude);
-    const displayMag = logScale
-      ? Float32Array.from(magnitude, (v) => toDecibels(v, refMag))
-      : magnitude;
+    // Compute display magnitude based on mode
+    let displayMag: Float32Array;
+    let refMag: number;
+    let yMin: number;
+    let yMax: number;
+
+    if (isTransferMode && referenceSpectrum) {
+      // Transfer function mode: H(f) = Y(f) / X(f)
+      // Y = probe output (magnitude), X = source input (referenceSpectrum.magnitude)
+      const transferMag = new Float32Array(magnitude.length);
+      const refSpecMag = referenceSpectrum.magnitude;
+
+      // Compute transfer function magnitude (with small epsilon to avoid division by zero)
+      const epsilon = 1e-10;
+      for (let i = 0; i < magnitude.length; i++) {
+        const refVal = i < refSpecMag.length ? refSpecMag[i] : epsilon;
+        transferMag[i] = magnitude[i] / Math.max(refVal, epsilon);
+      }
+
+      // In transfer function mode, reference is 1 (0 dB = unity gain)
+      refMag = 1;
+      displayMag = logScale
+        ? Float32Array.from(transferMag, (v) => toDecibels(v, 1))
+        : transferMag;
+
+      // Transfer function typically shows range around 0 dB
+      if (logScale) {
+        yMin = -40; // -40 dB
+        yMax = 20;  // +20 dB
+      } else {
+        const maxTransfer = Math.max(...transferMag);
+        yMin = 0;
+        yMax = Math.max(maxTransfer, 2); // At least show up to 2x gain
+      }
+    } else {
+      // Standard spectrum mode
+      refMag = Math.max(...magnitude);
+      displayMag = logScale
+        ? Float32Array.from(magnitude, (v) => toDecibels(v, refMag))
+        : magnitude;
+      yMin = logScale ? -80 : 0;
+      yMax = logScale ? 0 : refMag;
+    }
 
     // Create scales
     const xScale = d3
@@ -237,8 +325,6 @@ export function SpectrumPlot({
       .range([0, width])
       .clamp(true);
 
-    const yMin = logScale ? -80 : 0;
-    const yMax = logScale ? 0 : refMag;
     const yScale = d3.scaleLinear().domain([yMin, yMax]).range([height, 0]);
 
     // Create main group
@@ -259,7 +345,17 @@ export function SpectrumPlot({
     const yAxis = d3
       .axisLeft(yScale)
       .ticks(5)
-      .tickFormat((d) => (logScale ? `${d}dB` : d3.format(".1e")(+d)));
+      .tickFormat((d) => {
+        if (logScale) {
+          // Show +/- sign for transfer function mode
+          const val = +d;
+          if (isTransferMode) {
+            return val > 0 ? `+${val}dB` : `${val}dB`;
+          }
+          return `${val}dB`;
+        }
+        return d3.format(".1e")(+d);
+      });
 
     g.append("g")
       .attr("transform", `translate(0,${height})`)
@@ -567,7 +663,7 @@ export function SpectrumPlot({
       .on("dblclick", () => {
         setZoomDomain(null);
       });
-  }, [dimensions, spectrum, logScale, markers, peaks, showPeaks, sampleRate, zoomDomain]);
+  }, [dimensions, spectrum, logScale, markers, peaks, showPeaks, sampleRate, zoomDomain, mode, referenceSpectrum]);
 
   // Format frequency for display
   const formatFreq = useCallback((freq: number) => {
@@ -580,11 +676,21 @@ export function SpectrumPlot({
     setZoomDomain(null);
   }, []);
 
+  // Determine if we're in transfer mode
+  const isTransferMode = mode === "transfer" && referenceSpectrum !== null;
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-muted-foreground">Frequency Spectrum</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground">
+            {isTransferMode ? "Transfer Function" : "Frequency Spectrum"}
+          </h3>
+          {isTransferMode && referenceName && (
+            <Badge variant="secondary" className="text-xs">
+              ref: {referenceName}
+            </Badge>
+          )}
           {zoomDomain && (
             <Badge
               variant="outline"
@@ -630,6 +736,11 @@ export function SpectrumPlot({
               <Loader2 className="h-4 w-4 animate-spin" />
               <span className="text-sm">Computing spectrum...</span>
             </div>
+          </div>
+        )}
+        {!isComputing && !spectrum && data.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-sm text-muted-foreground">No probe data available</span>
           </div>
         )}
       </div>
