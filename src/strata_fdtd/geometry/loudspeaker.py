@@ -30,7 +30,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 
@@ -43,6 +43,9 @@ from strata_fdtd.geometry.sdf import (
     SDFPrimitive,
     Union,
 )
+
+if TYPE_CHECKING:
+    from strata_fdtd.core.solver import CircularMembraneSource
 
 
 @dataclass
@@ -108,6 +111,8 @@ class LoudspeakerEnclosure:
         mounting_depth: float = 0.0,
         baffle_face: Literal["front", "back", "top", "bottom", "left", "right"] = "front",
         name: str | None = None,
+        waveform: Any | None = None,
+        mode: tuple[int, int] = (0, 1),
     ) -> LoudspeakerEnclosure:
         """Add driver cutout on specified baffle face.
 
@@ -117,6 +122,10 @@ class LoudspeakerEnclosure:
             mounting_depth: How deep the driver sits into baffle
             baffle_face: Which face to mount driver on
             name: Optional name for reference
+            waveform: If provided, creates membrane source at this position.
+                Must be an object with a .waveform(t, dt) method (e.g., GaussianPulse).
+            mode: Membrane mode indices (m, n) for the source. Default (0, 1)
+                is the fundamental mode with maximum displacement at center.
 
         Returns:
             self for method chaining
@@ -125,6 +134,13 @@ class LoudspeakerEnclosure:
             >>> enc = LoudspeakerEnclosure((0.2, 0.25, 0.4))
             >>> enc.add_driver((0.1, 0.3), 0.025, name="tweeter")
             >>> enc.add_driver((0.1, 0.15), 0.065, name="woofer")
+            >>> # With waveform for simulation:
+            >>> from strata_fdtd import GaussianPulse
+            >>> enc.add_driver(
+            ...     (0.1, 0.3), 0.13,
+            ...     name="woofer",
+            ...     waveform=GaussianPulse(position=(0,0,0), frequency=100),
+            ... )
         """
         self._drivers.append({
             "position": position,
@@ -132,6 +148,8 @@ class LoudspeakerEnclosure:
             "depth": mounting_depth,
             "face": baffle_face,
             "name": name or f"driver_{len(self._drivers)}",
+            "waveform": waveform,
+            "mode": mode,
         })
         return self
 
@@ -356,6 +374,105 @@ class LoudspeakerEnclosure:
             box = Box(center=center, size=size)
             regions.append((box, absorber["material_id"]))
         return regions
+
+    def get_membrane_sources(self) -> list[CircularMembraneSource]:
+        """Generate membrane sources for all drivers with waveforms.
+
+        Returns:
+            List of CircularMembraneSource objects positioned at driver locations.
+            Only drivers with waveforms specified are included.
+
+        Example:
+            >>> from strata_fdtd import GaussianPulse
+            >>> enc = LoudspeakerEnclosure((0.2, 0.25, 0.4))
+            >>> enc.add_driver(
+            ...     (0.1, 0.35), 0.13,
+            ...     waveform=GaussianPulse(position=(0,0,0), frequency=100),
+            ... )
+            >>> sources = enc.get_membrane_sources()
+            >>> len(sources)
+            1
+        """
+        # Import here to avoid circular dependency
+        from strata_fdtd.core.solver import CircularMembraneSource
+
+        sources = []
+
+        for driver in self._drivers:
+            if driver["waveform"] is None:
+                continue
+
+            # Convert 2D baffle position to 3D center
+            center = self._driver_position_to_3d(driver)
+            normal = self._face_to_normal_axis(driver["face"])
+
+            source = CircularMembraneSource(
+                center=center,
+                radius=driver["diameter"] / 2,
+                normal_axis=normal,
+                waveform=driver["waveform"],
+                mode=driver["mode"],
+            )
+            sources.append(source)
+
+        return sources
+
+    def _driver_position_to_3d(
+        self, driver: dict
+    ) -> tuple[float, float, float]:
+        """Convert 2D baffle position to 3D coordinates.
+
+        Args:
+            driver: Driver dictionary with 'position' and 'face' keys
+
+        Returns:
+            3D coordinates (x, y, z) of driver center
+        """
+        pos_2d = driver["position"]
+        face = driver["face"]
+        w, d, h = self.external_size
+
+        if face == "front":
+            # Front face at y=0
+            return (pos_2d[0], 0.0, pos_2d[1])
+        elif face == "back":
+            # Back face at y=d
+            return (pos_2d[0], d, pos_2d[1])
+        elif face == "top":
+            # Top face at z=h
+            return (pos_2d[0], pos_2d[1], h)
+        elif face == "bottom":
+            # Bottom face at z=0
+            return (pos_2d[0], pos_2d[1], 0.0)
+        elif face == "left":
+            # Left face at x=0
+            return (0.0, pos_2d[0], pos_2d[1])
+        elif face == "right":
+            # Right face at x=w
+            return (w, pos_2d[0], pos_2d[1])
+        else:
+            raise ValueError(f"Unknown face: {face}")
+
+    def _face_to_normal_axis(self, face: str) -> Literal["x", "y", "z"]:
+        """Convert face name to normal axis.
+
+        Args:
+            face: Face name ('front', 'back', 'left', 'right', 'top', 'bottom')
+
+        Returns:
+            Axis perpendicular to the face ('x', 'y', or 'z')
+        """
+        axis_map: dict[str, Literal["x", "y", "z"]] = {
+            "front": "y",
+            "back": "y",
+            "left": "x",
+            "right": "x",
+            "top": "z",
+            "bottom": "z",
+        }
+        if face not in axis_map:
+            raise ValueError(f"Unknown face: {face}")
+        return axis_map[face]
 
     # === Helper methods for building geometry ===
 

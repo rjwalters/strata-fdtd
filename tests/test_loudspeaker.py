@@ -535,3 +535,297 @@ class TestHelmholtzResonatorIntegration:
         assert len(resonators) == 1
         # Should be close to target frequency
         assert 500 < resonators[0].resonant_frequency < 700
+
+
+class TestMembraneSourceIntegration:
+    """Tests for membrane source integration with LoudspeakerEnclosure."""
+
+    def test_add_driver_with_waveform(self):
+        """Test adding driver with waveform parameter."""
+        from strata_fdtd import GaussianPulse
+
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        waveform = GaussianPulse(position=(0, 0, 0), frequency=100)
+        enc.add_driver(
+            (0.1, 0.3), 0.13,
+            baffle_face="front",
+            name="woofer",
+            waveform=waveform,
+        )
+
+        assert len(enc._drivers) == 1
+        assert enc._drivers[0]["waveform"] is waveform
+        assert enc._drivers[0]["mode"] == (0, 1)  # Default mode
+
+    def test_add_driver_with_custom_mode(self):
+        """Test adding driver with custom mode parameter."""
+        from strata_fdtd import GaussianPulse
+
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        waveform = GaussianPulse(position=(0, 0, 0), frequency=100)
+        enc.add_driver(
+            (0.1, 0.3), 0.13,
+            baffle_face="front",
+            waveform=waveform,
+            mode=(1, 1),
+        )
+
+        assert enc._drivers[0]["mode"] == (1, 1)
+
+    def test_add_driver_without_waveform(self):
+        """Test that drivers without waveforms work (backward compatibility)."""
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        enc.add_driver((0.1, 0.3), 0.13, baffle_face="front", name="woofer")
+
+        assert len(enc._drivers) == 1
+        assert enc._drivers[0]["waveform"] is None
+
+    def test_get_membrane_sources_empty(self):
+        """Test get_membrane_sources when no drivers have waveforms."""
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        enc.add_driver((0.1, 0.3), 0.13, baffle_face="front")
+        enc.add_driver((0.1, 0.15), 0.025, baffle_face="front")
+
+        sources = enc.get_membrane_sources()
+
+        assert sources == []
+
+    def test_get_membrane_sources_single_driver(self):
+        """Test get_membrane_sources with single driver."""
+        from strata_fdtd import GaussianPulse
+        from strata_fdtd.core.solver import CircularMembraneSource
+
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        waveform = GaussianPulse(position=(0, 0, 0), frequency=100)
+        enc.add_driver(
+            (0.1, 0.3), 0.13,
+            baffle_face="front",
+            waveform=waveform,
+        )
+
+        sources = enc.get_membrane_sources()
+
+        assert len(sources) == 1
+        assert isinstance(sources[0], CircularMembraneSource)
+        assert sources[0].center == (0.1, 0.0, 0.3)
+        assert sources[0].radius == 0.13 / 2
+        assert sources[0].normal_axis == "y"
+        assert sources[0].waveform is waveform
+
+    def test_get_membrane_sources_multiple_drivers(self):
+        """Test get_membrane_sources with multiple drivers."""
+        from strata_fdtd import GaussianPulse
+        from strata_fdtd.core.solver import CircularMembraneSource
+
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+
+        # Tweeter
+        tweeter_waveform = GaussianPulse(position=(0, 0, 0), frequency=5000)
+        enc.add_driver(
+            (0.1, 0.35), 0.025,
+            baffle_face="front",
+            name="tweeter",
+            waveform=tweeter_waveform,
+        )
+
+        # Woofer
+        woofer_waveform = GaussianPulse(position=(0, 0, 0), frequency=100)
+        enc.add_driver(
+            (0.1, 0.15), 0.13,
+            baffle_face="front",
+            name="woofer",
+            waveform=woofer_waveform,
+        )
+
+        sources = enc.get_membrane_sources()
+
+        assert len(sources) == 2
+        assert all(isinstance(s, CircularMembraneSource) for s in sources)
+
+    def test_get_membrane_sources_mixed_drivers(self):
+        """Test get_membrane_sources with some drivers having waveforms."""
+        from strata_fdtd import GaussianPulse
+
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+
+        # Driver without waveform
+        enc.add_driver((0.1, 0.35), 0.025, baffle_face="front", name="tweeter")
+
+        # Driver with waveform
+        waveform = GaussianPulse(position=(0, 0, 0), frequency=100)
+        enc.add_driver(
+            (0.1, 0.15), 0.13,
+            baffle_face="front",
+            name="woofer",
+            waveform=waveform,
+        )
+
+        sources = enc.get_membrane_sources()
+
+        assert len(sources) == 1
+        assert sources[0].radius == 0.13 / 2
+
+    def test_driver_position_to_3d_front(self):
+        """Test 3D position conversion for front face."""
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        driver = {"position": (0.1, 0.3), "face": "front"}
+
+        pos = enc._driver_position_to_3d(driver)
+
+        assert pos == (0.1, 0.0, 0.3)
+
+    def test_driver_position_to_3d_back(self):
+        """Test 3D position conversion for back face."""
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        driver = {"position": (0.1, 0.3), "face": "back"}
+
+        pos = enc._driver_position_to_3d(driver)
+
+        assert pos == (0.1, 0.25, 0.3)
+
+    def test_driver_position_to_3d_top(self):
+        """Test 3D position conversion for top face."""
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        driver = {"position": (0.1, 0.125), "face": "top"}
+
+        pos = enc._driver_position_to_3d(driver)
+
+        assert pos == (0.1, 0.125, 0.4)
+
+    def test_driver_position_to_3d_bottom(self):
+        """Test 3D position conversion for bottom face."""
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        driver = {"position": (0.1, 0.125), "face": "bottom"}
+
+        pos = enc._driver_position_to_3d(driver)
+
+        assert pos == (0.1, 0.125, 0.0)
+
+    def test_driver_position_to_3d_left(self):
+        """Test 3D position conversion for left face."""
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        driver = {"position": (0.125, 0.2), "face": "left"}
+
+        pos = enc._driver_position_to_3d(driver)
+
+        assert pos == (0.0, 0.125, 0.2)
+
+    def test_driver_position_to_3d_right(self):
+        """Test 3D position conversion for right face."""
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        driver = {"position": (0.125, 0.2), "face": "right"}
+
+        pos = enc._driver_position_to_3d(driver)
+
+        assert pos == (0.2, 0.125, 0.2)
+
+    def test_face_to_normal_axis(self):
+        """Test face to normal axis conversion."""
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+
+        assert enc._face_to_normal_axis("front") == "y"
+        assert enc._face_to_normal_axis("back") == "y"
+        assert enc._face_to_normal_axis("left") == "x"
+        assert enc._face_to_normal_axis("right") == "x"
+        assert enc._face_to_normal_axis("top") == "z"
+        assert enc._face_to_normal_axis("bottom") == "z"
+
+    def test_face_to_normal_axis_invalid(self):
+        """Test that invalid face raises error."""
+        import pytest
+
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+
+        with pytest.raises(ValueError, match="Unknown face"):
+            enc._face_to_normal_axis("invalid")
+
+    def test_driver_position_to_3d_invalid(self):
+        """Test that invalid face raises error for position conversion."""
+        import pytest
+
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        driver = {"position": (0.1, 0.3), "face": "invalid"}
+
+        with pytest.raises(ValueError, match="Unknown face"):
+            enc._driver_position_to_3d(driver)
+
+    def test_two_way_speaker_sources(self):
+        """Test complete 2-way speaker source generation."""
+        from strata_fdtd import GaussianPulse
+        from strata_fdtd.core.solver import CircularMembraneSource
+
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.35))
+
+        # Tweeter with high-frequency waveform
+        enc.add_driver(
+            (0.1, 0.28),
+            diameter=0.025,  # 1" tweeter
+            baffle_face="front",
+            name="tweeter",
+            waveform=GaussianPulse(position=(0, 0, 0), frequency=5000),
+        )
+
+        # Woofer with low-frequency waveform
+        enc.add_driver(
+            (0.1, 0.12),
+            diameter=0.13,  # 5" woofer
+            baffle_face="front",
+            name="woofer",
+            waveform=GaussianPulse(position=(0, 0, 0), frequency=200),
+        )
+
+        # Build geometry and get sources
+        geometry = enc.build()
+        sources = enc.get_membrane_sources()
+
+        assert geometry is not None
+        assert len(sources) == 2
+        assert all(isinstance(s, CircularMembraneSource) for s in sources)
+
+        # Check tweeter position and size
+        assert sources[0].center == (0.1, 0.0, 0.28)
+        assert sources[0].radius == 0.025 / 2
+
+        # Check woofer position and size
+        assert sources[1].center == (0.1, 0.0, 0.12)
+        assert sources[1].radius == 0.13 / 2
+
+    def test_back_mounted_driver_sources(self):
+        """Test source generation for back-mounted drivers."""
+        from strata_fdtd import GaussianPulse
+        from strata_fdtd.core.solver import CircularMembraneSource
+
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        waveform = GaussianPulse(position=(0, 0, 0), frequency=100)
+
+        enc.add_driver(
+            (0.1, 0.2), 0.1,
+            baffle_face="back",
+            waveform=waveform,
+        )
+
+        sources = enc.get_membrane_sources()
+
+        assert len(sources) == 1
+        assert sources[0].center == (0.1, 0.25, 0.2)
+        assert sources[0].normal_axis == "y"
+
+    def test_top_mounted_driver_sources(self):
+        """Test source generation for top-mounted drivers."""
+        from strata_fdtd import GaussianPulse
+        from strata_fdtd.core.solver import CircularMembraneSource
+
+        enc = LoudspeakerEnclosure(external_size=(0.2, 0.25, 0.4))
+        waveform = GaussianPulse(position=(0, 0, 0), frequency=100)
+
+        enc.add_driver(
+            (0.1, 0.125), 0.1,
+            baffle_face="top",
+            waveform=waveform,
+        )
+
+        sources = enc.get_membrane_sources()
+
+        assert len(sources) == 1
+        assert sources[0].center == (0.1, 0.125, 0.4)
+        assert sources[0].normal_axis == "z"
