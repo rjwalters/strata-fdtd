@@ -27,6 +27,7 @@ fdtd-compute examples/basic_pulse.py
 
 | Example | Description | Features |
 |---------|-------------|----------|
+| `sealed_subwoofer.py` | Sealed subwoofer with membrane source | Membrane source, enclosure geometry, impulse response |
 | `optimize_horn.py` | Parametric horn optimization | Parametric geometry, optimization |
 | `strata_midrange_chamber.py` | Metamaterial chamber design | Laminated geometry, Helmholtz |
 | `sdf_csg/helmholtz_resonator.py` | SDF-based resonator | SDF primitives, CSG |
