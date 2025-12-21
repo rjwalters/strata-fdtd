@@ -240,6 +240,99 @@ export function nextPowerOf2(n: number): number {
 // =============================================================================
 
 /**
+ * Available window function types for spectral analysis.
+ *
+ * | Window         | Main Lobe Width | Side Lobe Level | Use Case                    |
+ * |----------------|-----------------|-----------------|------------------------------|
+ * | hanning        | Moderate        | -31 dB          | General purpose (default)    |
+ * | hamming        | Moderate        | -43 dB          | Better side lobe suppression |
+ * | blackman       | Wide            | -58 dB          | Best side lobe suppression   |
+ * | blackman-harris| Wide            | -92 dB          | Maximum dynamic range        |
+ */
+export type WindowType = 'hanning' | 'hamming' | 'blackman' | 'blackman-harris';
+
+/**
+ * Generate a window function of the specified type.
+ * @param type - Window function type
+ * @param size - Window size (number of samples)
+ * @returns Window coefficients as Float32Array
+ */
+export function getWindow(type: WindowType, size: number): Float32Array {
+  const w = new Float32Array(size);
+  const N = size - 1;
+
+  switch (type) {
+    case 'hanning':
+      // Hanning (Hann) window: 0.5 * (1 - cos(2π*n/N))
+      for (let i = 0; i < size; i++) {
+        w[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / N));
+      }
+      break;
+
+    case 'hamming':
+      // Hamming window: 0.54 - 0.46 * cos(2π*n/N)
+      for (let i = 0; i < size; i++) {
+        w[i] = 0.54 - 0.46 * Math.cos((2 * Math.PI * i) / N);
+      }
+      break;
+
+    case 'blackman':
+      // Blackman window: a0 - a1*cos(2π*n/N) + a2*cos(4π*n/N)
+      // where a0 = 0.42, a1 = 0.5, a2 = 0.08
+      for (let i = 0; i < size; i++) {
+        const a0 = 0.42;
+        const a1 = 0.5;
+        const a2 = 0.08;
+        w[i] = a0 - a1 * Math.cos((2 * Math.PI * i) / N) +
+                    a2 * Math.cos((4 * Math.PI * i) / N);
+      }
+      break;
+
+    case 'blackman-harris':
+      // 4-term Blackman-Harris window for maximum side lobe suppression
+      // a0 - a1*cos(2π*n/N) + a2*cos(4π*n/N) - a3*cos(6π*n/N)
+      for (let i = 0; i < size; i++) {
+        const a0 = 0.35875;
+        const a1 = 0.48829;
+        const a2 = 0.14128;
+        const a3 = 0.01168;
+        w[i] = a0 - a1 * Math.cos((2 * Math.PI * i) / N) +
+                    a2 * Math.cos((4 * Math.PI * i) / N) -
+                    a3 * Math.cos((6 * Math.PI * i) / N);
+      }
+      break;
+  }
+
+  return w;
+}
+
+/**
+ * Apply a window function to a data segment.
+ * @param data - Input data segment
+ * @param window - Window coefficients (must be same length as data)
+ * @param output - Output array (same length as data)
+ */
+function applyWindow(data: Float32Array, window: Float32Array, output: Float32Array): void {
+  const n = data.length;
+  for (let i = 0; i < n; i++) {
+    output[i] = data[i] * window[i];
+  }
+}
+
+/**
+ * Compute the power of a window function for normalization.
+ * @param window - Window coefficients
+ * @returns Sum of squared window values
+ */
+function computeWindowPower(window: Float32Array): number {
+  let power = 0;
+  for (let i = 0; i < window.length; i++) {
+    power += window[i] * window[i];
+  }
+  return power;
+}
+
+/**
  * Result of coherence analysis between two signals.
  */
 export interface CoherenceResult {
@@ -251,19 +344,6 @@ export interface CoherenceResult {
   transferMagnitude: Float32Array;
   /** Transfer function phase in radians at each frequency */
   transferPhase: Float32Array;
-}
-
-/**
- * Apply Hanning window to a segment of data.
- * @param data - Input data segment
- * @param output - Output array (same length as data)
- */
-function applyHanningWindow(data: Float32Array, output: Float32Array): void {
-  const n = data.length;
-  for (let i = 0; i < n; i++) {
-    const window = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (n - 1)));
-    output[i] = data[i] * window;
-  }
 }
 
 /**
@@ -338,6 +418,7 @@ function realFFTFloat32(input: Float32Array, n: number): Float32Array {
  * @param sampleRate - Sample rate in Hz
  * @param segmentSize - Size of each segment for Welch's method (default: 4096)
  * @param overlap - Overlap ratio between segments (default: 0.5 = 50%)
+ * @param windowType - Window function to apply (default: 'hanning')
  * @returns Coherence result with frequencies, coherence, and transfer function
  */
 export function computeCoherence(
@@ -345,7 +426,8 @@ export function computeCoherence(
   measurement: Float32Array,
   sampleRate: number,
   segmentSize: number = 4096,
-  overlap: number = 0.5
+  overlap: number = 0.5,
+  windowType: WindowType = 'hanning'
 ): CoherenceResult {
   // Ensure segment size is power of 2
   const nfft = nextPowerOf2(segmentSize);
@@ -368,6 +450,9 @@ export function computeCoherence(
   const windowedRef = new Float32Array(nfft);
   const windowedMeas = new Float32Array(nfft);
 
+  // Generate window function
+  const windowCoeffs = getWindow(windowType, nfft);
+
   // Process each segment
   for (let seg = 0; seg < numSegments; seg++) {
     const start = seg * hopSize;
@@ -376,9 +461,9 @@ export function computeCoherence(
     const refSegment = reference.subarray(start, start + nfft);
     const measSegment = measurement.subarray(start, start + nfft);
 
-    // Apply Hanning window
-    applyHanningWindow(refSegment, windowedRef);
-    applyHanningWindow(measSegment, windowedMeas);
+    // Apply window function
+    applyWindow(refSegment, windowCoeffs, windowedRef);
+    applyWindow(measSegment, windowCoeffs, windowedMeas);
 
     // Compute FFTs
     const refFFT = realFFTFloat32(windowedRef, nfft);
@@ -477,6 +562,8 @@ export interface WelchOptions {
   segmentSize?: number;
   /** Fraction of overlap between segments, 0-1 (default: 0.5 = 50%) */
   overlap?: number;
+  /** Window function to apply (default: 'hanning') */
+  window?: WindowType;
 }
 
 /**
@@ -496,7 +583,7 @@ export interface WelchPSDResult {
  *
  * Welch's method provides improved spectral estimates by:
  * 1. Dividing the signal into overlapping segments
- * 2. Applying a Hanning window to each segment
+ * 2. Applying a window function to each segment
  * 3. Computing FFT of each segment
  * 4. Averaging the resulting periodograms
  *
@@ -516,6 +603,7 @@ export function welchPSD(
   const {
     segmentSize = 4096,
     overlap = 0.5,
+    window: windowType = 'hanning',
   } = options;
 
   // Ensure segment size is power of 2
@@ -534,20 +622,17 @@ export function welchPSD(
   // Temporary array for windowed segment
   const windowed = new Float32Array(nfft);
 
-  // Compute window power for normalization (Hanning window)
-  let windowPower = 0;
-  for (let i = 0; i < nfft; i++) {
-    const w = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (nfft - 1)));
-    windowPower += w * w;
-  }
+  // Generate window and compute its power for normalization
+  const windowCoeffs = getWindow(windowType, nfft);
+  const windowPower = computeWindowPower(windowCoeffs);
 
   // Process each segment
   for (let seg = 0; seg < numSegments; seg++) {
     const start = seg * hopSize;
     const segment = signal.subarray(start, start + nfft);
 
-    // Apply Hanning window
-    applyHanningWindow(segment, windowed);
+    // Apply window function
+    applyWindow(segment, windowCoeffs, windowed);
 
     // Compute FFT
     const fftOut = realFFTFloat32(windowed, nfft);

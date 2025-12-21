@@ -11,6 +11,7 @@ import {
   type ComplexSpectrum,
   type CoherenceResult,
   type WelchPSDResult,
+  type WindowType,
 } from "@/lib/fft";
 import { logBinDownsample, WORKER_THRESHOLD } from "@/lib/downsample";
 import { Button } from "@/components/ui/button";
@@ -187,6 +188,7 @@ export function SpectrumPlot({
   // Welch averaging options
   const [useAveraging, setUseAveraging] = useState(false);
   const [welchResult, setWelchResult] = useState<WelchPSDResult | null>(null);
+  const [windowType, setWindowType] = useState<WindowType>('hanning');
   // Phase display options
   const [showPhase, setShowPhase] = useState(false);
   const [phaseViewMode, setPhaseViewMode] = useState<PhaseViewMode>("phase");
@@ -220,7 +222,7 @@ export function SpectrumPlot({
       const frameId = requestAnimationFrame(() => {
         if (cancelled) return;
         try {
-          const result = welchPSD(data, sampleRate, { segmentSize: 4096, overlap: 0.5 });
+          const result = welchPSD(data, sampleRate, { segmentSize: 4096, overlap: 0.5, window: windowType });
           if (!cancelled) {
             // Convert PSD to magnitude for display compatibility
             const magnitude = new Float32Array(result.psd.length);
@@ -281,7 +283,7 @@ export function SpectrumPlot({
     return () => {
       cancelled = true;
     };
-  }, [data, sampleRate, nfft, analysisMode, useAveraging]);
+  }, [data, sampleRate, nfft, analysisMode, useAveraging, windowType]);
 
   // Compute coherence (coherence mode only)
   useEffect(() => {
@@ -1404,8 +1406,8 @@ export function SpectrumPlot({
             </Badge>
           )}
           {useAveraging && welchResult && (
-            <Badge variant="secondary" className="text-xs" title="Welch's method: overlapping segments averaged">
-              {welchResult.numSegments} segments
+            <Badge variant="secondary" className="text-xs" title={`Welch's method: ${welchResult.numSegments} segments with ${windowType} window`}>
+              {welchResult.numSegments} seg · {windowType}
             </Badge>
           )}
           {zoomDomain && (
@@ -1453,6 +1455,46 @@ export function SpectrumPlot({
             >
               Avg
             </Button>
+            {useAveraging && (
+              <div className="flex gap-0.5 border-l border-border pl-1 ml-1">
+                <Button
+                  variant={windowType === 'hanning' ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs h-6 px-1.5"
+                  onClick={() => setWindowType('hanning')}
+                  title="Hanning window: General purpose, moderate side lobe suppression (-31 dB)"
+                >
+                  Han
+                </Button>
+                <Button
+                  variant={windowType === 'hamming' ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs h-6 px-1.5"
+                  onClick={() => setWindowType('hamming')}
+                  title="Hamming window: Better side lobe suppression (-43 dB)"
+                >
+                  Ham
+                </Button>
+                <Button
+                  variant={windowType === 'blackman' ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs h-6 px-1.5"
+                  onClick={() => setWindowType('blackman')}
+                  title="Blackman window: Best side lobe suppression (-58 dB), wider main lobe"
+                >
+                  Blk
+                </Button>
+                <Button
+                  variant={windowType === 'blackman-harris' ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs h-6 px-1.5"
+                  onClick={() => setWindowType('blackman-harris')}
+                  title="Blackman-Harris window: Maximum dynamic range (-92 dB), widest main lobe"
+                >
+                  B-H
+                </Button>
+              </div>
+            )}
             {isTransferMode && (
               <Button
                 variant={showPhase ? "default" : "outline"}
