@@ -7,7 +7,7 @@
 
 import { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
 import * as THREE from "three";
-import { extractSlice, getSliceIndex, getAxisSize, getSlicePlaneLabel } from "../../lib/sliceUtils";
+import { extractSlice, extractGeometrySlice, getSliceIndex, getAxisSize, getSlicePlaneLabel } from "../../lib/sliceUtils";
 import { applyPressureColormap, getSymmetricRange } from "../../lib/colormap";
 import type { SliceAxis } from "../../stores/simulationStore";
 
@@ -26,6 +26,10 @@ export interface SliceRendererProps {
   showLabels?: boolean;
   /** Whether to show the colorbar */
   showColorbar?: boolean;
+  /** 3D geometry mask (1=air, 0=solid) */
+  geometry?: Uint8Array | null;
+  /** Whether to show geometry overlay */
+  showGeometry?: boolean;
 }
 
 export interface SliceRendererHandle {
@@ -38,6 +42,9 @@ export interface SliceRendererHandle {
 // Pre-allocated color for performance
 const tempColor = new THREE.Color();
 
+// Geometry overlay color (semi-transparent dark gray)
+const GEOMETRY_COLOR = { r: 74, g: 74, b: 74, a: 180 }; // #4a4a4a with alpha
+
 export const SliceRenderer = forwardRef<SliceRendererHandle, SliceRendererProps>(
   function SliceRenderer(
     {
@@ -48,6 +55,8 @@ export const SliceRenderer = forwardRef<SliceRendererHandle, SliceRendererProps>
       position,
       showLabels = true,
       showColorbar = true,
+      geometry = null,
+      showGeometry = false,
     },
     ref
   ) {
@@ -126,11 +135,16 @@ export const SliceRenderer = forwardRef<SliceRendererHandle, SliceRendererProps>
       // Draw to canvas
       ctx.putImageData(imageData, 0, 0);
 
+      // Render geometry overlay if enabled
+      if (showGeometry && geometry && geometry.length > 0) {
+        renderGeometryOverlay(ctx, slice.width, slice.height);
+      }
+
       // Render colorbar if enabled
       if (showColorbar && colorbarCanvasRef.current) {
         renderColorbar(min, max);
       }
-    }, [pressure, shape, axis, position, resolution, showColorbar]);
+    }, [pressure, shape, axis, position, resolution, showColorbar, geometry, showGeometry]);
 
     // Render the colorbar
     const renderColorbar = useCallback((min: number, max: number) => {
@@ -166,6 +180,57 @@ export const SliceRenderer = forwardRef<SliceRendererHandle, SliceRendererProps>
 
       ctx.putImageData(imageData, 0, 0);
     }, []);
+
+    // Render geometry overlay on top of pressure slice
+    const renderGeometryOverlay = useCallback(
+      (ctx: CanvasRenderingContext2D, width: number, height: number) => {
+        if (!geometry) return;
+
+        // Extract geometry slice
+        const geoSlice = extractGeometrySlice(geometry, shape, axis, position);
+
+        // Create overlay image data
+        const overlayData = ctx.createImageData(width, height);
+        const pixels = overlayData.data;
+
+        // Apply geometry overlay (solid regions = 0 in mask)
+        for (let i = 0; i < geoSlice.data.length; i++) {
+          const isSolid = geoSlice.data[i] === 0;
+
+          // Note: Canvas Y is inverted (0 at top), so we flip vertically
+          const row = Math.floor(i / width);
+          const col = i % width;
+          const flippedRow = height - 1 - row;
+          const pixelIndex = (flippedRow * width + col) * 4;
+
+          if (isSolid) {
+            pixels[pixelIndex] = GEOMETRY_COLOR.r;
+            pixels[pixelIndex + 1] = GEOMETRY_COLOR.g;
+            pixels[pixelIndex + 2] = GEOMETRY_COLOR.b;
+            pixels[pixelIndex + 3] = GEOMETRY_COLOR.a;
+          } else {
+            // Transparent for air
+            pixels[pixelIndex] = 0;
+            pixels[pixelIndex + 1] = 0;
+            pixels[pixelIndex + 2] = 0;
+            pixels[pixelIndex + 3] = 0;
+          }
+        }
+
+        // Create temporary canvas for compositing
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        const tempCtx = tempCanvas.getContext("2d");
+        if (!tempCtx) return;
+
+        tempCtx.putImageData(overlayData, 0, 0);
+
+        // Draw overlay on top with alpha compositing
+        ctx.drawImage(tempCanvas, 0, 0);
+      },
+      [geometry, shape, axis, position]
+    );
 
     // Re-render when dependencies change
     useEffect(() => {

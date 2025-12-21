@@ -233,9 +233,14 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   const mainViewMode = useSimulationStore((s) => s.viewMode);
   const sliceAxis = useSimulationStore((s) => s.sliceAxis);
   const slicePosition = useSimulationStore((s) => s.slicePosition);
+  const showSliceGeometry = useSimulationStore((s) => s.showSliceGeometry);
   const setMainViewMode = useSimulationStore((s) => s.setViewMode);
   const setSliceAxis = useSimulationStore((s) => s.setSliceAxis);
   const setSlicePosition = useSimulationStore((s) => s.setSlicePosition);
+  const setShowSliceGeometry = useSimulationStore((s) => s.setShowSliceGeometry);
+
+  // Geometry data
+  const geometry = useSimulationStore((s) => s.geometry);
 
   // Local state
   const [bottomViewMode, setBottomViewMode] = useState<"time" | "spectrum">("time");
@@ -625,6 +630,9 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
               resolution={resolution}
               onAxisChange={setSliceAxis}
               onPositionChange={setSlicePosition}
+              showGeometry={showSliceGeometry}
+              onShowGeometryChange={setShowSliceGeometry}
+              hasGeometry={!!geometry?.mask}
             />
           )}
 
@@ -846,6 +854,8 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
             resolution={resolution}
             axis={sliceAxis}
             position={slicePosition}
+            geometry={geometry?.mask}
+            showGeometry={showSliceGeometry}
           />
         ) : (
           <OptimizedVoxelRenderer
