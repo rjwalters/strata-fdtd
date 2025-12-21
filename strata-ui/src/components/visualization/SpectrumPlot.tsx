@@ -7,8 +7,10 @@ import {
   unwrapPhase,
   computeGroupDelay,
   computeCoherence,
+  welchPSD,
   type ComplexSpectrum,
   type CoherenceResult,
+  type WelchPSDResult,
 } from "@/lib/fft";
 import { logBinDownsample, WORKER_THRESHOLD } from "@/lib/downsample";
 import { Button } from "@/components/ui/button";
@@ -182,6 +184,9 @@ export function SpectrumPlot({
   } | null>(null);
   const [referenceComplexSpectrum, setReferenceComplexSpectrum] = useState<ComplexSpectrum | null>(null);
   const [isComputing, setIsComputing] = useState(false);
+  // Welch averaging options
+  const [useAveraging, setUseAveraging] = useState(false);
+  const [welchResult, setWelchResult] = useState<WelchPSDResult | null>(null);
   // Phase display options
   const [showPhase, setShowPhase] = useState(false);
   const [phaseViewMode, setPhaseViewMode] = useState<PhaseViewMode>("phase");
@@ -202,10 +207,47 @@ export function SpectrumPlot({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSpectrum(null);
       setComplexSpectrum(null);
+      setWelchResult(null);
       return;
     }
 
     let cancelled = false;
+
+    // Compute Welch PSD if averaging is enabled
+    if (useAveraging) {
+      setIsComputing(true);
+      // Use requestAnimationFrame to avoid blocking main thread
+      const frameId = requestAnimationFrame(() => {
+        if (cancelled) return;
+        try {
+          const result = welchPSD(data, sampleRate, { segmentSize: 4096, overlap: 0.5 });
+          if (!cancelled) {
+            // Convert PSD to magnitude for display compatibility
+            const magnitude = new Float32Array(result.psd.length);
+            for (let i = 0; i < result.psd.length; i++) {
+              magnitude[i] = Math.sqrt(result.psd[i]);
+            }
+            setSpectrum({ frequencies: result.frequencies, magnitude });
+            setWelchResult(result);
+            // Complex spectrum not available in Welch mode (averaged)
+            setComplexSpectrum(null);
+            setIsComputing(false);
+          }
+        } catch (error) {
+          console.error("Welch PSD computation error:", error);
+          if (!cancelled) {
+            setIsComputing(false);
+          }
+        }
+      });
+      return () => {
+        cancelled = true;
+        cancelAnimationFrame(frameId);
+      };
+    }
+
+    // Standard FFT (no averaging)
+    setWelchResult(null);
 
     // Use async for large datasets to avoid blocking main thread
     if (data.length >= WORKER_THRESHOLD) {
@@ -239,7 +281,7 @@ export function SpectrumPlot({
     return () => {
       cancelled = true;
     };
-  }, [data, sampleRate, nfft, analysisMode]);
+  }, [data, sampleRate, nfft, analysisMode, useAveraging]);
 
   // Compute coherence (coherence mode only)
   useEffect(() => {
@@ -1361,6 +1403,11 @@ export function SpectrumPlot({
               ref: {referenceName}
             </Badge>
           )}
+          {useAveraging && welchResult && (
+            <Badge variant="secondary" className="text-xs" title="Welch's method: overlapping segments averaged">
+              {welchResult.numSegments} segments
+            </Badge>
+          )}
           {zoomDomain && (
             <Badge
               variant="outline"
@@ -1396,6 +1443,15 @@ export function SpectrumPlot({
               onClick={() => setShowPeaks(!showPeaks)}
             >
               Peaks
+            </Button>
+            <Button
+              variant={useAveraging ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-6 px-2"
+              onClick={() => setUseAveraging(!useAveraging)}
+              title="Enable Welch's method averaging for smoother spectral estimates"
+            >
+              Avg
             </Button>
             {isTransferMode && (
               <Button

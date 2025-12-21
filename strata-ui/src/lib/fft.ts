@@ -469,6 +469,125 @@ export function transferMagnitudeToDb(
   return db;
 }
 
+/**
+ * Options for Welch's method PSD computation.
+ */
+export interface WelchOptions {
+  /** FFT length per segment (default: 4096) */
+  segmentSize?: number;
+  /** Fraction of overlap between segments, 0-1 (default: 0.5 = 50%) */
+  overlap?: number;
+}
+
+/**
+ * Result of Welch's method PSD computation.
+ */
+export interface WelchPSDResult {
+  /** Frequency bins in Hz */
+  frequencies: Float32Array;
+  /** Power spectral density values */
+  psd: Float32Array;
+  /** Number of segments averaged */
+  numSegments: number;
+}
+
+/**
+ * Compute Power Spectral Density using Welch's method.
+ *
+ * Welch's method provides improved spectral estimates by:
+ * 1. Dividing the signal into overlapping segments
+ * 2. Applying a Hanning window to each segment
+ * 3. Computing FFT of each segment
+ * 4. Averaging the resulting periodograms
+ *
+ * This reduces variance in the spectral estimate at the cost of some
+ * frequency resolution.
+ *
+ * @param signal - Input signal as Float32Array
+ * @param sampleRate - Sample rate in Hz
+ * @param options - Welch method configuration options
+ * @returns PSD result with frequencies, psd values, and segment count
+ */
+export function welchPSD(
+  signal: Float32Array,
+  sampleRate: number,
+  options: WelchOptions = {}
+): WelchPSDResult {
+  const {
+    segmentSize = 4096,
+    overlap = 0.5,
+  } = options;
+
+  // Ensure segment size is power of 2
+  const nfft = nextPowerOf2(segmentSize);
+  const hopSize = Math.floor(nfft * (1 - overlap));
+
+  // Determine number of segments
+  const numSegments = Math.max(1, Math.floor((signal.length - nfft) / hopSize) + 1);
+
+  // Number of positive frequencies (up to Nyquist)
+  const numFreqs = nfft / 2;
+
+  // Accumulator for averaged periodogram
+  const psdSum = new Float32Array(numFreqs);
+
+  // Temporary array for windowed segment
+  const windowed = new Float32Array(nfft);
+
+  // Compute window power for normalization (Hanning window)
+  let windowPower = 0;
+  for (let i = 0; i < nfft; i++) {
+    const w = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (nfft - 1)));
+    windowPower += w * w;
+  }
+
+  // Process each segment
+  for (let seg = 0; seg < numSegments; seg++) {
+    const start = seg * hopSize;
+    const segment = signal.subarray(start, start + nfft);
+
+    // Apply Hanning window
+    applyHanningWindow(segment, windowed);
+
+    // Compute FFT
+    const fftOut = realFFTFloat32(windowed, nfft);
+
+    // Accumulate power spectrum for positive frequencies
+    for (let i = 0; i < numFreqs; i++) {
+      const re = fftOut[2 * i];
+      const im = fftOut[2 * i + 1];
+      psdSum[i] += re * re + im * im;
+    }
+  }
+
+  // Normalize by number of segments, window power, and sample rate
+  // Scale factor converts to power spectral density (units²/Hz)
+  const scale = 2.0 / (sampleRate * windowPower * numSegments);
+
+  const psd = new Float32Array(numFreqs);
+  for (let i = 0; i < numFreqs; i++) {
+    psd[i] = psdSum[i] * scale;
+  }
+
+  // DC and Nyquist components should not be doubled
+  psd[0] /= 2;
+  if (numFreqs > 1) {
+    psd[numFreqs - 1] /= 2;
+  }
+
+  // Frequency axis
+  const frequencies = new Float32Array(numFreqs);
+  for (let i = 0; i < numFreqs; i++) {
+    frequencies[i] = (i * sampleRate) / nfft;
+  }
+
+  return {
+    frequencies,
+    psd,
+    numSegments,
+  };
+}
+
 // =============================================================================
 // Web Worker Support
 // =============================================================================
