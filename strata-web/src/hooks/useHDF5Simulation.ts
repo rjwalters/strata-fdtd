@@ -93,6 +93,17 @@ export function useHDF5Simulation(): UseHDF5SimulationResult {
       // Convert to SimulationMetadata
       const metadata = toSimulationMetadata(data);
 
+      // Convert sources to SourceData format
+      const sources = data.sources.map((source, index) => ({
+        name: `source_${index}`,
+        type: source.type,
+        position: source.position,
+        frequency: source.frequency,
+        bandwidth: source.bandwidth,
+        amplitude: source.amplitude,
+        waveform: source.waveform,
+      }));
+
       // Set initial state
       store.manifest = manifest;
       store.metadata = metadata;
@@ -102,6 +113,7 @@ export function useHDF5Simulation(): UseHDF5SimulationResult {
       store.probeData = data.probes;
       store.geometry = data.geometry;
       store.selectedProbes = Object.keys(data.probes.probes);
+      store.sources = sources;
       store.currentFrame = 0;
       store.isLoading = false;
       store.error = null;

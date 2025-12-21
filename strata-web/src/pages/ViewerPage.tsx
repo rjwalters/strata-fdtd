@@ -24,6 +24,8 @@ import {
   TimeSeriesPlot,
   SpectrumPlot,
   ExportPanel,
+  ProbesPanel,
+  SourcesPanel,
   Button,
   Badge,
   Slider,
@@ -34,8 +36,11 @@ import {
   useViewOptions,
   useGridInfo,
   useProbeData,
+  useProbeVisibility,
+  useSourceData,
   usePerformanceSettings,
   useExport,
+  useSliceKeyboardNavigation,
 } from "@strata/ui";
 import type {
   VoxelRendererHandle,
@@ -206,6 +211,19 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   const { shape, resolution } = useGridInfo();
   const { probeData } = useProbeData();
   const {
+    hiddenProbes,
+    showProbeMarkers,
+    toggleProbeVisibility,
+    showAllProbes,
+    hideAllProbes,
+    setShowProbeMarkers,
+  } = useProbeVisibility();
+  const {
+    sources,
+    showSourceMarkers,
+    setShowSourceMarkers,
+  } = useSourceData();
+  const {
     enableDownsampling,
     targetVoxels,
     downsampleMethod,
@@ -216,19 +234,44 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   const mainViewMode = useSimulationStore((s) => s.viewMode);
   const sliceAxis = useSimulationStore((s) => s.sliceAxis);
   const slicePosition = useSimulationStore((s) => s.slicePosition);
+  const showSliceGeometry = useSimulationStore((s) => s.showSliceGeometry);
   const setMainViewMode = useSimulationStore((s) => s.setViewMode);
   const setSliceAxis = useSimulationStore((s) => s.setSliceAxis);
   const setSlicePosition = useSimulationStore((s) => s.setSlicePosition);
+  const setShowSliceGeometry = useSimulationStore((s) => s.setShowSliceGeometry);
+
+  // Geometry data
+  const geometry = useSimulationStore((s) => s.geometry);
+
+  // Slice keyboard navigation
+  useSliceKeyboardNavigation({
+    enabled: mainViewMode === "slice" && isLoaded,
+    position: slicePosition,
+    axis: sliceAxis,
+    shape,
+    callbacks: {
+      onPositionChange: setSlicePosition,
+      onAxisChange: setSliceAxis,
+    },
+  });
 
   // Local state
   const [bottomViewMode, setBottomViewMode] = useState<"time" | "spectrum" | "coherence">("time");
   const [showMetadata, setShowMetadata] = useState(false);
 
-  // Derive selected probe from probe data
+  // Derive selected probe from probe data (first visible probe for spectrum)
   const probeNames = probeData ? Object.keys(probeData.probes) : [];
-  const [selectedProbeOverride, setSelectedProbeOverride] = useState<string | null>(null);
-  const selectedProbe = selectedProbeOverride ?? probeNames[0] ?? null;
-  const setSelectedProbe = (name: string | null) => setSelectedProbeOverride(name);
+  const visibleProbeNames = probeNames.filter(name => !hiddenProbes.includes(name));
+  const selectedProbe = visibleProbeNames[0] ?? null;
+
+  // Compute probes array for ProbesPanel and 3D markers
+  const probesForPanel = useMemo(() => {
+    if (!probeData) return [];
+    return Object.entries(probeData.probes).map(([name, probe]) => ({
+      name,
+      position: probe.position,
+    }));
+  }, [probeData]);
 
   // Coherence mode probe selection
   const [referenceProbe, setReferenceProbe] = useState<string | null>(null);
@@ -612,6 +655,9 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
               resolution={resolution}
               onAxisChange={setSliceAxis}
               onPositionChange={setSlicePosition}
+              showGeometry={showSliceGeometry}
+              onShowGeometryChange={setShowSliceGeometry}
+              hasGeometry={!!geometry?.mask}
             />
           )}
 
@@ -677,10 +723,13 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
               step={1}
               onValueChange={([v]) => setThreshold(v / 100)}
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>0%</span>
-              <span>{Math.round(threshold * 100)}%</span>
-              <span>100%</span>
+            <div className="relative h-4">
+              <span
+                className="absolute text-xs text-muted-foreground -translate-x-1/2"
+                style={{ left: `${threshold * 100}%` }}
+              >
+                {Math.round(threshold * 100)}%
+              </span>
             </div>
           </Panel>
 
@@ -693,10 +742,13 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
               step={1}
               onValueChange={([v]) => setDisplayFill(v / 100)}
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>1%</span>
-              <span>{Math.round(displayFill * 100)}%</span>
-              <span>100%</span>
+            <div className="relative h-4">
+              <span
+                className="absolute text-xs text-muted-foreground -translate-x-1/2"
+                style={{ left: `${((displayFill * 100) - 1) / 99 * 100}%` }}
+              >
+                {Math.round(displayFill * 100)}%
+              </span>
             </div>
           </Panel>
 
@@ -756,6 +808,28 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
             </div>
           </Panel>
 
+          {/* Probes */}
+          <Panel title="Probes">
+            <ProbesPanel
+              probes={probesForPanel}
+              hiddenProbes={hiddenProbes}
+              showProbeMarkers={showProbeMarkers}
+              onToggleProbe={toggleProbeVisibility}
+              onShowAll={showAllProbes}
+              onHideAll={hideAllProbes}
+              onToggleMarkers={setShowProbeMarkers}
+            />
+          </Panel>
+
+          {/* Sources */}
+          <Panel title="Sources">
+            <SourcesPanel
+              sources={sources}
+              showSourceMarkers={showSourceMarkers}
+              onToggleMarkers={setShowSourceMarkers}
+            />
+          </Panel>
+
           {/* Performance */}
           <PerformancePanel
             enableDownsampling={enableDownsampling}
@@ -805,6 +879,8 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
             resolution={resolution}
             axis={sliceAxis}
             position={slicePosition}
+            geometry={geometry?.mask}
+            showGeometry={showSliceGeometry}
           />
         ) : (
           <OptimizedVoxelRenderer
@@ -825,6 +901,11 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
             downsampleMethod={downsampleMethod}
             showPerformanceMetrics={showPerformanceMetrics}
             onPerformanceUpdate={updatePerformanceMetrics}
+            probes={probesForPanel}
+            hiddenProbes={hiddenProbes}
+            showProbeMarkers={showProbeMarkers}
+            sources={sources}
+            showSourceMarkers={showSourceMarkers}
           />
         )
       }
@@ -836,13 +917,14 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
           playbackSpeed={playbackSpeed}
           probeData={probeData}
           selectedProbe={selectedProbe}
+          hiddenProbes={hiddenProbes}
           viewMode={bottomViewMode}
           currentTime={currentTime}
+          sources={sources}
           onFrameChange={setCurrentFrame}
           onPlayingChange={handlePlayingChange}
           onTimeSelect={handleTimeSelect}
           onViewModeChange={setBottomViewMode}
-          onSelectProbe={setSelectedProbe}
           referenceProbe={referenceProbe}
           measurementProbe={measurementProbe}
           onReferenceProbeChange={setReferenceProbe}
@@ -963,13 +1045,14 @@ interface BottomPanelProps {
   playbackSpeed: number;
   probeData: ReturnType<typeof useSimulationStore.getState>["probeData"];
   selectedProbe: string | null;
+  hiddenProbes: string[];
   viewMode: "time" | "spectrum" | "coherence";
   currentTime?: number;
+  sources: ReturnType<typeof useSourceData>["sources"];
   onFrameChange: (frame: number) => void;
   onPlayingChange: (playing: boolean) => void;
   onTimeSelect: (time: number) => void;
   onViewModeChange: (mode: "time" | "spectrum" | "coherence") => void;
-  onSelectProbe: (name: string | null) => void;
   // Coherence mode props
   referenceProbe: string | null;
   measurementProbe: string | null;
@@ -984,24 +1067,57 @@ function BottomPanel({
   playbackSpeed,
   probeData,
   selectedProbe,
+  hiddenProbes,
   viewMode,
   currentTime,
+  sources,
   onFrameChange,
   onPlayingChange,
   onTimeSelect,
   onViewModeChange,
-  onSelectProbe,
   referenceProbe,
   measurementProbe,
   onReferenceProbeChange,
   onMeasurementProbeChange,
 }: BottomPanelProps) {
-  const probeNames = probeData ? Object.keys(probeData.probes) : [];
+  // Convert hiddenProbes array to Set for TimeSeriesPlot
+  const hiddenProbesSet = useMemo(() => new Set(hiddenProbes), [hiddenProbes]);
+
+  // Convert sources to SourceTimeSeries format for TimeSeriesPlot
+  const sourcesForPlot = useMemo(() => {
+    return sources
+      .filter(s => s.waveform !== undefined)
+      .map(s => ({
+        name: s.name,
+        type: s.type,
+        waveform: s.waveform!,
+      }));
+  }, [sources]);
+
+  // Get probe names for coherence mode validation
+  const probeNames = useMemo(() => probeData ? Object.keys(probeData.probes) : [], [probeData]);
+
+  // Spectrum mode state: 'spectrum' for power spectrum, 'transfer' for transfer function
+  const [spectrumMode, setSpectrumMode] = useState<"spectrum" | "transfer">("spectrum");
+
+  // Selected source for transfer function reference
+  const [selectedSourceIndex, setSelectedSourceIndex] = useState(0);
+
+  // Get available sources with waveforms
+  const sourcesWithWaveform = useMemo(() =>
+    sources.filter(s => s.waveform !== undefined),
+    [sources]
+  );
+
+  // Get selected source reference data
+  const referenceSource = sourcesWithWaveform[selectedSourceIndex];
+  const referenceData = referenceSource?.waveform;
+  const referenceName = referenceSource?.name;
 
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <Button
             variant={viewMode === "time" ? "default" : "outline"}
             size="sm"
@@ -1028,19 +1144,44 @@ function BottomPanel({
           >
             Coherence
           </Button>
+          {viewMode === "spectrum" && selectedProbe && (
+            <span className="text-xs text-muted-foreground ml-2">
+              Showing: {selectedProbe}
+            </span>
+          )}
         </div>
-        {viewMode === "spectrum" && probeNames.length > 0 && (
-          <div className="flex gap-1">
-            {probeNames.map((name) => (
-              <Badge
-                key={name}
-                variant={selectedProbe === name ? "default" : "outline"}
-                className="cursor-pointer text-xs"
-                onClick={() => onSelectProbe(name)}
+        {/* Transfer function controls - show when in spectrum mode and sources available */}
+        {viewMode === "spectrum" && sourcesWithWaveform.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant={spectrumMode === "spectrum" ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-6"
+              onClick={() => setSpectrumMode("spectrum")}
+            >
+              Spectrum
+            </Button>
+            <Button
+              variant={spectrumMode === "transfer" ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-6"
+              onClick={() => setSpectrumMode("transfer")}
+            >
+              Transfer Fn
+            </Button>
+            {spectrumMode === "transfer" && sourcesWithWaveform.length > 1 && (
+              <select
+                value={selectedSourceIndex}
+                onChange={(e) => setSelectedSourceIndex(Number(e.target.value))}
+                className="h-6 text-xs bg-secondary border rounded px-1"
               >
-                {name}
-              </Badge>
-            ))}
+                {sourcesWithWaveform.map((source, idx) => (
+                  <option key={source.name} value={idx}>
+                    {source.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
         )}
       </div>
@@ -1056,6 +1197,10 @@ function BottomPanel({
             sampleRate={probeData.sampleRate}
             currentTime={currentTime}
             onTimeSelect={onTimeSelect}
+            hideProbeSelector
+            hiddenProbes={hiddenProbesSet}
+            sources={sourcesForPlot}
+            showSources={sourcesForPlot.length > 0}
           />
         ) : viewMode === "coherence" ? (
           <SpectrumPlot
@@ -1068,15 +1213,24 @@ function BottomPanel({
             onReferenceProbeChange={onReferenceProbeChange}
             onMeasurementProbeChange={onMeasurementProbeChange}
           />
+        ) : !selectedProbe ? (
+          <div className="h-full bg-secondary/30 rounded-md flex items-center justify-center text-muted-foreground text-sm">
+            {Object.keys(probeData.probes).length === 0
+              ? "No probes in simulation"
+              : "No probes visible - enable a probe in the sidebar"}
+          </div>
         ) : (
           <SpectrumPlot
             data={
-              selectedProbe && probeData.probes[selectedProbe]
+              probeData.probes[selectedProbe]
                 ? probeData.probes[selectedProbe].data
                 : new Float32Array(0)
             }
             sampleRate={probeData.sampleRate}
             analysisMode="spectrum"
+            mode={spectrumMode}
+            referenceData={referenceData}
+            referenceName={referenceName}
           />
         )}
       </div>

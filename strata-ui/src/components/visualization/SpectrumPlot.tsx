@@ -14,6 +14,9 @@ export interface FrequencyMarker {
 /** Analysis mode for the spectrum plot */
 export type AnalysisMode = "spectrum" | "coherence";
 
+/** Spectrum display mode */
+export type SpectrumMode = "spectrum" | "transfer";
+
 /** Probe data structure for coherence analysis */
 export interface ProbeRecord {
   position: [number, number, number];
@@ -33,6 +36,12 @@ export interface SpectrumPlotProps {
   markers?: FrequencyMarker[];
   /** Analysis mode: spectrum or coherence */
   analysisMode?: AnalysisMode;
+  /** Display mode: 'spectrum' for power spectrum, 'transfer' for transfer function */
+  mode?: SpectrumMode;
+  /** Reference signal for transfer function (source waveform) */
+  referenceData?: Float32Array;
+  /** Name of the reference source for display */
+  referenceName?: string;
   /** All available probes for coherence analysis */
   probes?: Record<string, ProbeRecord>;
   /** Selected reference probe name for coherence */
@@ -134,6 +143,9 @@ export function SpectrumPlot({
   logScale: initialLogScale = true,
   markers = [],
   analysisMode = "spectrum",
+  mode = "spectrum",
+  referenceData,
+  referenceName,
   probes,
   referenceProbe,
   measurementProbe,
@@ -151,6 +163,10 @@ export function SpectrumPlot({
     magnitude: Float32Array;
   } | null>(null);
   const [coherenceResult, setCoherenceResult] = useState<CoherenceResult | null>(null);
+  const [referenceSpectrum, setReferenceSpectrum] = useState<{
+    frequencies: Float32Array;
+    magnitude: Float32Array;
+  } | null>(null);
   const [isComputing, setIsComputing] = useState(false);
   // Track brush state to suppress tooltip during drag
   const isBrushingRef = useRef(false);
@@ -246,6 +262,38 @@ export function SpectrumPlot({
     };
   }, [analysisMode, probes, referenceProbe, measurementProbe, sampleRate]);
 
+  // Compute reference spectrum for transfer function mode
+  useEffect(() => {
+    if (!referenceData || referenceData.length === 0 || mode !== "transfer") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setReferenceSpectrum(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    if (referenceData.length >= WORKER_THRESHOLD) {
+      computeSpectrumAsync(referenceData, sampleRate, nfft)
+        .then((result) => {
+          if (!cancelled) {
+            setReferenceSpectrum(result);
+          }
+        })
+        .catch((error) => {
+          console.error("Reference FFT computation error:", error);
+          if (!cancelled) {
+            setReferenceSpectrum(computeSpectrum(referenceData, sampleRate, nfft));
+          }
+        });
+    } else {
+      setReferenceSpectrum(computeSpectrum(referenceData, sampleRate, nfft));
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [referenceData, sampleRate, nfft, mode]);
+
   // Find peaks (cached based on spectrum)
   const [peaks, setPeaks] = useState<PeakInfo[]>([]);
   useEffect(() => {
@@ -276,6 +324,9 @@ export function SpectrumPlot({
   // Render chart
   useEffect(() => {
     if (!svgRef.current || dimensions.width === 0 || !spectrum) return;
+
+    // In transfer mode, need reference spectrum to display
+    const isTransferMode = mode === "transfer" && referenceSpectrum !== null;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
@@ -310,11 +361,49 @@ export function SpectrumPlot({
       }
     }
 
-    // Convert to dB if needed
-    const refMag = Math.max(...magnitude);
-    const displayMag = logScale
-      ? Float32Array.from(magnitude, (v) => toDecibels(v, refMag))
-      : magnitude;
+    // Compute display magnitude based on mode
+    let displayMag: Float32Array;
+    let refMag: number;
+    let yMin: number;
+    let yMax: number;
+
+    if (isTransferMode && referenceSpectrum) {
+      // Transfer function mode: H(f) = Y(f) / X(f)
+      // Y = probe output (magnitude), X = source input (referenceSpectrum.magnitude)
+      const transferMag = new Float32Array(magnitude.length);
+      const refSpecMag = referenceSpectrum.magnitude;
+
+      // Compute transfer function magnitude (with small epsilon to avoid division by zero)
+      const epsilon = 1e-10;
+      for (let i = 0; i < magnitude.length; i++) {
+        const refVal = i < refSpecMag.length ? refSpecMag[i] : epsilon;
+        transferMag[i] = magnitude[i] / Math.max(refVal, epsilon);
+      }
+
+      // In transfer function mode, reference is 1 (0 dB = unity gain)
+      refMag = 1;
+      displayMag = logScale
+        ? Float32Array.from(transferMag, (v) => toDecibels(v, 1))
+        : transferMag;
+
+      // Transfer function typically shows range around 0 dB
+      if (logScale) {
+        yMin = -40; // -40 dB
+        yMax = 20;  // +20 dB
+      } else {
+        const maxTransfer = Math.max(...transferMag);
+        yMin = 0;
+        yMax = Math.max(maxTransfer, 2); // At least show up to 2x gain
+      }
+    } else {
+      // Standard spectrum mode
+      refMag = Math.max(...magnitude);
+      displayMag = logScale
+        ? Float32Array.from(magnitude, (v) => toDecibels(v, refMag))
+        : magnitude;
+      yMin = logScale ? -80 : 0;
+      yMax = logScale ? 0 : refMag;
+    }
 
     // Create scales
     const xScale = d3
@@ -323,8 +412,6 @@ export function SpectrumPlot({
       .range([0, width])
       .clamp(true);
 
-    const yMin = logScale ? -80 : 0;
-    const yMax = logScale ? 0 : refMag;
     const yScale = d3.scaleLinear().domain([yMin, yMax]).range([height, 0]);
 
     // Create main group
@@ -345,7 +432,17 @@ export function SpectrumPlot({
     const yAxis = d3
       .axisLeft(yScale)
       .ticks(5)
-      .tickFormat((d) => (logScale ? `${d}dB` : d3.format(".1e")(+d)));
+      .tickFormat((d) => {
+        if (logScale) {
+          // Show +/- sign for transfer function mode
+          const val = +d;
+          if (isTransferMode) {
+            return val > 0 ? `+${val}dB` : `${val}dB`;
+          }
+          return `${val}dB`;
+        }
+        return d3.format(".1e")(+d);
+      });
 
     g.append("g")
       .attr("transform", `translate(0,${height})`)
@@ -653,7 +750,7 @@ export function SpectrumPlot({
       .on("dblclick", () => {
         setZoomDomain(null);
       });
-  }, [dimensions, spectrum, logScale, markers, peaks, showPeaks, sampleRate, zoomDomain, analysisMode]);
+  }, [dimensions, spectrum, logScale, markers, peaks, showPeaks, sampleRate, zoomDomain, mode, referenceSpectrum, analysisMode]);
 
   // Render coherence chart (coherence mode)
   useEffect(() => {
@@ -1020,11 +1117,21 @@ export function SpectrumPlot({
     referenceProbe && measurementProbe &&
     referenceProbe !== measurementProbe;
 
+  // Determine if we're in transfer mode
+  const isTransferMode = mode === "transfer" && referenceSpectrum !== null;
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-muted-foreground">{title}</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground">
+            {analysisMode === "coherence" ? title : (isTransferMode ? "Transfer Function" : "Frequency Spectrum")}
+          </h3>
+          {isTransferMode && referenceName && (
+            <Badge variant="secondary" className="text-xs">
+              ref: {referenceName}
+            </Badge>
+          )}
           {zoomDomain && (
             <Badge
               variant="outline"
@@ -1130,6 +1237,11 @@ export function SpectrumPlot({
         {analysisMode === "coherence" && !coherenceReady && !isComputing && probeNames.length >= 2 && (
           <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
             Select reference and measurement probes above
+          </div>
+        )}
+        {analysisMode !== "coherence" && !isComputing && !spectrum && data.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-sm text-muted-foreground">No probe data available</span>
           </div>
         )}
       </div>

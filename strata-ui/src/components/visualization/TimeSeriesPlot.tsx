@@ -16,6 +16,12 @@ export interface ProbeTimeSeries {
   data: Float32Array;
 }
 
+export interface SourceTimeSeries {
+  name: string;
+  type: string;
+  waveform: Float32Array;
+}
+
 export interface TimeSeriesPlotProps {
   probes: {
     [name: string]: ProbeTimeSeries;
@@ -42,6 +48,16 @@ export interface TimeSeriesPlotProps {
   onBufferFlush?: () => void;
   /** Maximum buffer size in streaming mode (default: 50000 points per probe) */
   streamingBufferSize?: number;
+  /** Hide the internal probe selector badges (when parent manages selection) */
+  hideProbeSelector?: boolean;
+  /** Callback when probe visibility is toggled */
+  onProbeToggle?: (name: string) => void;
+  /** Set of hidden probe names (controlled mode) */
+  hiddenProbes?: Set<string>;
+  /** Source waveforms to display (dashed lines) */
+  sources?: SourceTimeSeries[];
+  /** Show source waveforms in the plot */
+  showSources?: boolean;
 }
 
 /** Threshold for switching to Canvas rendering in 'auto' mode */
@@ -66,12 +82,20 @@ export function TimeSeriesPlot({
   streamingMode = false,
   onBufferFlush,
   streamingBufferSize = DEFAULT_STREAMING_BUFFER_SIZE,
+  hideProbeSelector = false,
+  onProbeToggle,
+  hiddenProbes: hiddenProbesProp,
+  sources = [],
+  showSources = true,
 }: TimeSeriesPlotProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [hiddenProbes, setHiddenProbes] = useState<Set<string>>(new Set());
+  const [hiddenProbesInternal, setHiddenProbesInternal] = useState<Set<string>>(new Set());
+  // Use prop if provided (controlled mode), otherwise use internal state
+  const hiddenProbes = hiddenProbesProp ?? hiddenProbesInternal;
+  const setHiddenProbes = hiddenProbesProp ? undefined : setHiddenProbesInternal;
   const [zoomDomain, setZoomDomain] = useState<[number, number] | null>(null);
   const [isDownsampling, setIsDownsampling] = useState(false);
   // Track brush state to suppress tooltip during drag
@@ -280,7 +304,7 @@ export function TimeSeriesPlot({
       // Use fixed y-range if provided
       [minPressure, maxPressure] = yRange;
     } else {
-      // Auto-scale based on visible data
+      // Auto-scale based on visible data (probes)
       for (const name of visibleProbes) {
         const probe = probes[name];
         if (!probe) continue;
@@ -293,6 +317,21 @@ export function TimeSeriesPlot({
           const v = probe.data[i];
           if (v < minPressure) minPressure = v;
           if (v > maxPressure) maxPressure = v;
+        }
+      }
+
+      // Include source waveforms in y-range calculation
+      if (showSources && sources.length > 0) {
+        const startSample = Math.floor((xMin / 1000) * sampleRate);
+        const endSample = Math.ceil((xMax / 1000) * sampleRate);
+
+        for (const source of sources) {
+          if (!source.waveform) continue;
+          for (let i = Math.max(0, startSample); i < Math.min(source.waveform.length, endSample); i++) {
+            const v = source.waveform[i];
+            if (v < minPressure) minPressure = v;
+            if (v > maxPressure) maxPressure = v;
+          }
         }
       }
 
@@ -466,6 +505,91 @@ export function TimeSeriesPlot({
       }
     }
 
+    // Draw source waveforms (dashed lines)
+    if (showSources && sources.length > 0) {
+      // Use a distinct color for sources (yellow/gold tones)
+      const sourceColors = ["#fbbf24", "#f59e0b", "#d97706", "#b45309"];
+
+      for (let i = 0; i < sources.length; i++) {
+        const source = sources[i];
+        if (!source.waveform || source.waveform.length === 0) continue;
+
+        // Downsample source waveform using the same approach
+        const sourceData = source.waveform;
+        let sourcePoints: [number, number][];
+
+        // Calculate sample range for current view
+        const startSample = Math.max(0, Math.floor((xMin / 1000) * sampleRate));
+        const endSample = Math.min(sourceData.length, Math.ceil((xMax / 1000) * sampleRate));
+
+        if (startSample >= endSample) continue;
+
+        const viewData = sourceData.subarray(startSample, endSample);
+        const targetPoints = Math.min(width * 4, viewData.length);
+
+        if (viewData.length <= targetPoints || downsampleAlgorithm === "none") {
+          sourcePoints = Array.from(viewData, (y, j) => [
+            ((startSample + j) / sampleRate) * 1000,
+            y,
+          ]);
+        } else {
+          const timeOffset = (startSample / sampleRate) * 1000;
+          if (downsampleAlgorithm === "minmax") {
+            const result = minMaxDownsample(viewData, targetPoints, sampleRate);
+            sourcePoints = result
+              .filter((point): point is [number, number] =>
+                Array.isArray(point) && point.length === 2)
+              .map(([t, v]) => [t + timeOffset, v]);
+          } else {
+            const result = lttbDownsample(viewData, targetPoints, sampleRate);
+            sourcePoints = result
+              .filter((point): point is [number, number] =>
+                Array.isArray(point) && point.length === 2)
+              .map(([t, v]) => [t + timeOffset, v]);
+          }
+        }
+
+        if (sourcePoints.length === 0) continue;
+
+        const color = sourceColors[i % sourceColors.length];
+
+        if (useCanvas && ctx) {
+          // Canvas rendering with dashed line
+          ctx.beginPath();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([6, 3]); // Dashed line pattern
+
+          let started = false;
+          for (const [t, v] of sourcePoints) {
+            const x = xScale(t);
+            const y = yScale(v);
+            if (!isFinite(x) || !isFinite(y)) continue;
+
+            if (!started) {
+              ctx.moveTo(x, y);
+              started = true;
+            } else {
+              ctx.lineTo(x, y);
+            }
+          }
+          ctx.stroke();
+          ctx.setLineDash([]); // Reset to solid line
+        } else {
+          // SVG rendering with dashed line
+          const path = createLinePath(sourcePoints);
+          if (!path) continue;
+
+          g.append("path")
+            .attr("fill", "none")
+            .attr("stroke", color)
+            .attr("stroke-width", 1.5)
+            .attr("stroke-dasharray", "6,3")
+            .attr("d", path);
+        }
+      }
+    }
+
     // Draw current time marker
     if (currentTime !== undefined && currentTime >= 0 && currentTime <= fullDuration) {
       g.append("line")
@@ -600,6 +724,17 @@ export function TimeSeriesPlot({
           }
         }
 
+        // Include source waveform values in tooltip
+        if (showSources && sources.length > 0) {
+          const sampleIndex = Math.round((timeMs / 1000) * sampleRate);
+          for (const source of sources) {
+            if (!source.waveform) continue;
+            if (sampleIndex >= 0 && sampleIndex < source.waveform.length) {
+              lines.push(`${source.name} (src): ${source.waveform[sampleIndex].toExponential(2)}`);
+            }
+          }
+        }
+
         // Update tooltip text
         tooltipText.selectAll("tspan").remove();
         lines.forEach((line, i) => {
@@ -675,6 +810,8 @@ export function TimeSeriesPlot({
     streamingMode,
     streamingBuffer,
     onBufferFlush,
+    sources,
+    showSources,
   ]);
 
   // Incremental render effect for streaming mode (Canvas only)
@@ -836,22 +973,28 @@ export function TimeSeriesPlot({
   ]);
 
   const toggleProbe = useCallback((name: string) => {
-    setHiddenProbes((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) {
-        next.delete(name);
-      } else {
-        next.add(name);
-      }
-      return next;
-    });
+    // If controlled mode, call the callback
+    if (onProbeToggle) {
+      onProbeToggle(name);
+    } else if (setHiddenProbes) {
+      // Internal state mode
+      setHiddenProbes((prev) => {
+        const next = new Set(prev);
+        if (next.has(name)) {
+          next.delete(name);
+        } else {
+          next.add(name);
+        }
+        return next;
+      });
+    }
     // Invalidate streaming buffer when visibility changes
     if (streamingMode) {
       streamingBuffer.invalidate(name);
       needsFullRenderRef.current = true;
       onBufferFlush?.();
     }
-  }, [streamingMode, streamingBuffer, onBufferFlush]);
+  }, [onProbeToggle, setHiddenProbes, streamingMode, streamingBuffer, onBufferFlush]);
 
   return (
     <div className="h-full flex flex-col">
@@ -873,24 +1016,26 @@ export function TimeSeriesPlot({
             </Badge>
           )}
         </div>
-        <div className="flex gap-1">
-          {probeNames.map((name) => (
-            <Badge
-              key={name}
-              variant={visibleProbes.has(name) ? "default" : "outline"}
-              className="cursor-pointer text-xs"
-              style={{
-                backgroundColor: visibleProbes.has(name)
-                  ? probeColors.get(name)
-                  : undefined,
-                borderColor: probeColors.get(name),
-              }}
-              onClick={() => toggleProbe(name)}
-            >
-              {name}
-            </Badge>
-          ))}
-        </div>
+        {!hideProbeSelector && (
+          <div className="flex gap-1">
+            {probeNames.map((name) => (
+              <Badge
+                key={name}
+                variant={visibleProbes.has(name) ? "default" : "outline"}
+                className="cursor-pointer text-xs"
+                style={{
+                  backgroundColor: visibleProbes.has(name)
+                    ? probeColors.get(name)
+                    : undefined,
+                  borderColor: probeColors.get(name),
+                }}
+                onClick={() => toggleProbe(name)}
+              >
+                {name}
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
       <div ref={containerRef} className="flex-1 min-h-0 relative">
         <svg ref={svgRef} width={dimensions.width} height={dimensions.height} />

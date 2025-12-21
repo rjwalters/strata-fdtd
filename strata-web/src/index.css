@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Include strata-ui component library source files for Tailwind class scanning */
+@source "../node_modules/@strata/ui/src/**/*.tsx";
+@source "../node_modules/@strata/ui/src/**/*.ts";
+
 @theme {
   /* shadcn/ui CSS variables for dark theme */
   --color-background: hsl(222.2 84% 4.9%);
