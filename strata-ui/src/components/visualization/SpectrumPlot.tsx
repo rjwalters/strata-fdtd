@@ -1,10 +1,21 @@
 import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import * as d3 from "d3";
-import { computeSpectrum, computeSpectrumAsync, computeCoherence, type CoherenceResult } from "@/lib/fft";
+import {
+  computeSpectrumAsync,
+  computeComplexSpectrum,
+  extractTransferPhase,
+  unwrapPhase,
+  computeGroupDelay,
+  computeCoherence,
+  type ComplexSpectrum,
+  type CoherenceResult,
+} from "@/lib/fft";
 import { logBinDownsample, WORKER_THRESHOLD } from "@/lib/downsample";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+
+export type PhaseViewMode = "phase" | "groupDelay";
 
 export interface FrequencyMarker {
   frequency: number;
@@ -154,6 +165,7 @@ export function SpectrumPlot({
 }: SpectrumPlotProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const phaseSvgRef = useRef<SVGSVGElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [logScale, setLogScale] = useState(initialLogScale);
   const [showPeaks, setShowPeaks] = useState(true);
@@ -163,11 +175,17 @@ export function SpectrumPlot({
     magnitude: Float32Array;
   } | null>(null);
   const [coherenceResult, setCoherenceResult] = useState<CoherenceResult | null>(null);
+  const [complexSpectrum, setComplexSpectrum] = useState<ComplexSpectrum | null>(null);
   const [referenceSpectrum, setReferenceSpectrum] = useState<{
     frequencies: Float32Array;
     magnitude: Float32Array;
   } | null>(null);
+  const [referenceComplexSpectrum, setReferenceComplexSpectrum] = useState<ComplexSpectrum | null>(null);
   const [isComputing, setIsComputing] = useState(false);
+  // Phase display options
+  const [showPhase, setShowPhase] = useState(false);
+  const [phaseViewMode, setPhaseViewMode] = useState<PhaseViewMode>("phase");
+  const [phaseUnwrap, setPhaseUnwrap] = useState(true);
   // Track brush state to suppress tooltip during drag
   const isBrushingRef = useRef(false);
 
@@ -183,6 +201,7 @@ export function SpectrumPlot({
     if (data.length === 0) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSpectrum(null);
+      setComplexSpectrum(null);
       return;
     }
 
@@ -195,6 +214,8 @@ export function SpectrumPlot({
         .then((result) => {
           if (!cancelled) {
             setSpectrum(result);
+            // Also compute complex spectrum for phase analysis
+            setComplexSpectrum(computeComplexSpectrum(data, sampleRate, nfft));
             setIsComputing(false);
           }
         })
@@ -202,13 +223,17 @@ export function SpectrumPlot({
           console.error("FFT computation error:", error);
           if (!cancelled) {
             // Fallback to sync on error
-            setSpectrum(computeSpectrum(data, sampleRate, nfft));
+            const complexResult = computeComplexSpectrum(data, sampleRate, nfft);
+            setSpectrum({ frequencies: complexResult.frequencies, magnitude: complexResult.magnitude });
+            setComplexSpectrum(complexResult);
             setIsComputing(false);
           }
         });
     } else {
       // Sync for small datasets
-      setSpectrum(computeSpectrum(data, sampleRate, nfft));
+      const complexResult = computeComplexSpectrum(data, sampleRate, nfft);
+      setSpectrum({ frequencies: complexResult.frequencies, magnitude: complexResult.magnitude });
+      setComplexSpectrum(complexResult);
     }
 
     return () => {
@@ -267,6 +292,7 @@ export function SpectrumPlot({
     if (!referenceData || referenceData.length === 0 || mode !== "transfer") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setReferenceSpectrum(null);
+      setReferenceComplexSpectrum(null);
       return;
     }
 
@@ -277,16 +303,21 @@ export function SpectrumPlot({
         .then((result) => {
           if (!cancelled) {
             setReferenceSpectrum(result);
+            setReferenceComplexSpectrum(computeComplexSpectrum(referenceData, sampleRate, nfft));
           }
         })
         .catch((error) => {
           console.error("Reference FFT computation error:", error);
           if (!cancelled) {
-            setReferenceSpectrum(computeSpectrum(referenceData, sampleRate, nfft));
+            const complexResult = computeComplexSpectrum(referenceData, sampleRate, nfft);
+            setReferenceSpectrum({ frequencies: complexResult.frequencies, magnitude: complexResult.magnitude });
+            setReferenceComplexSpectrum(complexResult);
           }
         });
     } else {
-      setReferenceSpectrum(computeSpectrum(referenceData, sampleRate, nfft));
+      const complexResult = computeComplexSpectrum(referenceData, sampleRate, nfft);
+      setReferenceSpectrum({ frequencies: complexResult.frequencies, magnitude: complexResult.magnitude });
+      setReferenceComplexSpectrum(complexResult);
     }
 
     return () => {
@@ -304,6 +335,36 @@ export function SpectrumPlot({
     }
     setPeaks(findPeaks(spectrum.frequencies, spectrum.magnitude));
   }, [spectrum]);
+
+  // Compute phase and group delay for transfer function mode
+  const phaseData = useMemo(() => {
+    if (mode !== "transfer" || !complexSpectrum || !referenceComplexSpectrum) {
+      return null;
+    }
+
+    // Extract phase from complex transfer function
+    const rawPhase = extractTransferPhase(
+      referenceComplexSpectrum.real,
+      referenceComplexSpectrum.imag,
+      complexSpectrum.real,
+      complexSpectrum.imag
+    );
+
+    // Optionally unwrap phase
+    const phase = phaseUnwrap ? unwrapPhase(rawPhase) : rawPhase;
+
+    // Compute group delay from unwrapped phase
+    const groupDelay = computeGroupDelay(
+      unwrapPhase(rawPhase), // Always use unwrapped for group delay
+      complexSpectrum.frequencies
+    );
+
+    return {
+      frequencies: complexSpectrum.frequencies,
+      phase,
+      groupDelay,
+    };
+  }, [mode, complexSpectrum, referenceComplexSpectrum, phaseUnwrap]);
 
   // Threshold for downsampling (number of frequency bins)
   const DOWNSAMPLE_THRESHOLD = 2000;
@@ -1098,6 +1159,174 @@ export function SpectrumPlot({
       .text("Transfer Fn");
   }, [dimensions, coherenceResult, sampleRate, zoomDomain, analysisMode]);
 
+  // Render phase plot
+  useEffect(() => {
+    if (!phaseSvgRef.current || !showPhase || !phaseData || dimensions.width === 0) return;
+
+    const PHASE_MARGIN = { top: 5, right: 20, bottom: 25, left: 50 };
+    const phaseHeight = 120; // Fixed height for phase plot
+    const svg = d3.select(phaseSvgRef.current);
+    svg.selectAll("*").remove();
+
+    const width = dimensions.width - PHASE_MARGIN.left - PHASE_MARGIN.right;
+    const height = phaseHeight - PHASE_MARGIN.top - PHASE_MARGIN.bottom;
+
+    if (width <= 0 || height <= 0) return;
+
+    const { frequencies, phase, groupDelay } = phaseData;
+
+    // Default frequency range
+    const defaultMaxFreq = Math.min(sampleRate / 2, 20000);
+    const defaultMinFreq = 20;
+    const [minFreq, maxFreq] = zoomDomain ?? [defaultMinFreq, defaultMaxFreq];
+
+    // Find indices for frequency range
+    let startIdx = 0;
+    let endIdx = frequencies.length - 1;
+    for (let i = 0; i < frequencies.length; i++) {
+      if (frequencies[i] >= minFreq) {
+        startIdx = i;
+        break;
+      }
+    }
+    for (let i = frequencies.length - 1; i >= 0; i--) {
+      if (frequencies[i] <= maxFreq) {
+        endIdx = i;
+        break;
+      }
+    }
+
+    // Select data based on view mode
+    const displayData = phaseViewMode === "phase" ? phase : groupDelay;
+    const yLabel = phaseViewMode === "phase"
+      ? (phaseUnwrap ? "Phase (rad)" : "Phase (°)")
+      : "Group Delay (ms)";
+
+    // Convert phase to degrees if not unwrapped
+    const convertedData = phaseViewMode === "phase" && !phaseUnwrap
+      ? Float32Array.from(displayData, v => v * (180 / Math.PI))
+      : phaseViewMode === "groupDelay"
+        ? Float32Array.from(displayData, v => v * 1000) // Convert to milliseconds
+        : displayData;
+
+    // Calculate y-axis range
+    let yMin: number, yMax: number;
+    const visibleData = convertedData.subarray(startIdx, endIdx + 1);
+    const dataMin = Math.min(...visibleData);
+    const dataMax = Math.max(...visibleData);
+    const padding = (dataMax - dataMin) * 0.1 || 1;
+    yMin = dataMin - padding;
+    yMax = dataMax + padding;
+
+    // Create scales
+    const xScale = d3
+      .scaleLog()
+      .domain([Math.max(minFreq, frequencies[startIdx]), maxFreq])
+      .range([0, width])
+      .clamp(true);
+
+    const yScale = d3.scaleLinear().domain([yMin, yMax]).range([height, 0]);
+
+    // Create main group
+    const g = svg
+      .append("g")
+      .attr("transform", `translate(${PHASE_MARGIN.left},${PHASE_MARGIN.top})`);
+
+    // Create axes
+    const xAxis = d3
+      .axisBottom(xScale)
+      .ticks(5, ",.0f")
+      .tickFormat((d) => {
+        const val = +d;
+        if (val >= 1000) return `${val / 1000}k`;
+        return `${val}`;
+      });
+
+    const yAxis = d3
+      .axisLeft(yScale)
+      .ticks(4)
+      .tickFormat((d) => {
+        const val = +d;
+        if (Math.abs(val) >= 100) return val.toFixed(0);
+        if (Math.abs(val) >= 10) return val.toFixed(1);
+        return val.toFixed(2);
+      });
+
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .attr("class", "x-axis")
+      .call(xAxis)
+      .selectAll("text")
+      .style("fill", "hsl(var(--muted-foreground))")
+      .style("font-size", "9px");
+
+    g.append("g")
+      .attr("class", "y-axis")
+      .call(yAxis)
+      .selectAll("text")
+      .style("fill", "hsl(var(--muted-foreground))")
+      .style("font-size", "9px");
+
+    // Style axis lines
+    g.selectAll(".domain, .tick line").style("stroke", "hsl(var(--border))");
+
+    // Add grid lines
+    g.append("g")
+      .attr("class", "grid")
+      .selectAll("line")
+      .data(yScale.ticks(4))
+      .join("line")
+      .attr("x1", 0)
+      .attr("x2", width)
+      .attr("y1", (d) => yScale(d))
+      .attr("y2", (d) => yScale(d))
+      .attr("stroke", "hsl(var(--border))")
+      .attr("stroke-opacity", 0.3);
+
+    // Y-axis label
+    g.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("x", -height / 2)
+      .attr("y", -38)
+      .attr("text-anchor", "middle")
+      .attr("fill", "hsl(var(--muted-foreground))")
+      .attr("font-size", "9px")
+      .text(yLabel);
+
+    // Build path data
+    const pathData: [number, number][] = [];
+    for (let i = startIdx; i <= endIdx; i++) {
+      const x = xScale(frequencies[i]);
+      const y = yScale(convertedData[i]);
+      if (isFinite(x) && isFinite(y)) {
+        pathData.push([x, y]);
+      }
+    }
+
+    // Create line generator
+    const line = d3.line().x((d) => d[0]).y((d) => d[1]);
+
+    // Draw phase/group delay line
+    g.append("path")
+      .attr("fill", "none")
+      .attr("stroke", phaseViewMode === "phase" ? "hsl(var(--accent))" : "hsl(var(--chart-2))")
+      .attr("stroke-width", 1.5)
+      .attr("d", line(pathData));
+
+    // Add zero line for reference
+    if (yMin < 0 && yMax > 0) {
+      g.append("line")
+        .attr("x1", 0)
+        .attr("x2", width)
+        .attr("y1", yScale(0))
+        .attr("y2", yScale(0))
+        .attr("stroke", "hsl(var(--muted-foreground))")
+        .attr("stroke-width", 1)
+        .attr("stroke-dasharray", "4,4")
+        .attr("stroke-opacity", 0.5);
+    }
+  }, [dimensions, phaseData, showPhase, phaseViewMode, phaseUnwrap, sampleRate, zoomDomain]);
+
   // Format frequency for display
   const formatFreq = useCallback((freq: number) => {
     if (freq >= 1000) return `${(freq / 1000).toFixed(1)}k`;
@@ -1168,6 +1397,16 @@ export function SpectrumPlot({
             >
               Peaks
             </Button>
+            {isTransferMode && (
+              <Button
+                variant={showPhase ? "default" : "outline"}
+                size="sm"
+                className="text-xs h-6 px-2"
+                onClick={() => setShowPhase(!showPhase)}
+              >
+                Phase
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -1222,7 +1461,7 @@ export function SpectrumPlot({
         </div>
       )}
 
-      <div ref={containerRef} className="flex-1 min-h-0 relative">
+      <div ref={containerRef} className={`min-h-0 relative ${showPhase && isTransferMode ? "flex-[2]" : "flex-1"}`}>
         <svg ref={svgRef} width={dimensions.width} height={dimensions.height} />
         {isComputing && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/50">
@@ -1245,6 +1484,42 @@ export function SpectrumPlot({
           </div>
         )}
       </div>
+      {/* Phase/Group Delay Plot */}
+      {showPhase && isTransferMode && phaseData && (
+        <div className="flex-1 min-h-[120px] max-h-[150px] mt-1 border-t border-border pt-1">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex gap-1">
+              <Button
+                variant={phaseViewMode === "phase" ? "default" : "outline"}
+                size="sm"
+                className="text-xs h-5 px-2"
+                onClick={() => setPhaseViewMode("phase")}
+              >
+                Phase
+              </Button>
+              <Button
+                variant={phaseViewMode === "groupDelay" ? "default" : "outline"}
+                size="sm"
+                className="text-xs h-5 px-2"
+                onClick={() => setPhaseViewMode("groupDelay")}
+              >
+                Group Delay
+              </Button>
+            </div>
+            {phaseViewMode === "phase" && (
+              <Button
+                variant={phaseUnwrap ? "default" : "outline"}
+                size="sm"
+                className="text-xs h-5 px-2"
+                onClick={() => setPhaseUnwrap(!phaseUnwrap)}
+              >
+                Unwrap
+              </Button>
+            )}
+          </div>
+          <svg ref={phaseSvgRef} width={dimensions.width} height={120} />
+        </div>
+      )}
       {zoomDomain && (
         <div className="text-xs text-muted-foreground mt-1 text-center">
           Double-click to reset zoom

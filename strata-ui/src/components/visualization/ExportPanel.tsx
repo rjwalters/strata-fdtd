@@ -17,9 +17,11 @@ import {
   ImageIcon,
   FileJson,
   FileText,
+  Layers,
 } from "lucide-react"
 import { type ExportState, type ExportActions } from "@/hooks/useExport"
 import type { ViewState } from "@/lib/export"
+import type { SliceAxis } from "@/stores/simulationStore"
 
 interface ExportPanelProps {
   /** Export state from useExport hook */
@@ -48,6 +50,14 @@ interface ExportPanelProps {
   } | null
   /** Get current view state for JSON export */
   getViewState: () => ViewState
+  /** Whether in slice view mode */
+  isSliceMode?: boolean
+  /** Current slice axis */
+  sliceAxis?: SliceAxis
+  /** Current slice position (0-1) */
+  slicePosition?: number
+  /** Set slice position for position sweep */
+  setSlicePosition?: (position: number) => void
 }
 
 type ResolutionOption = 1 | 2 | 4
@@ -77,6 +87,10 @@ export function ExportPanel({
   resolution,
   probeData,
   getViewState,
+  isSliceMode = false,
+  sliceAxis = "z",
+  slicePosition = 0.5,
+  setSlicePosition,
 }: ExportPanelProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
 
@@ -90,16 +104,37 @@ export function ExportPanel({
   const [frameRangeStart, setFrameRangeStart] = useState(0)
   const [frameRangeEnd, setFrameRangeEnd] = useState(Math.max(0, totalFrames - 1))
 
+  // Slice animation options
+  const [sliceAnimationType, setSliceAnimationType] = useState<"time" | "position">("time")
+  const [sliceAnimationFormat, setSliceAnimationFormat] = useState<"png-sequence" | "gif">("png-sequence")
+  const [sliceAnimationFps, setSliceAnimationFps] = useState(15)
+  const [sliceFrameRangeStart, setSliceFrameRangeStart] = useState(0)
+  const [sliceFrameRangeEnd, setSliceFrameRangeEnd] = useState(Math.max(0, totalFrames - 1))
+  const [slicePositionFrames, setSlicePositionFrames] = useState(50)
+
   // Update frame range when totalFrames changes
   const maxFrame = Math.max(0, totalFrames - 1)
   useEffect(() => {
     if (frameRangeEnd > maxFrame) {
       setFrameRangeEnd(maxFrame)
     }
-  }, [maxFrame, frameRangeEnd])
+    if (sliceFrameRangeEnd > maxFrame) {
+      setSliceFrameRangeEnd(maxFrame)
+    }
+  }, [maxFrame, frameRangeEnd, sliceFrameRangeEnd])
 
   // Memoize slider value to prevent infinite re-render loops
   const frameRangeValue = useMemo(() => [frameRangeStart, frameRangeEnd], [frameRangeStart, frameRangeEnd])
+  const sliceFrameRangeValue = useMemo(() => [sliceFrameRangeStart, sliceFrameRangeEnd], [sliceFrameRangeStart, sliceFrameRangeEnd])
+
+  // Get axis size for position sweep
+  const getAxisSize = useCallback(() => {
+    switch (sliceAxis) {
+      case "x": return shape[0]
+      case "y": return shape[1]
+      case "z": return shape[2]
+    }
+  }, [sliceAxis, shape])
 
   const toggleSection = useCallback((section: string) => {
     setExpandedSection((s) => (s === section ? null : section))
@@ -142,6 +177,78 @@ export function ExportPanel({
     animationResolution,
     totalFrames,
     renderFrame,
+  ])
+
+  const handleSliceAnimationExport = useCallback(async () => {
+    const canvas = getCanvas()
+    if (!canvas) {
+      console.error("Canvas not available")
+      return
+    }
+
+    if (sliceAnimationType === "time") {
+      // Time animation at fixed slice position
+      const options = {
+        frameRange: [sliceFrameRangeStart, sliceFrameRangeEnd] as [number, number],
+        fps: sliceAnimationFps,
+        resolution: 1 as const,
+      }
+
+      if (sliceAnimationFormat === "png-sequence") {
+        await exportActions.exportPngSequence(canvas, totalFrames, renderFrame, options)
+      } else {
+        await exportActions.exportGif(canvas, totalFrames, renderFrame, options)
+      }
+    } else {
+      // Position sweep animation at fixed timestep
+      if (!setSlicePosition) {
+        console.error("setSlicePosition not provided")
+        return
+      }
+
+      const originalPosition = slicePosition
+
+      // Create a render function that changes slice position
+      const renderSliceAtPosition = async (frameIndex: number) => {
+        const position = frameIndex / (slicePositionFrames - 1)
+        setSlicePosition(position)
+        // Wait for render to update
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      }
+
+      const options = {
+        frameRange: [0, slicePositionFrames - 1] as [number, number],
+        fps: sliceAnimationFps,
+        resolution: 1 as const,
+        filename: `slice-sweep-${sliceAxis}-${sliceAnimationFormat === "png-sequence" ? "frames.zip" : "animation.gif"}`,
+      }
+
+      try {
+        if (sliceAnimationFormat === "png-sequence") {
+          await exportActions.exportPngSequence(canvas, slicePositionFrames, renderSliceAtPosition, options)
+        } else {
+          await exportActions.exportGif(canvas, slicePositionFrames, renderSliceAtPosition, options)
+        }
+      } finally {
+        // Restore original position
+        setSlicePosition(originalPosition)
+      }
+    }
+  }, [
+    getCanvas,
+    exportActions,
+    sliceAnimationType,
+    sliceAnimationFormat,
+    sliceAnimationFps,
+    sliceFrameRangeStart,
+    sliceFrameRangeEnd,
+    slicePositionFrames,
+    slicePosition,
+    setSlicePosition,
+    sliceAxis,
+    totalFrames,
+    renderFrame,
+    getAxisSize,
   ])
 
   const handleExportPressure = useCallback(() => {
@@ -368,6 +475,146 @@ export function ExportPanel({
           </div>
         )}
       </div>
+
+      {/* Slice Animation Section - Only show when in slice mode */}
+      {isSliceMode && (
+        <div className="border border-border rounded-md overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between p-2 hover:bg-accent/50 transition-colors"
+            onClick={() => toggleSection("slice-animation")}
+          >
+            <span className="flex items-center gap-2 text-sm">
+              <Layers className="h-4 w-4" />
+              Slice Animation
+            </span>
+            {expandedSection === "slice-animation" ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </button>
+
+          {expandedSection === "slice-animation" && (
+            <div className="p-2 pt-0 space-y-3">
+              <div className="space-y-1">
+                <span className="text-xs text-muted-foreground">Animation Type</span>
+                <div className="flex gap-1">
+                  <Badge
+                    variant={sliceAnimationType === "time" ? "default" : "secondary"}
+                    className="cursor-pointer text-xs"
+                    onClick={() => setSliceAnimationType("time")}
+                  >
+                    Time Animation
+                  </Badge>
+                  <Badge
+                    variant={sliceAnimationType === "position" ? "default" : "secondary"}
+                    className="cursor-pointer text-xs"
+                    onClick={() => setSliceAnimationType("position")}
+                  >
+                    Position Sweep
+                  </Badge>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  {sliceAnimationType === "time"
+                    ? "Animate through time at fixed slice position"
+                    : `Sweep through ${sliceAxis.toUpperCase()}-axis positions at current frame`}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-xs text-muted-foreground">Format</span>
+                <div className="flex gap-1">
+                  <Badge
+                    variant={sliceAnimationFormat === "png-sequence" ? "default" : "secondary"}
+                    className="cursor-pointer text-xs"
+                    onClick={() => setSliceAnimationFormat("png-sequence")}
+                  >
+                    PNG Sequence (ZIP)
+                  </Badge>
+                  <Badge
+                    variant={sliceAnimationFormat === "gif" ? "default" : "secondary"}
+                    className="cursor-pointer text-xs"
+                    onClick={() => setSliceAnimationFormat("gif")}
+                  >
+                    GIF
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-xs text-muted-foreground">FPS</span>
+                <div className="flex gap-1">
+                  {FPS_OPTIONS.map((fps) => (
+                    <Badge
+                      key={fps}
+                      variant={sliceAnimationFps === fps ? "default" : "secondary"}
+                      className="cursor-pointer text-xs"
+                      onClick={() => setSliceAnimationFps(fps)}
+                    >
+                      {fps}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {sliceAnimationType === "time" ? (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Frame Range</span>
+                    <span>
+                      {sliceFrameRangeStart} - {sliceFrameRangeEnd}
+                    </span>
+                  </div>
+                  <Slider
+                    value={sliceFrameRangeValue}
+                    min={0}
+                    max={maxFrame}
+                    step={1}
+                    onValueChange={([start, end]) => {
+                      setSliceFrameRangeStart(start)
+                      setSliceFrameRangeEnd(end)
+                    }}
+                    disabled={totalFrames === 0}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>0</span>
+                    <span>{sliceFrameRangeEnd - sliceFrameRangeStart + 1} frames</span>
+                    <span>{maxFrame}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Position Frames</span>
+                    <span>{slicePositionFrames} frames</span>
+                  </div>
+                  <Slider
+                    value={[slicePositionFrames]}
+                    min={10}
+                    max={Math.min(200, getAxisSize())}
+                    step={1}
+                    onValueChange={([value]) => setSlicePositionFrames(value)}
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Sweeps through all {getAxisSize()} slices along {sliceAxis.toUpperCase()}-axis
+                  </p>
+                </div>
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+                onClick={handleSliceAnimationExport}
+                disabled={sliceAnimationType === "time" ? totalFrames === 0 : !setSlicePosition}
+              >
+                <Layers className="h-4 w-4" />
+                Export {sliceAnimationFormat === "png-sequence" ? "ZIP" : "GIF"}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Data Section */}
       <div className="border border-border rounded-md overflow-hidden">
