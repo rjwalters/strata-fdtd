@@ -1,18 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Button, Badge } from '@strata/ui'
 import {
-  ArrowRight,
-  Waves,
-  Volume2,
-  Code2,
-  BookOpen,
-  Zap,
-  Target,
-  Radio,
-  Grid3x3,
-  Eye,
-} from 'lucide-react'
+  Button,
+  Badge,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@strata/ui'
+import { Waves, Volume2 } from 'lucide-react'
 import { CodeViewerModal } from '../components/examples'
 
 // =============================================================================
@@ -69,20 +67,195 @@ const DEMOS: Demo[] = [
   },
 ]
 
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  Acoustics: <Volume2 className="h-4 w-4" />,
-  Basics: <BookOpen className="h-4 w-4" />,
-  Physics: <Zap className="h-4 w-4" />,
-  Transducers: <Radio className="h-4 w-4" />,
-  Metamaterials: <Target className="h-4 w-4" />,
-  Imaging: <Eye className="h-4 w-4" />,
-  Advanced: <Grid3x3 className="h-4 w-4" />,
+type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced'
+
+const DIFFICULTY_VARIANT: Record<Difficulty, 'default' | 'secondary' | 'destructive'> = {
+  Beginner: 'default',
+  Intermediate: 'secondary',
+  Advanced: 'destructive',
 }
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  Beginner: 'bg-green-500/20 text-green-400 border-green-500/30',
-  Intermediate: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  Advanced: 'bg-red-500/20 text-red-400 border-red-500/30',
+// =============================================================================
+// Sub-components
+// =============================================================================
+
+// Pipe geometry SVG illustrations
+function OpenPipeSvg() {
+  return (
+    <svg viewBox="0 0 200 80" className="w-48 h-auto">
+      {/* Pipe walls */}
+      <rect x="20" y="10" width="160" height="8" fill="currentColor" className="text-muted-foreground" />
+      <rect x="20" y="62" width="160" height="8" fill="currentColor" className="text-muted-foreground" />
+      {/* Wave inside */}
+      <path
+        d="M 30 40 Q 50 25, 70 40 T 110 40 T 150 40 T 190 40"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        className="text-blue-400"
+      />
+      {/* Open ends indicated by gaps */}
+    </svg>
+  )
+}
+
+function ClosedPipeSvg() {
+  return (
+    <svg viewBox="0 0 200 80" className="w-48 h-auto">
+      {/* Pipe walls */}
+      <rect x="20" y="10" width="160" height="8" fill="currentColor" className="text-muted-foreground" />
+      <rect x="20" y="62" width="160" height="8" fill="currentColor" className="text-muted-foreground" />
+      {/* Closed ends */}
+      <rect x="12" y="10" width="8" height="60" fill="currentColor" className="text-muted-foreground" />
+      <rect x="180" y="10" width="8" height="60" fill="currentColor" className="text-muted-foreground" />
+      {/* Wave inside */}
+      <path
+        d="M 30 40 Q 50 25, 70 40 T 110 40 T 150 40"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        className="text-blue-400"
+      />
+    </svg>
+  )
+}
+
+function HalfOpenPipeSvg() {
+  return (
+    <svg viewBox="0 0 200 80" className="w-48 h-auto">
+      {/* Pipe walls */}
+      <rect x="20" y="10" width="160" height="8" fill="currentColor" className="text-muted-foreground" />
+      <rect x="20" y="62" width="160" height="8" fill="currentColor" className="text-muted-foreground" />
+      {/* Closed left end */}
+      <rect x="12" y="10" width="8" height="60" fill="currentColor" className="text-muted-foreground" />
+      {/* Wave inside */}
+      <path
+        d="M 30 40 Q 60 20, 90 40 T 150 40"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        className="text-blue-400"
+      />
+      {/* Open right end indicated by gap */}
+    </svg>
+  )
+}
+
+const PIPE_ILLUSTRATIONS: Record<string, React.ReactNode> = {
+  'open-pipe': <OpenPipeSvg />,
+  'closed-pipe': <ClosedPipeSvg />,
+  'half-open-pipe': <HalfOpenPipeSvg />,
+}
+
+interface DemoCardProps {
+  demo: Demo
+  onView: () => void
+}
+
+function DemoCard({ demo, onView }: DemoCardProps) {
+  return (
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
+      {/* Thumbnail */}
+      <div className="h-48 bg-secondary/30 flex items-center justify-center -mt-6">
+        {PIPE_ILLUSTRATIONS[demo.id] || <Volume2 className="h-12 w-12 text-muted-foreground" />}
+      </div>
+
+      <CardHeader className="flex-1">
+        <CardTitle className="text-xl">{demo.title}</CardTitle>
+        <CardDescription className="line-clamp-2">
+          {demo.description}
+        </CardDescription>
+      </CardHeader>
+
+      <CardFooter className="justify-between mt-auto">
+        <Badge variant="secondary">{demo.category}</Badge>
+        <Button
+          onClick={onView}
+          variant="outline"
+          size="sm"
+          className="gap-2 px-4 whitespace-nowrap shrink-0 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+        >
+          View&nbsp;Demo
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}
+
+interface ViewCodeButtonProps {
+  onClick: () => void
+}
+
+function ViewCodeButton({ onClick }: ViewCodeButtonProps) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={onClick}
+      className="gap-2 px-4 whitespace-nowrap shrink-0 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+    >
+View&nbsp;Code
+    </Button>
+  )
+}
+
+interface ScriptCardProps {
+  script: ExampleScript
+  onViewCode: () => void
+}
+
+function ScriptCard({ script, onViewCode }: ScriptCardProps) {
+  return (
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
+      {/* Thumbnail */}
+      <div className="h-48 bg-secondary/30 flex items-center justify-center overflow-hidden -mt-6">
+        <img
+          src={`/examples/${script.thumbnail}`}
+          alt={script.title}
+          className="w-full h-full object-contain p-4"
+        />
+      </div>
+
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <CardTitle className="text-lg">{script.title}</CardTitle>
+          <Badge variant={DIFFICULTY_VARIANT[script.difficulty]}>
+            {script.difficulty}
+          </Badge>
+        </div>
+        <CardDescription className="line-clamp-2">
+          {script.description}
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-3 flex-1">
+        {/* Features */}
+        <div className="flex flex-wrap gap-1">
+          {script.features.slice(0, 2).map((feature) => (
+            <Badge key={feature} variant="outline" className="text-xs font-normal">
+              {feature}
+            </Badge>
+          ))}
+          {script.features.length > 2 && (
+            <span className="text-xs text-muted-foreground">
+              +{script.features.length - 2} more
+            </span>
+          )}
+        </div>
+
+        {/* Meta info */}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <span>{script.gridSize}</span>
+          <span>{script.estimatedRuntime}</span>
+        </div>
+      </CardContent>
+
+      <CardFooter className="justify-between mt-auto">
+        <Badge variant="secondary">{script.category}</Badge>
+        <ViewCodeButton onClick={onViewCode} />
+      </CardFooter>
+    </Card>
+  )
 }
 
 // =============================================================================
@@ -191,37 +364,11 @@ export function ExamplesGallery() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {DEMOS.map((demo) => (
-              <div
+              <DemoCard
                 key={demo.id}
-                className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                {/* Thumbnail placeholder */}
-                <div className="h-48 bg-secondary/30 flex items-center justify-center">
-                  <Volume2 className="h-12 w-12 text-muted-foreground" />
-                </div>
-
-                {/* Content */}
-                <div className="p-5 space-y-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-foreground">
-                      {demo.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                      {demo.description}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline">{demo.category}</Badge>
-                    <Button
-                      onClick={() => handleViewDemo(demo)}
-                      className="gap-2"
-                    >
-                      View <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
+                demo={demo}
+                onView={() => handleViewDemo(demo)}
+              />
             ))}
           </div>
         </section>
@@ -237,77 +384,11 @@ export function ExamplesGallery() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {exampleScripts.map((script) => (
-              <div
+              <ScriptCard
                 key={script.id}
-                className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                {/* Thumbnail */}
-                <div className="h-48 bg-secondary/30 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={`/examples/${script.thumbnail}`}
-                    alt={script.title}
-                    className="w-full h-full object-contain p-4"
-                  />
-                </div>
-
-                {/* Content */}
-                <div className="p-5 space-y-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg font-bold text-foreground">
-                        {script.title}
-                      </h3>
-                      <Badge
-                        variant="outline"
-                        className={DIFFICULTY_COLORS[script.difficulty]}
-                      >
-                        {script.difficulty}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {script.description}
-                    </p>
-                  </div>
-
-                  {/* Features */}
-                  <div className="flex flex-wrap gap-1">
-                    {script.features.slice(0, 2).map((feature) => (
-                      <span
-                        key={feature}
-                        className="text-xs bg-secondary/50 px-2 py-0.5 rounded text-muted-foreground"
-                      >
-                        {feature}
-                      </span>
-                    ))}
-                    {script.features.length > 2 && (
-                      <span className="text-xs text-muted-foreground">
-                        +{script.features.length - 2} more
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Meta info */}
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>{script.gridSize}</span>
-                    <span>{script.estimatedRuntime}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline" className="gap-1">
-                      {CATEGORY_ICONS[script.category]}
-                      {script.category}
-                    </Badge>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleViewCode(script)}
-                      className="gap-2"
-                    >
-                      <Code2 className="h-4 w-4" />
-                      View Code
-                    </Button>
-                  </div>
-                </div>
-              </div>
+                script={script}
+                onViewCode={() => handleViewCode(script)}
+              />
             ))}
           </div>
         </section>

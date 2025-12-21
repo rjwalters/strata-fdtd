@@ -56,7 +56,8 @@ export interface ViewState {
     threshold: number
     displayFill: number
     voxelGeometry: string
-    geometryMode: string
+    showWireframe: boolean
+    boundaryOpacity: number
     showGrid: boolean
     showAxes: boolean
   }
