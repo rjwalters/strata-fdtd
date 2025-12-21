@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { realFFT, computeSpectrum, nextPowerOf2, welchPSD } from "../fft";
+import { realFFT, computeSpectrum, nextPowerOf2, welchPSD, getWindow, type WindowType } from "../fft";
 
 describe("nextPowerOf2", () => {
   it("returns power of 2 for exact powers", () => {
@@ -275,5 +275,115 @@ describe("welchPSD", () => {
     // With 1024 samples and 4096 segment size, should have 1 segment
     expect(result.numSegments).toBe(1);
     expect(result.psd.length).toBeGreaterThan(0);
+  });
+
+  it("respects window option", () => {
+    const sampleRate = 1000;
+    const data = new Float32Array(8192);
+
+    // Create a signal with known spectral content
+    for (let i = 0; i < data.length; i++) {
+      data[i] = Math.sin((2 * Math.PI * 100 * i) / sampleRate);
+    }
+
+    // Compute with different windows
+    const resultHanning = welchPSD(data, sampleRate, { segmentSize: 4096, window: 'hanning' });
+    const resultHamming = welchPSD(data, sampleRate, { segmentSize: 4096, window: 'hamming' });
+    const resultBlackman = welchPSD(data, sampleRate, { segmentSize: 4096, window: 'blackman' });
+    const resultBH = welchPSD(data, sampleRate, { segmentSize: 4096, window: 'blackman-harris' });
+
+    // All should produce valid results with same frequency bins
+    expect(resultHanning.frequencies.length).toBe(resultHamming.frequencies.length);
+    expect(resultHanning.frequencies.length).toBe(resultBlackman.frequencies.length);
+    expect(resultHanning.frequencies.length).toBe(resultBH.frequencies.length);
+
+    // All should find the peak at around 100 Hz
+    const findPeakFreq = (result: { frequencies: Float32Array; psd: Float32Array }) => {
+      let maxIdx = 0;
+      let maxPsd = 0;
+      for (let i = 1; i < result.psd.length; i++) {
+        if (result.psd[i] > maxPsd) {
+          maxPsd = result.psd[i];
+          maxIdx = i;
+        }
+      }
+      return result.frequencies[maxIdx];
+    };
+
+    expect(findPeakFreq(resultHanning)).toBeCloseTo(100, -1);
+    expect(findPeakFreq(resultHamming)).toBeCloseTo(100, -1);
+    expect(findPeakFreq(resultBlackman)).toBeCloseTo(100, -1);
+    expect(findPeakFreq(resultBH)).toBeCloseTo(100, -1);
+  });
+});
+
+describe("getWindow", () => {
+  const windowTypes: WindowType[] = ['hanning', 'hamming', 'blackman', 'blackman-harris'];
+
+  it("returns array of correct length", () => {
+    for (const type of windowTypes) {
+      const w = getWindow(type, 1024);
+      expect(w.length).toBe(1024);
+    }
+  });
+
+  it("produces symmetric windows", () => {
+    for (const type of windowTypes) {
+      const w = getWindow(type, 256);
+      // Check first and last values are approximately equal
+      expect(w[0]).toBeCloseTo(w[255], 5);
+      // Check second and second-to-last are approximately equal
+      expect(w[1]).toBeCloseTo(w[254], 5);
+      // Check values near center
+      expect(w[127]).toBeCloseTo(w[128], 3);
+    }
+  });
+
+  it("has maximum value of approximately 1 for all windows", () => {
+    for (const type of windowTypes) {
+      const w = getWindow(type, 256);
+      const maxVal = Math.max(...w);
+      expect(maxVal).toBeCloseTo(1, 1);
+    }
+  });
+
+  it("has correct endpoint values for hanning window", () => {
+    const w = getWindow('hanning', 256);
+    // Hanning window should be near zero at endpoints
+    expect(w[0]).toBeCloseTo(0, 5);
+    expect(w[255]).toBeCloseTo(0, 5);
+  });
+
+  it("has correct endpoint values for hamming window", () => {
+    const w = getWindow('hamming', 256);
+    // Hamming window has non-zero endpoints (approximately 0.08)
+    expect(w[0]).toBeCloseTo(0.08, 2);
+    expect(w[255]).toBeCloseTo(0.08, 2);
+  });
+
+  it("has correct endpoint values for blackman window", () => {
+    const w = getWindow('blackman', 256);
+    // Blackman window should be near zero at endpoints
+    expect(w[0]).toBeCloseTo(0, 5);
+    expect(w[255]).toBeCloseTo(0, 5);
+  });
+
+  it("has correct endpoint values for blackman-harris window", () => {
+    const w = getWindow('blackman-harris', 256);
+    // Blackman-Harris window has very small but non-zero endpoints
+    expect(w[0]).toBeCloseTo(0.00006, 3);
+    expect(w[255]).toBeCloseTo(0.00006, 3);
+  });
+
+  it("produces different window shapes", () => {
+    const hanning = getWindow('hanning', 256);
+    const hamming = getWindow('hamming', 256);
+    const blackman = getWindow('blackman', 256);
+    const bh = getWindow('blackman-harris', 256);
+
+    // Windows should be different (compare at endpoints where differences are most pronounced)
+    expect(hanning[0]).not.toBe(hamming[0]);
+    expect(hanning[0]).not.toBe(blackman[0]);
+    expect(hamming[0]).not.toBe(bh[0]);
   });
 });
