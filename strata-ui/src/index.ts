@@ -68,6 +68,8 @@ export { BuilderHelpModal } from './components/visualization/BuilderHelpModal'
 export { Spectrogram } from './components/visualization/Spectrogram'
 export { SpectrumPlot } from './components/visualization/SpectrumPlot'
 export type { SpectrumPlotProps, FrequencyMarker, AnalysisMode, ProbeRecord, SpectrumMode } from './components/visualization/SpectrumPlot'
+export { ImpulseResponseView } from './components/visualization/ImpulseResponseView'
+export type { ImpulseResponseViewProps, ImpulseDisplayMode } from './components/visualization/ImpulseResponseView'
 export { ThreeViewer } from './components/visualization/ThreeViewer'
 export { TimeSeriesPlot } from './components/visualization/TimeSeriesPlot'
 export type { SourceTimeSeries } from './components/visualization/TimeSeriesPlot'
@@ -155,6 +157,25 @@ export {
   transferMagnitudeToDb,
   type CoherenceResult,
 } from './lib/fft'
+
+// Acoustics (impulse response and room metrics)
+export {
+  inverseFFT,
+  applySpectralWindow,
+  computeImpulseResponse,
+  schroederIntegration,
+  estimateRT60,
+  estimateEDT,
+  computeClarity,
+  computeDefinition,
+  computeCentreTime,
+  computeAcousticMetrics,
+  analyzeTransferFunction,
+  type ImpulseResponseResult,
+  type EnergyDecayResult,
+  type AcousticMetrics,
+  type WindowType,
+} from './lib/acoustics'
 
 // Export utilities
 export * from './lib/export'
