@@ -28,7 +28,7 @@ describe("SimulationStore", () => {
 
       expect(state.colormap).toBe("diverging");
       expect(state.pressureRange).toBe("auto");
-      expect(state.voxelGeometry).toBe("point");
+      expect(state.voxelGeometry).toBe("hidden");
       expect(state.showWireframe).toBe(false);
       expect(state.boundaryOpacity).toBe(30);
       expect(state.threshold).toBe(0);
