@@ -63,6 +63,7 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.special import j0, jn_zeros, jv
 
 from .grid import NonuniformGrid, UniformGrid
 
@@ -365,6 +366,192 @@ class MembraneSource:
                 f"Source will be placed at nearest grid plane.",
                 stacklevel=3,
             )
+
+
+@dataclass(kw_only=True)
+class CircularMembraneSource(MembraneSource):
+    """Circular membrane source with Bessel function mode shapes.
+
+    Models drum heads, speaker cones, and circular vibrating panels.
+    The pressure injection at each grid cell is modulated by Bessel
+    function mode shapes, which accurately represent how circular
+    membranes vibrate when clamped at the edge.
+
+    Physics:
+        A circular membrane clamped at its edge has displacement patterns
+        described by Bessel functions of the first kind:
+
+            u(r, θ, t) = Jₘ(αₘₙ · r/a) · cos(mθ) · cos(ωₘₙ t)
+
+        Where:
+        - Jₘ is the Bessel function of the first kind, order m
+        - αₘₙ is the n-th zero of Jₘ (for clamped boundary condition)
+        - a is the membrane radius
+        - m is the azimuthal mode number (circumferential nodes)
+        - n is the radial mode number (circular nodes)
+
+        For the fundamental mode (0,1): m=0, n=1, α₀₁ ≈ 2.405
+        This gives maximum displacement at center, zero at edge.
+
+    Args:
+        center: Physical coordinates (x, y, z) of membrane center in meters
+        radius: Membrane radius in meters
+        normal_axis: Axis perpendicular to membrane plane ('x', 'y', or 'z')
+        waveform: Temporal waveform object (must have .waveform(t, dt) method)
+        mode: Mode indices (m, n) where m=azimuthal, n=radial. Default (0, 1)
+        injection_type: 'pressure' or 'velocity' (default: 'pressure')
+
+    Example:
+        >>> from strata_fdtd import GaussianPulse
+        >>> from strata_fdtd.core.solver import CircularMembraneSource
+        >>> # 8" woofer (20cm diameter)
+        >>> woofer = CircularMembraneSource(
+        ...     center=(0.1, 0.15, 0.05),
+        ...     radius=0.10,
+        ...     normal_axis='y',  # Mounted on front baffle
+        ...     waveform=GaussianPulse(position=(0,0,0), frequency=50),
+        ... )
+        >>> # 14" snare drum
+        >>> snare = CircularMembraneSource(
+        ...     center=(0.0, 0.0, 0.01),
+        ...     radius=0.178,
+        ...     normal_axis='z',
+        ...     waveform=GaussianPulse(position=(0,0,0), frequency=200),
+        ... )
+    """
+
+    radius: float
+
+    # Precomputed Bessel zeros for common modes (m, n) -> α_mn
+    # These are the n-th positive zeros of J_m(x)
+    _BESSEL_ZEROS: dict[tuple[int, int], float] = field(
+        default_factory=lambda: {
+            (0, 1): 2.4048255576957727,  # J₀ first zero
+            (0, 2): 5.5200781102863115,  # J₀ second zero
+            (1, 1): 3.8317059702075125,  # J₁ first zero
+            (1, 2): 7.0155866698156190,  # J₁ second zero
+            (2, 1): 5.1356223018406826,  # J₂ first zero
+            (2, 2): 8.4172441403998649,  # J₂ second zero
+        },
+        repr=False,
+        init=False,
+    )
+
+    # Cached Bessel zero for current mode
+    _alpha: float = field(default=0.0, repr=False, init=False)
+
+    def __post_init__(self) -> None:
+        """Compute and cache the Bessel zero for the current mode."""
+        m, n = self.mode
+        if m < 0:
+            raise ValueError(f"Azimuthal mode m must be non-negative, got {m}")
+        if n < 1:
+            raise ValueError(f"Radial mode n must be positive, got {n}")
+
+        if (m, n) in self._BESSEL_ZEROS:
+            object.__setattr__(self, '_alpha', self._BESSEL_ZEROS[(m, n)])
+        else:
+            # Compute dynamically for higher modes
+            zeros = jn_zeros(m, n)
+            object.__setattr__(self, '_alpha', zeros[-1])  # n-th zero
+
+    def mode_shape(self, r: NDArray, theta: NDArray) -> NDArray:
+        """Compute Bessel mode shape at given coordinates.
+
+        The mode shape is the absolute value of the Bessel function,
+        normalized so the maximum value is 1.0.
+
+        Args:
+            r: Radial distances from membrane center in meters
+            theta: Angles from center in radians (used for m > 0 modes)
+
+        Returns:
+            Mode shape values in [0, 1], normalized to maximum
+        """
+        m, _ = self.mode
+
+        # Normalized radial coordinate (0 at center, 1 at edge)
+        rho = r / self.radius
+
+        # Compute Bessel function value
+        if m == 0:
+            # Axisymmetric mode - no angular dependence
+            shape = j0(self._alpha * rho)
+        else:
+            # Non-axisymmetric mode - includes angular variation
+            shape = jv(m, self._alpha * rho) * np.cos(m * theta)
+
+        # Zero outside membrane boundary
+        shape = np.where(rho <= 1.0, shape, 0.0)
+
+        # Take absolute value (mode shape represents amplitude envelope)
+        # and normalize to [0, 1] with maximum at 1.0
+        # Use a threshold to avoid normalizing essentially-zero values
+        shape = np.abs(shape)
+        max_val = np.max(shape)
+        if max_val > 1e-10:
+            shape = shape / max_val
+        else:
+            # All values are essentially zero (e.g., at boundary)
+            shape = np.zeros_like(shape)
+
+        return shape
+
+    def get_injection_mask(self, grid: UniformGrid | NonuniformGrid) -> NDArray[np.bool_]:
+        """Return boolean mask of grid cells within the membrane radius.
+
+        The mask is True for cells that are:
+        1. In the plane containing the membrane (nearest to center)
+        2. Within the membrane radius
+
+        Args:
+            grid: The simulation grid
+
+        Returns:
+            3D boolean array with True for cells inside membrane
+        """
+        r, theta, plane_idx = self._grid_to_membrane_coords(grid)
+        mask = np.zeros(grid.shape, dtype=bool)
+
+        # Cells within radius on the membrane plane
+        within_radius = r <= self.radius
+
+        if self.normal_axis == 'z':
+            mask[:, :, plane_idx] = within_radius[:, :, plane_idx]
+        elif self.normal_axis == 'y':
+            mask[:, plane_idx, :] = within_radius[:, plane_idx, :]
+        else:  # x
+            mask[plane_idx, :, :] = within_radius[plane_idx, :, :]
+
+        return mask
+
+    def get_injection_weights(
+        self, grid: UniformGrid | NonuniformGrid
+    ) -> NDArray[np.floating]:
+        """Return array of mode shape weights at each grid cell.
+
+        The weights represent the relative amplitude of the membrane
+        displacement at each cell, based on the Bessel mode shape.
+
+        Args:
+            grid: The simulation grid
+
+        Returns:
+            3D array of weights with mode shape values (0 outside membrane)
+        """
+        # Check grid alignment and warn if off-grid
+        self._check_grid_alignment(grid)
+
+        r, theta, plane_idx = self._grid_to_membrane_coords(grid)
+        weights = np.zeros(grid.shape, dtype=np.float64)
+
+        # Get mask and compute mode shape only for cells within membrane
+        mask = self.get_injection_mask(grid)
+
+        # Compute mode shape for all cells in the mask
+        weights[mask] = self.mode_shape(r[mask], theta[mask])
+
+        return weights
 
 
 @dataclass
