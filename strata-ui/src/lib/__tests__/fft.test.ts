@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { realFFT, computeSpectrum, nextPowerOf2 } from "../fft";
+import { realFFT, computeSpectrum, nextPowerOf2, welchPSD } from "../fft";
 
 describe("nextPowerOf2", () => {
   it("returns power of 2 for exact powers", () => {
@@ -158,5 +158,122 @@ describe("computeSpectrum", () => {
 
     // Should use 512-point FFT, so 256 frequency bins
     expect(frequencies.length).toBe(256);
+  });
+});
+
+describe("welchPSD", () => {
+  it("returns correct frequency bins and PSD values", () => {
+    const sampleRate = 1000;
+    const data = new Float32Array(8192);
+
+    // Create 100 Hz sine wave
+    for (let i = 0; i < data.length; i++) {
+      data[i] = Math.sin((2 * Math.PI * 100 * i) / sampleRate);
+    }
+
+    const result = welchPSD(data, sampleRate);
+
+    // Check frequency array starts at 0
+    expect(result.frequencies[0]).toBe(0);
+
+    // Check we have positive PSD values
+    expect(result.psd.length).toBeGreaterThan(0);
+
+    // Find peak in PSD
+    let maxIdx = 0;
+    let maxPsd = 0;
+    for (let i = 1; i < result.psd.length; i++) {
+      if (result.psd[i] > maxPsd) {
+        maxPsd = result.psd[i];
+        maxIdx = i;
+      }
+    }
+
+    // Peak should be near 100 Hz
+    const peakFreq = result.frequencies[maxIdx];
+    expect(peakFreq).toBeGreaterThan(90);
+    expect(peakFreq).toBeLessThan(110);
+  });
+
+  it("returns segment count", () => {
+    const sampleRate = 1000;
+    const data = new Float32Array(16384);
+
+    const result = welchPSD(data, sampleRate, { segmentSize: 4096, overlap: 0.5 });
+
+    // With 16384 samples, 4096 segment size, 50% overlap (2048 hop):
+    // numSegments = floor((16384 - 4096) / 2048) + 1 = floor(12288/2048) + 1 = 6 + 1 = 7
+    expect(result.numSegments).toBe(7);
+  });
+
+  it("respects segment size option", () => {
+    const sampleRate = 1000;
+    const data = new Float32Array(8192);
+
+    const result2048 = welchPSD(data, sampleRate, { segmentSize: 2048 });
+    const result4096 = welchPSD(data, sampleRate, { segmentSize: 4096 });
+
+    // Smaller segment size = more segments
+    expect(result2048.numSegments).toBeGreaterThan(result4096.numSegments);
+
+    // Smaller segment size = fewer frequency bins
+    expect(result2048.frequencies.length).toBeLessThan(result4096.frequencies.length);
+  });
+
+  it("respects overlap option", () => {
+    const sampleRate = 1000;
+    const data = new Float32Array(8192);
+
+    const result25 = welchPSD(data, sampleRate, { segmentSize: 4096, overlap: 0.25 });
+    const result75 = welchPSD(data, sampleRate, { segmentSize: 4096, overlap: 0.75 });
+
+    // Higher overlap = more segments
+    expect(result75.numSegments).toBeGreaterThan(result25.numSegments);
+  });
+
+  it("reduces variance compared to single FFT", () => {
+    const sampleRate = 1000;
+    const data = new Float32Array(16384);
+
+    // Create noisy sine wave
+    for (let i = 0; i < data.length; i++) {
+      data[i] = Math.sin((2 * Math.PI * 100 * i) / sampleRate) + (Math.random() - 0.5) * 0.5;
+    }
+
+    const welchResult = welchPSD(data, sampleRate, { segmentSize: 4096, overlap: 0.5 });
+    const singleResult = computeSpectrum(data, sampleRate);
+
+    // Welch averaging should have smoother spectrum
+    // Calculate variance of non-peak bins
+    const welchPsdSlice = Array.from(welchResult.psd.slice(10, 50));
+    const singleMagSlice = Array.from(singleResult.magnitude.slice(10, 50));
+
+    const welchMean = welchPsdSlice.reduce((a, b) => a + b, 0) / welchPsdSlice.length;
+    const singleMean = singleMagSlice.reduce((a, b) => a + b, 0) / singleMagSlice.length;
+
+    const welchVar = welchPsdSlice.reduce((a, b) => a + (b - welchMean) ** 2, 0) / welchPsdSlice.length;
+    const singleVar = singleMagSlice.reduce((a, b) => a + (b - singleMean) ** 2, 0) / singleMagSlice.length;
+
+    // Normalized variance should be lower for Welch (divided by mean^2 to normalize)
+    const welchNormVar = welchVar / (welchMean ** 2 + 1e-10);
+    const singleNormVar = singleVar / (singleMean ** 2 + 1e-10);
+
+    // Welch should reduce variance
+    expect(welchNormVar).toBeLessThan(singleNormVar);
+  });
+
+  it("handles short signals with single segment", () => {
+    const sampleRate = 1000;
+    const data = new Float32Array(1024);
+
+    for (let i = 0; i < data.length; i++) {
+      data[i] = Math.sin((2 * Math.PI * 100 * i) / sampleRate);
+    }
+
+    const result = welchPSD(data, sampleRate, { segmentSize: 4096 });
+
+    // With 1024 samples and 4096 segment size, should have 1 segment
+    expect(result.numSegments).toBe(1);
+    expect(result.psd.length).toBeGreaterThan(0);
   });
 });
