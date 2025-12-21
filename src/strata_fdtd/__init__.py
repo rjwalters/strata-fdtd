@@ -7,6 +7,9 @@ Main exports:
 - GaussianPulse: Point/plane acoustic source
 - AudioFileWaveform: Audio file source waveform
 - MembraneSource: Spatially-distributed source with modal patterns
+- Crossover, ThreeWayCrossover: Multi-driver crossover filters
+- DelayedWaveform: Time alignment for drivers
+- ParametricEQ: Frequency response shaping
 - PML: Absorbing boundary
 - Materials: Acoustic material library
 """
@@ -36,6 +39,13 @@ from strata_fdtd.core.solver_gpu import (
     has_gpu_support,
 )
 from strata_fdtd.core.waveforms import AudioFileWaveform
+from strata_fdtd.dsp import (
+    Crossover,
+    DelayedWaveform,
+    FilteredWaveform,
+    ParametricEQ,
+    ThreeWayCrossover,
+)
 
 # Re-export common geometry classes for convenience
 from strata_fdtd.geometry import (
@@ -59,7 +69,7 @@ from strata_fdtd.geometry import (
 )
 
 # Submodules for more specific imports
-from . import analysis, geometry, io, manufacturing, materials
+from . import analysis, dsp, geometry, io, manufacturing, materials
 
 __version__ = "0.1.0"
 
@@ -83,6 +93,12 @@ __all__ = [
     "RadiationImpedance",
     "has_native_kernels",
     "has_gpu_support",
+    # DSP
+    "Crossover",
+    "ThreeWayCrossover",
+    "FilteredWaveform",
+    "DelayedWaveform",
+    "ParametricEQ",
     # Geometry
     "Box",
     "Sphere",
@@ -111,4 +127,5 @@ __all__ = [
     "manufacturing",
     "io",
     "analysis",
+    "dsp",
 ]
