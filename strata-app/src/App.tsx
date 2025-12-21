@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from "react"
 import * as THREE from "three"
 import { UpdateNotification } from "./components/UpdateNotification"
+import { DragDropOverlay } from "./components/DragDropOverlay"
+import { FilePickerModal } from "./components/FilePickerModal"
 import { useTauriFileOpen, useTauriNavigate } from "./hooks/useTauri"
 import {
   Layout,
@@ -89,6 +91,28 @@ const TARGET_VOXEL_PRESETS = [
 function App() {
   const [page, setPage] = useState<Page>("home")
   const [pendingFilePath, setPendingFilePath] = useState<string | null>(null)
+  const [filePickerFiles, setFilePickerFiles] = useState<string[]>([])
+  const [isFilePickerOpen, setIsFilePickerOpen] = useState(false)
+
+  // Handle multiple files dropped - show file picker modal
+  const handleMultipleFiles = useCallback((files: string[]) => {
+    setFilePickerFiles(files)
+    setIsFilePickerOpen(true)
+  }, [])
+
+  // Handle file selection from picker modal
+  const handleFilePickerSelect = useCallback((path: string) => {
+    setIsFilePickerOpen(false)
+    setFilePickerFiles([])
+    setPendingFilePath(path)
+    setPage("viewer")
+  }, [])
+
+  // Handle file picker close
+  const handleFilePickerClose = useCallback(() => {
+    setIsFilePickerOpen(false)
+    setFilePickerFiles([])
+  }, [])
 
   // Listen for file open events from Tauri (system tray, deep links, etc.)
   useTauriFileOpen(useCallback((path: string) => {
@@ -359,6 +383,13 @@ function App() {
     return (
       <>
         <UpdateNotification />
+        <DragDropOverlay onMultipleFiles={handleMultipleFiles} />
+        <FilePickerModal
+          files={filePickerFiles}
+          isOpen={isFilePickerOpen}
+          onClose={handleFilePickerClose}
+          onSelectFile={handleFilePickerSelect}
+        />
         <Suspense fallback={<PageLoadingFallback />}>
           <OrganPipeDemo onBack={() => setPage("home")} />
         </Suspense>
@@ -370,6 +401,13 @@ function App() {
     return (
       <>
         <UpdateNotification />
+        <DragDropOverlay onMultipleFiles={handleMultipleFiles} />
+        <FilePickerModal
+          files={filePickerFiles}
+          isOpen={isFilePickerOpen}
+          onClose={handleFilePickerClose}
+          onSelectFile={handleFilePickerSelect}
+        />
         <Suspense fallback={<PageLoadingFallback />}>
           <SimulationBuilder onBack={() => setPage("home")} />
         </Suspense>
@@ -381,6 +419,13 @@ function App() {
     return (
       <>
         <UpdateNotification />
+        <DragDropOverlay onMultipleFiles={handleMultipleFiles} />
+        <FilePickerModal
+          files={filePickerFiles}
+          isOpen={isFilePickerOpen}
+          onClose={handleFilePickerClose}
+          onSelectFile={handleFilePickerSelect}
+        />
         <Suspense fallback={<PageLoadingFallback />}>
           <ViewerPage
             onBack={() => setPage("home")}
@@ -395,6 +440,13 @@ function App() {
   return (
     <>
       <UpdateNotification />
+      <DragDropOverlay onMultipleFiles={handleMultipleFiles} />
+      <FilePickerModal
+        files={filePickerFiles}
+        isOpen={isFilePickerOpen}
+        onClose={handleFilePickerClose}
+        onSelectFile={handleFilePickerSelect}
+      />
       <Layout
         sidebar={
           <Sidebar
