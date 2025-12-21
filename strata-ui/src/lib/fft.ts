@@ -72,14 +72,24 @@ function bitReverse(x: number, bits: number): number {
 }
 
 /**
- * Compute power spectrum from real input data.
- * Applies Hanning window and returns only positive frequencies.
+ * Complex spectrum result including both magnitude and phase information.
  */
-export function computeSpectrum(
+export interface ComplexSpectrum {
+  frequencies: Float32Array;
+  magnitude: Float32Array;
+  real: Float32Array;
+  imag: Float32Array;
+}
+
+/**
+ * Compute complex spectrum from real input data.
+ * Applies Hanning window and returns complex FFT result for positive frequencies.
+ */
+export function computeComplexSpectrum(
   data: Float32Array,
   sampleRate: number,
   nfft?: number
-): { frequencies: Float32Array; magnitude: Float32Array } {
+): ComplexSpectrum {
   const n = nfft ?? nextPowerOf2(data.length);
 
   // Apply Hanning window
@@ -92,19 +102,130 @@ export function computeSpectrum(
   // Compute FFT
   const fftOut = realFFT(windowed, n);
 
-  // Compute magnitude (only positive frequencies up to Nyquist)
+  // Extract complex spectrum (only positive frequencies up to Nyquist)
   const nyquist = n / 2;
   const frequencies = new Float32Array(nyquist);
   const magnitude = new Float32Array(nyquist);
+  const real = new Float32Array(nyquist);
+  const imag = new Float32Array(nyquist);
 
   for (let i = 0; i < nyquist; i++) {
     const re = fftOut[2 * i];
     const im = fftOut[2 * i + 1];
     frequencies[i] = (i * sampleRate) / n;
+    real[i] = re / n;
+    imag[i] = im / n;
     magnitude[i] = Math.sqrt(re * re + im * im) / n;
   }
 
-  return { frequencies, magnitude };
+  return { frequencies, magnitude, real, imag };
+}
+
+/**
+ * Compute power spectrum from real input data.
+ * Applies Hanning window and returns only positive frequencies.
+ */
+export function computeSpectrum(
+  data: Float32Array,
+  sampleRate: number,
+  nfft?: number
+): { frequencies: Float32Array; magnitude: Float32Array } {
+  const result = computeComplexSpectrum(data, sampleRate, nfft);
+  return { frequencies: result.frequencies, magnitude: result.magnitude };
+}
+
+/**
+ * Extract phase from complex transfer function H = Y/X.
+ * @param sourceReal - Real part of source spectrum X
+ * @param sourceImag - Imaginary part of source spectrum X
+ * @param probeReal - Real part of probe spectrum Y
+ * @param probeImag - Imaginary part of probe spectrum Y
+ * @returns Phase in radians [-π, π]
+ */
+export function extractTransferPhase(
+  sourceReal: Float32Array,
+  sourceImag: Float32Array,
+  probeReal: Float32Array,
+  probeImag: Float32Array
+): Float32Array {
+  const n = sourceReal.length;
+  const phase = new Float32Array(n);
+  const epsilon = 1e-10;
+
+  for (let i = 0; i < n; i++) {
+    // H = Y/X = (Yr + jYi) / (Xr + jXi)
+    // H = (Yr*Xr + Yi*Xi + j(Yi*Xr - Yr*Xi)) / (Xr² + Xi²)
+    const xr = sourceReal[i];
+    const xi = sourceImag[i];
+    const yr = probeReal[i];
+    const yi = probeImag[i];
+
+    const denom = xr * xr + xi * xi + epsilon;
+    const hr = (yr * xr + yi * xi) / denom;
+    const hi = (yi * xr - yr * xi) / denom;
+
+    phase[i] = Math.atan2(hi, hr);
+  }
+
+  return phase;
+}
+
+/**
+ * Unwrap phase to produce continuous phase response.
+ * Removes 2π discontinuities.
+ * @param phase - Wrapped phase in radians
+ * @returns Unwrapped phase in radians
+ */
+export function unwrapPhase(phase: Float32Array): Float32Array {
+  const n = phase.length;
+  const unwrapped = new Float32Array(n);
+  unwrapped[0] = phase[0];
+
+  for (let i = 1; i < n; i++) {
+    let diff = phase[i] - phase[i - 1];
+    // Wrap difference to [-π, π]
+    while (diff > Math.PI) diff -= 2 * Math.PI;
+    while (diff < -Math.PI) diff += 2 * Math.PI;
+    unwrapped[i] = unwrapped[i - 1] + diff;
+  }
+
+  return unwrapped;
+}
+
+/**
+ * Compute group delay from phase response.
+ * τ(f) = -dφ/dω = -dφ/(2π·df)
+ * @param phase - Unwrapped phase in radians
+ * @param frequencies - Frequency array in Hz
+ * @returns Group delay in seconds
+ */
+export function computeGroupDelay(
+  phase: Float32Array,
+  frequencies: Float32Array
+): Float32Array {
+  const n = phase.length;
+  const groupDelay = new Float32Array(n);
+
+  // Central differences for interior points
+  for (let i = 1; i < n - 1; i++) {
+    const df = frequencies[i + 1] - frequencies[i - 1];
+    const dPhase = phase[i + 1] - phase[i - 1];
+    // τ = -dφ/(2π·df)
+    groupDelay[i] = -dPhase / (2 * Math.PI * df);
+  }
+
+  // Handle endpoints with forward/backward differences
+  if (n > 1) {
+    const df0 = frequencies[1] - frequencies[0];
+    const dPhase0 = phase[1] - phase[0];
+    groupDelay[0] = df0 > 0 ? -dPhase0 / (2 * Math.PI * df0) : 0;
+
+    const dfN = frequencies[n - 1] - frequencies[n - 2];
+    const dPhaseN = phase[n - 1] - phase[n - 2];
+    groupDelay[n - 1] = dfN > 0 ? -dPhaseN / (2 * Math.PI * dfN) : 0;
+  }
+
+  return groupDelay;
 }
 
 /**
