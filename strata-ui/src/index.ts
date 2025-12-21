@@ -87,6 +87,7 @@ export { useProbeData as useProbeDataLoader } from './hooks/useProbeData'
 export { useSimulation } from './hooks/useSimulation'
 export { useStreamingBuffer } from './hooks/useStreamingBuffer'
 export { useUrlState } from './hooks/useUrlState'
+export { useSliceKeyboardNavigation, type SliceKeyboardCallbacks, type UseSliceKeyboardNavigationOptions } from './hooks/useSliceKeyboardNavigation'
 // useVideoExport moved to strata-web (requires @ffmpeg)
 
 // =============================================================================

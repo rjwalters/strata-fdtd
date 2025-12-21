@@ -36,6 +36,7 @@ import {
   useProbeData,
   usePerformanceSettings,
   useExport,
+  useSliceKeyboardNavigation,
 } from "@strata/ui";
 import type {
   VoxelRendererHandle,
@@ -219,6 +220,18 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   const setMainViewMode = useSimulationStore((s) => s.setViewMode);
   const setSliceAxis = useSimulationStore((s) => s.setSliceAxis);
   const setSlicePosition = useSimulationStore((s) => s.setSlicePosition);
+
+  // Slice keyboard navigation
+  useSliceKeyboardNavigation({
+    enabled: mainViewMode === "slice" && isLoaded,
+    position: slicePosition,
+    axis: sliceAxis,
+    shape,
+    callbacks: {
+      onPositionChange: setSlicePosition,
+      onAxisChange: setSliceAxis,
+    },
+  });
 
   // Local state
   const [bottomViewMode, setBottomViewMode] = useState<"time" | "spectrum">("time");
