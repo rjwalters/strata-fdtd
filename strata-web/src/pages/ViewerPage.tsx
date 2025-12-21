@@ -256,7 +256,7 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   });
 
   // Local state
-  const [bottomViewMode, setBottomViewMode] = useState<"time" | "spectrum">("time");
+  const [bottomViewMode, setBottomViewMode] = useState<"time" | "spectrum" | "coherence">("time");
   const [showMetadata, setShowMetadata] = useState(false);
 
   // Derive selected probe from probe data (first visible probe for spectrum)
@@ -272,6 +272,18 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
       position: probe.position,
     }));
   }, [probeData]);
+
+  // Coherence mode probe selection
+  const [referenceProbe, setReferenceProbe] = useState<string | null>(null);
+  const [measurementProbe, setMeasurementProbe] = useState<string | null>(null);
+
+  // Initialize coherence probes when probe data loads
+  useEffect(() => {
+    if (probeNames.length >= 2 && !referenceProbe && !measurementProbe) {
+      setReferenceProbe(probeNames[0]);
+      setMeasurementProbe(probeNames[1]);
+    }
+  }, [probeNames, referenceProbe, measurementProbe]);
 
   // Renderer refs for export
   const voxelRendererRef = useRef<VoxelRendererHandle>(null);
@@ -917,6 +929,10 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
           onPlayingChange={handlePlayingChange}
           onTimeSelect={handleTimeSelect}
           onViewModeChange={setBottomViewMode}
+          referenceProbe={referenceProbe}
+          measurementProbe={measurementProbe}
+          onReferenceProbeChange={setReferenceProbe}
+          onMeasurementProbeChange={setMeasurementProbe}
         />
       }
     />
@@ -1034,13 +1050,18 @@ interface BottomPanelProps {
   probeData: ReturnType<typeof useSimulationStore.getState>["probeData"];
   selectedProbe: string | null;
   hiddenProbes: string[];
-  viewMode: "time" | "spectrum";
+  viewMode: "time" | "spectrum" | "coherence";
   currentTime?: number;
   sources: ReturnType<typeof useSourceData>["sources"];
   onFrameChange: (frame: number) => void;
   onPlayingChange: (playing: boolean) => void;
   onTimeSelect: (time: number) => void;
-  onViewModeChange: (mode: "time" | "spectrum") => void;
+  onViewModeChange: (mode: "time" | "spectrum" | "coherence") => void;
+  // Coherence mode props
+  referenceProbe: string | null;
+  measurementProbe: string | null;
+  onReferenceProbeChange: (name: string) => void;
+  onMeasurementProbeChange: (name: string) => void;
 }
 
 function BottomPanel({
@@ -1058,6 +1079,10 @@ function BottomPanel({
   onPlayingChange,
   onTimeSelect,
   onViewModeChange,
+  referenceProbe,
+  measurementProbe,
+  onReferenceProbeChange,
+  onMeasurementProbeChange,
 }: BottomPanelProps) {
   // Convert hiddenProbes array to Set for TimeSeriesPlot
   const hiddenProbesSet = useMemo(() => new Set(hiddenProbes), [hiddenProbes]);
@@ -1072,6 +1097,9 @@ function BottomPanel({
         waveform: s.waveform!,
       }));
   }, [sources]);
+
+  // Get probe names for coherence mode validation
+  const probeNames = useMemo(() => probeData ? Object.keys(probeData.probes) : [], [probeData]);
 
   // Spectrum mode state: 'spectrum' for power spectrum, 'transfer' for transfer function
   const [spectrumMode, setSpectrumMode] = useState<"spectrum" | "transfer">("spectrum");
@@ -1109,6 +1137,16 @@ function BottomPanel({
             onClick={() => onViewModeChange("spectrum")}
           >
             Spectrum
+          </Button>
+          <Button
+            variant={viewMode === "coherence" ? "default" : "outline"}
+            size="sm"
+            className="text-xs h-6"
+            onClick={() => onViewModeChange("coherence")}
+            disabled={probeNames.length < 2}
+            title={probeNames.length < 2 ? "Requires 2+ probes" : ""}
+          >
+            Coherence
           </Button>
           {viewMode === "spectrum" && selectedProbe && (
             <span className="text-xs text-muted-foreground ml-2">
@@ -1168,6 +1206,17 @@ function BottomPanel({
             sources={sourcesForPlot}
             showSources={sourcesForPlot.length > 0}
           />
+        ) : viewMode === "coherence" ? (
+          <SpectrumPlot
+            data={new Float32Array(0)}
+            sampleRate={probeData.sampleRate}
+            analysisMode="coherence"
+            probes={probeData.probes}
+            referenceProbe={referenceProbe}
+            measurementProbe={measurementProbe}
+            onReferenceProbeChange={onReferenceProbeChange}
+            onMeasurementProbeChange={onMeasurementProbeChange}
+          />
         ) : !selectedProbe ? (
           <div className="h-full bg-secondary/30 rounded-md flex items-center justify-center text-muted-foreground text-sm">
             {Object.keys(probeData.probes).length === 0
@@ -1182,6 +1231,7 @@ function BottomPanel({
                 : new Float32Array(0)
             }
             sampleRate={probeData.sampleRate}
+            analysisMode="spectrum"
             mode={spectrumMode}
             referenceData={referenceData}
             referenceName={referenceName}
