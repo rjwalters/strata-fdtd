@@ -108,6 +108,7 @@ export interface SimulationState {
   viewMode: ViewMode;
   sliceAxis: SliceAxis;
   slicePosition: number; // 0-1 normalized position along axis
+  showSliceGeometry: boolean; // Whether to show geometry overlay on slice
 
   // Loading state
   isLoading: boolean;
@@ -172,6 +173,7 @@ export interface SimulationActions {
   setViewMode: (mode: ViewMode) => void;
   setSliceAxis: (axis: SliceAxis) => void;
   setSlicePosition: (position: number) => void;
+  setShowSliceGeometry: (show: boolean) => void;
 
   // Performance
   setEnableDownsampling: (enable: boolean) => void;
@@ -247,6 +249,7 @@ const DEFAULT_STATE: SimulationState = {
   viewMode: "3d",
   sliceAxis: "y",
   slicePosition: 0.5,
+  showSliceGeometry: true, // Show geometry overlay by default
 
   // Loading
   isLoading: false,
@@ -647,6 +650,8 @@ export const useSimulationStore = create<SimulationStore>()(
     setSlicePosition: (position: number) =>
       set({ slicePosition: Math.max(0, Math.min(1, position)) }),
 
+    setShowSliceGeometry: (show: boolean) => set({ showSliceGeometry: show }),
+
     // =========================================================================
     // Performance
     // =========================================================================
@@ -922,6 +927,7 @@ export const selectPerformanceMetrics = (state: SimulationStore) => state.perfor
 export const selectViewMode = (state: SimulationStore) => state.viewMode;
 export const selectSliceAxis = (state: SimulationStore) => state.sliceAxis;
 export const selectSlicePosition = (state: SimulationStore) => state.slicePosition;
+export const selectShowSliceGeometry = (state: SimulationStore) => state.showSliceGeometry;
 
 /** @deprecated Use individual selectors with useSimulationStore instead */
 export const usePlaybackState = () =>

@@ -24,6 +24,12 @@ export interface SliceControlPanelProps {
   onAxisChange: (axis: SliceAxis) => void;
   /** Callback when position changes */
   onPositionChange: (position: number) => void;
+  /** Whether geometry overlay is shown */
+  showGeometry?: boolean;
+  /** Callback when geometry visibility changes */
+  onShowGeometryChange?: (show: boolean) => void;
+  /** Whether geometry data is available */
+  hasGeometry?: boolean;
 }
 
 const AXIS_OPTIONS: { value: SliceAxis; label: string; description: string }[] = [
@@ -39,6 +45,9 @@ export function SliceControlPanel({
   resolution,
   onAxisChange,
   onPositionChange,
+  showGeometry = false,
+  onShowGeometryChange,
+  hasGeometry = false,
 }: SliceControlPanelProps) {
   // Memoize slider value to prevent infinite re-render loops
   const sliderValue = useMemo(() => [position * 100], [position]);
@@ -104,6 +113,19 @@ export function SliceControlPanel({
             <span>0 - {((axisSize - 1) * resolution * 100).toFixed(1)} cm</span>
           </div>
         </div>
+
+        {/* Geometry overlay toggle */}
+        {hasGeometry && onShowGeometryChange && (
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showGeometry}
+              onChange={(e) => onShowGeometryChange(e.target.checked)}
+              className="rounded"
+            />
+            Show Geometry
+          </label>
+        )}
       </div>
     </Panel>
   );
