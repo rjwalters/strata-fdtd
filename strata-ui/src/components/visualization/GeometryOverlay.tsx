@@ -1,16 +1,17 @@
 /**
  * GeometryOverlay - Renders FDTD geometry mask (solid/air boundaries) as a 3D mesh.
  *
- * Supports multiple visualization modes:
+ * Supports wireframe mode toggle and opacity-based rendering:
  * - wireframe: Edge lines of solid regions
- * - solid: Opaque solid surfaces
- * - transparent: Semi-transparent solids
- * - hidden: Don't render geometry
+ * - opacity 0: Hidden (don't render)
+ * - opacity 1-99: Semi-transparent solids
+ * - opacity 100: Solid opaque surfaces
  */
 
 import { useMemo } from "react";
 import * as THREE from "three";
 
+/** @deprecated Use showWireframe and boundaryOpacity instead */
 export type GeometryMode = "wireframe" | "solid" | "transparent" | "hidden";
 
 export interface GeometryOverlayProps {
@@ -184,37 +185,46 @@ export function generateBoundaryMesh(
 }
 
 /**
- * Create mesh group with both solid and wireframe representations.
- * Returns the appropriate objects based on visualization mode.
+ * Create mesh group for geometry boundary visualization.
+ * @param geometry - Boolean mask (1=air, 0=solid)
+ * @param shape - Grid dimensions [nx, ny, nz]
+ * @param resolution - Grid resolution in meters
+ * @param showWireframe - If true, render as wireframe edges only
+ * @param opacity - Boundary opacity 0-100 (0=hidden, 100=solid)
+ * @param color - Mesh color (default: gray)
  */
 export function createGeometryMesh(
   geometry: Uint8Array,
   shape: [number, number, number],
   resolution: number,
-  mode: GeometryMode,
-  color: THREE.Color = new THREE.Color(0x4a4a4a),
-  opacity: number = 0.3
+  showWireframe: boolean,
+  opacity: number, // 0-100
+  color: THREE.Color = new THREE.Color(0x4a4a4a)
 ): THREE.Group {
   const group = new THREE.Group();
   group.name = "geometry-overlay";
 
-  if (mode === "hidden") {
+  // Hidden: opacity 0 and not wireframe
+  if (opacity === 0 && !showWireframe) {
     return group;
   }
 
   const bufferGeometry = generateBoundaryMesh(geometry, shape, resolution);
 
-  if (mode === "wireframe") {
+  if (showWireframe) {
     // Wireframe: use EdgesGeometry for clean edge lines
+    const normalizedOpacity = opacity / 100;
     const edges = new THREE.EdgesGeometry(bufferGeometry, 1);
     const lineMaterial = new THREE.LineBasicMaterial({
       color: new THREE.Color(0xcccccc), // Light gray for wireframe
       linewidth: 1,
+      transparent: opacity < 100,
+      opacity: normalizedOpacity,
     });
     const wireframe = new THREE.LineSegments(edges, lineMaterial);
     wireframe.name = "geometry-wireframe";
     group.add(wireframe);
-  } else if (mode === "solid") {
+  } else if (opacity === 100) {
     // Solid: opaque mesh with lighting
     const material = new THREE.MeshStandardMaterial({
       color,
@@ -225,12 +235,13 @@ export function createGeometryMesh(
     const mesh = new THREE.Mesh(bufferGeometry, material);
     mesh.name = "geometry-solid";
     group.add(mesh);
-  } else if (mode === "transparent") {
+  } else if (opacity > 0) {
     // Transparent: semi-transparent with proper depth handling
+    const normalizedOpacity = opacity / 100;
     const material = new THREE.MeshBasicMaterial({
       color,
       transparent: true,
-      opacity,
+      opacity: normalizedOpacity,
       side: THREE.DoubleSide,
       depthWrite: false, // Prevent z-fighting with pressure voxels
     });
@@ -244,7 +255,7 @@ export function createGeometryMesh(
     const lineMaterial = new THREE.LineBasicMaterial({
       color: new THREE.Color(0x888888),
       transparent: true,
-      opacity: opacity * 1.5,
+      opacity: Math.min(1, normalizedOpacity * 1.5),
     });
     const wireframe = new THREE.LineSegments(edges, lineMaterial);
     wireframe.name = "geometry-transparent-edges";
@@ -263,12 +274,12 @@ export function useGeometryMesh(
   geometry: Uint8Array | null,
   shape: [number, number, number] | null,
   resolution: number,
-  mode: GeometryMode,
-  color?: THREE.Color,
-  opacity?: number
+  showWireframe: boolean,
+  opacity: number, // 0-100
+  color?: THREE.Color
 ): THREE.Group | null {
   return useMemo(() => {
-    if (!geometry || !shape || mode === "hidden") {
+    if (!geometry || !shape || (opacity === 0 && !showWireframe)) {
       return null;
     }
 
@@ -276,11 +287,11 @@ export function useGeometryMesh(
       geometry,
       shape,
       resolution,
-      mode,
-      color,
-      opacity
+      showWireframe,
+      opacity,
+      color
     );
-  }, [geometry, shape, resolution, mode, color, opacity]);
+  }, [geometry, shape, resolution, showWireframe, opacity, color]);
 }
 
 /**

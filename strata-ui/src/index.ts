@@ -37,6 +37,15 @@ export {
   DialogTitle,
   DialogTrigger,
 } from './components/ui/dialog'
+export {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from './components/ui/card'
 
 // =============================================================================
 // Visualization Components

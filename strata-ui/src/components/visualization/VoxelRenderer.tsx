@@ -7,10 +7,7 @@ import {
   applyPressureColormap,
   getSymmetricRange,
 } from "@/lib/colormap"
-import {
-  createGeometryMesh,
-  type GeometryMode,
-} from "./GeometryOverlay"
+import { createGeometryMesh } from "./GeometryOverlay"
 import { createDemoGeometry, type DemoGeometryType } from "@/lib/demoGeometry"
 
 export type VoxelGeometry = "point" | "mesh" | "hidden"
@@ -45,12 +42,12 @@ export interface VoxelRendererProps {
   showAxes?: boolean
   /** Called when renderer is ready */
   onReady?: () => void
-  /** Boundary geometry visualization mode */
-  geometryMode?: GeometryMode
+  /** Show boundary as wireframe */
+  showWireframe?: boolean
+  /** Boundary opacity 0-100 (0=hidden, 100=solid) */
+  boundaryOpacity?: number
   /** Demo geometry type for boundary overlay */
   demoType?: DemoGeometryType
-  /** Opacity for transparent geometry mode */
-  geometryOpacity?: number
 }
 
 // Pre-allocated objects for color updates (avoid GC pressure)
@@ -67,9 +64,9 @@ export const VoxelRenderer = forwardRef<VoxelRendererHandle, VoxelRendererProps>
   showGrid = true,
   showAxes = true,
   onReady,
-  geometryMode = "wireframe",
+  showWireframe = false,
+  boundaryOpacity = 30,
   demoType = "helmholtz",
-  geometryOpacity = 0.3,
 }, ref) {
   const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
@@ -414,21 +411,20 @@ export const VoxelRenderer = forwardRef<VoxelRendererHandle, VoxelRendererProps>
       boundaryMeshRef.current = null
     }
 
-    if (geometryMode !== "hidden") {
+    if (showWireframe || boundaryOpacity > 0) {
       // Create demo boundary geometry
       const boundaryData = createDemoGeometry(demoType, shape)
       const boundaryGroup = createGeometryMesh(
         boundaryData,
         shape,
         resolution,
-        geometryMode,
-        undefined,
-        geometryOpacity
+        showWireframe,
+        boundaryOpacity
       )
       scene.add(boundaryGroup)
       boundaryMeshRef.current = boundaryGroup
     }
-  }, [geometryMode, demoType, shape, resolution, geometryOpacity])
+  }, [showWireframe, boundaryOpacity, demoType, shape, resolution])
 
   // Memoize stats for display
   const stats = useMemo(() => {

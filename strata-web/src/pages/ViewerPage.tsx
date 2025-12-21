@@ -37,7 +37,6 @@ import {
 import type {
   VoxelRendererHandle,
   VoxelGeometry,
-  GeometryMode,
   DownsampleMethod,
   ViewState,
   DemoGeometryType,
@@ -72,13 +71,6 @@ interface ViewerPageProps {
 // =============================================================================
 // Constants
 // =============================================================================
-
-const GEOMETRY_MODES: { value: GeometryMode; label: string }[] = [
-  { value: "wireframe", label: "Wireframe" },
-  { value: "solid", label: "Solid" },
-  { value: "transparent", label: "Transparent" },
-  { value: "hidden", label: "Hidden" },
-];
 
 const DOWNSAMPLE_METHODS: { value: DownsampleMethod; label: string }[] = [
   { value: "average", label: "Average" },
@@ -206,7 +198,7 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   // Store selectors
   const pressure = useCurrentPressure();
   const { currentFrame, isPlaying, totalFrames, playbackSpeed, isLooping } = usePlaybackState();
-  const { voxelGeometry, threshold, displayFill, showAxes, showGrid, geometryMode } = useViewOptions();
+  const { voxelGeometry, threshold, displayFill, showAxes, showGrid, showWireframe, boundaryOpacity } = useViewOptions();
   const { shape, resolution } = useGridInfo();
   const { probeData } = useProbeData();
   const {
@@ -217,7 +209,6 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   } = usePerformanceSettings();
 
   // Local state
-  const [geometryOpacity, setGeometryOpacity] = useState(30);
   const [viewMode, setViewMode] = useState<"time" | "spectrum">("time");
   const [showMetadata, setShowMetadata] = useState(false);
 
@@ -244,7 +235,8 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
   const toggleGrid = useSimulationStore((s) => s.toggleGrid);
   const setLooping = useSimulationStore((s) => s.setLooping);
   const setPlaybackSpeed = useSimulationStore((s) => s.setPlaybackSpeed);
-  const setGeometryMode = useSimulationStore((s) => s.setGeometryMode);
+  const setShowWireframe = useSimulationStore((s) => s.setShowWireframe);
+  const setBoundaryOpacity = useSimulationStore((s) => s.setBoundaryOpacity);
   const setEnableDownsampling = useSimulationStore((s) => s.setEnableDownsampling);
   const setTargetVoxels = useSimulationStore((s) => s.setTargetVoxels);
   const setDownsampleMethod = useSimulationStore((s) => s.setDownsampleMethod);
@@ -264,49 +256,7 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
     }
   }, [currentFrame, isLoaded, totalFrames, loadTimestep, isHDF5Loaded, storeManifest, storeLoadSnapshot]);
 
-
-  // Playback animation loop
-  const animationRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(0);
-
-  useEffect(() => {
-    if (!isPlaying || totalFrames === 0) {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-        animationRef.current = null;
-      }
-      return;
-    }
-
-    const fps = 15 * playbackSpeed;
-    const interval = 1000 / fps;
-
-    const animate = (time: number) => {
-      if (time - lastTimeRef.current >= interval) {
-        lastTimeRef.current = time;
-        const nextFrame = currentFrame + 1;
-        if (nextFrame >= totalFrames) {
-          if (isLooping) {
-            setCurrentFrame(0);
-          } else {
-            pause();
-            return;
-          }
-        } else {
-          setCurrentFrame(nextFrame);
-        }
-      }
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    animationRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [isPlaying, totalFrames, playbackSpeed, isLooping, currentFrame, setCurrentFrame, pause]);
+  // Note: Playback animation is handled by PlaybackControls component
 
   const handlePlayingChange = useCallback(
     (playing: boolean) => {
@@ -358,7 +308,8 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
         threshold,
         displayFill,
         voxelGeometry,
-        geometryMode,
+        showWireframe,
+        boundaryOpacity,
         showGrid,
         showAxes,
       },
@@ -370,7 +321,7 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
       },
       timestamp: new Date().toISOString(),
     };
-  }, [threshold, displayFill, voxelGeometry, geometryMode, showGrid, showAxes, currentFrame, totalFrames, shape, resolution]);
+  }, [threshold, displayFill, voxelGeometry, showWireframe, boundaryOpacity, showGrid, showAxes, currentFrame, totalFrames, shape, resolution]);
 
   // Handle file/URL loading with error handling
   const handleLoadFile = useCallback(
@@ -394,6 +345,31 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
     },
     [loadURL]
   );
+
+  // Handle tutorial navigation (must be before early return)
+  const handleTutorialStepSelect = useCallback(
+    (stepIndex: number) => {
+      goToStep(stepIndex);
+    },
+    [goToStep]
+  );
+
+  const handleTutorialNext = useCallback(() => {
+    nextStep();
+  }, [nextStep]);
+
+  const handleTutorialPrevious = useCallback(() => {
+    previousStep();
+  }, [previousStep]);
+
+  const handleTutorialExit = useCallback(() => {
+    exitPath();
+  }, [exitPath]);
+
+  const handleMarkComplete = useCallback(() => {
+    completeCurrentStep();
+    setHasInteracted(true);
+  }, [completeCurrentStep]);
 
   // If not loaded, show file upload UI or demo loading state
   if (!isLoaded) {
@@ -488,31 +464,6 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
       </div>
     );
   }
-
-  // Handle tutorial navigation
-  const handleTutorialStepSelect = useCallback(
-    (stepIndex: number) => {
-      goToStep(stepIndex);
-    },
-    [goToStep]
-  );
-
-  const handleTutorialNext = useCallback(() => {
-    nextStep();
-  }, [nextStep]);
-
-  const handleTutorialPrevious = useCallback(() => {
-    previousStep();
-  }, [previousStep]);
-
-  const handleTutorialExit = useCallback(() => {
-    exitPath();
-  }, [exitPath]);
-
-  const handleMarkComplete = useCallback(() => {
-    completeCurrentStep();
-    setHasInteracted(true);
-  }, [completeCurrentStep]);
 
   // Main visualization view
   return (
@@ -617,33 +568,27 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
           {/* Boundary Display */}
           <Panel title="Boundary Display">
             <div className="space-y-3">
-              <div className="flex flex-wrap gap-1">
-                {GEOMETRY_MODES.map((mode) => (
-                  <Badge
-                    key={mode.value}
-                    variant={geometryMode === mode.value ? "default" : "secondary"}
-                    className="cursor-pointer"
-                    onClick={() => setGeometryMode(mode.value)}
-                  >
-                    {mode.label}
-                  </Badge>
-                ))}
-              </div>
-              {geometryMode === "transparent" && (
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Opacity</span>
-                    <span>{geometryOpacity}%</span>
-                  </div>
-                  <Slider
-                    value={[geometryOpacity]}
-                    onValueChange={(v) => setGeometryOpacity(v[0])}
-                    min={10}
-                    max={80}
-                    step={5}
-                  />
+              <Button
+                variant={showWireframe ? "default" : "outline"}
+                size="sm"
+                className="w-full"
+                onClick={() => setShowWireframe(!showWireframe)}
+              >
+                Wireframe
+              </Button>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Opacity</span>
+                  <span>{boundaryOpacity}%</span>
                 </div>
-              )}
+                <Slider
+                  value={[boundaryOpacity]}
+                  onValueChange={(v) => setBoundaryOpacity(v[0])}
+                  min={0}
+                  max={100}
+                  step={5}
+                />
+              </div>
             </div>
           </Panel>
 
@@ -670,10 +615,6 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
                     </Button>
                   ))}
                 </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Colormap</span>
-                <Badge variant="secondary">Diverging</Badge>
               </div>
             </div>
           </Panel>
@@ -816,9 +757,9 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
           displayFill={displayFill}
           showGrid={showGrid}
           showAxes={showAxes}
-          geometryMode={geometryMode}
+          showWireframe={showWireframe}
+          boundaryOpacity={boundaryOpacity}
           demoType={"helmholtz" as DemoGeometryType}
-          geometryOpacity={geometryOpacity / 100}
           enableDownsampling={enableDownsampling}
           targetVoxels={targetVoxels}
           downsampleMethod={downsampleMethod}

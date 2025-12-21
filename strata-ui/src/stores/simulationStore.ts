@@ -31,7 +31,7 @@ import type { PerformanceMetrics } from "@/lib/performance";
 /** Available colormap types */
 export type ColormapType = "diverging" | "magnitude" | "viridis";
 
-/** Geometry rendering modes */
+/** @deprecated Use showWireframe and boundaryOpacity instead */
 export type GeometryMode = "wireframe" | "solid" | "transparent" | "hidden";
 
 /** Voxel geometry types */
@@ -87,7 +87,8 @@ export interface SimulationState {
   colormap: ColormapType;
   pressureRange: [number, number] | "auto";
   voxelGeometry: VoxelGeometry;
-  geometryMode: GeometryMode;
+  showWireframe: boolean;
+  boundaryOpacity: number; // 0-100, 0=hidden, 100=solid
   threshold: number;
   displayFill: number; // 0-1, percentage of voxels to display (sparseness control)
   showAxes: boolean;
@@ -142,7 +143,8 @@ export interface SimulationActions {
   setColormap: (colormap: ColormapType) => void;
   setPressureRange: (range: [number, number] | "auto") => void;
   setVoxelGeometry: (geometry: VoxelGeometry) => void;
-  setGeometryMode: (mode: GeometryMode) => void;
+  setShowWireframe: (show: boolean) => void;
+  setBoundaryOpacity: (opacity: number) => void;
   setThreshold: (threshold: number) => void;
   setDisplayFill: (fill: number) => void;
   toggleAxes: () => void;
@@ -214,7 +216,8 @@ const DEFAULT_STATE: SimulationState = {
   colormap: "diverging",
   pressureRange: "auto",
   voxelGeometry: "point",
-  geometryMode: "wireframe",
+  showWireframe: false,
+  boundaryOpacity: 30, // Default to 30% opacity (transparent)
   threshold: 0,
   displayFill: 1, // 100% - show all voxels by default
   showAxes: true,
@@ -565,7 +568,9 @@ export const useSimulationStore = create<SimulationStore>()(
 
     setVoxelGeometry: (voxelGeometry: VoxelGeometry) => set({ voxelGeometry }),
 
-    setGeometryMode: (geometryMode: GeometryMode) => set({ geometryMode }),
+    setShowWireframe: (showWireframe: boolean) => set({ showWireframe }),
+    setBoundaryOpacity: (boundaryOpacity: number) =>
+      set({ boundaryOpacity: Math.max(0, Math.min(100, boundaryOpacity)) }),
 
     setThreshold: (threshold: number) =>
       set({ threshold: Math.max(0, Math.min(1, threshold)) }),
@@ -872,7 +877,8 @@ export const selectThreshold = (state: SimulationStore) => state.threshold;
 export const selectDisplayFill = (state: SimulationStore) => state.displayFill;
 export const selectShowAxes = (state: SimulationStore) => state.showAxes;
 export const selectShowGrid = (state: SimulationStore) => state.showGrid;
-export const selectGeometryMode = (state: SimulationStore) => state.geometryMode;
+export const selectShowWireframe = (state: SimulationStore) => state.showWireframe;
+export const selectBoundaryOpacity = (state: SimulationStore) => state.boundaryOpacity;
 export const selectColormap = (state: SimulationStore) => state.colormap;
 export const selectPressureRange = (state: SimulationStore) => state.pressureRange;
 export const selectGeometry = (state: SimulationStore) => state.geometry;
@@ -901,7 +907,8 @@ export const useViewOptions = () =>
       colormap: state.colormap,
       pressureRange: state.pressureRange,
       voxelGeometry: state.voxelGeometry,
-      geometryMode: state.geometryMode,
+      showWireframe: state.showWireframe,
+      boundaryOpacity: state.boundaryOpacity,
       threshold: state.threshold,
       displayFill: state.displayFill,
       showAxes: state.showAxes,

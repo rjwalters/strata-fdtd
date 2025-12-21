@@ -88,6 +88,7 @@ upload_demo() {
         if wrangler r2 object put "$BUCKET_NAME/$r2_key" \
             --file="$file" \
             --content-type="$content_type" \
+            --remote \
             2>/dev/null; then
             echo -e "${GREEN}OK${NC}"
             ((uploaded++)) || true

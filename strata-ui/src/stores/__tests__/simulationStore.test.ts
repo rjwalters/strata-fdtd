@@ -29,7 +29,8 @@ describe("SimulationStore", () => {
       expect(state.colormap).toBe("diverging");
       expect(state.pressureRange).toBe("auto");
       expect(state.voxelGeometry).toBe("point");
-      expect(state.geometryMode).toBe("wireframe");
+      expect(state.showWireframe).toBe(false);
+      expect(state.boundaryOpacity).toBe(30);
       expect(state.threshold).toBe(0);
       expect(state.showAxes).toBe(true);
       expect(state.showGrid).toBe(false);
@@ -155,14 +156,21 @@ describe("SimulationStore", () => {
       expect(useSimulationStore.getState().voxelGeometry).toBe("point");
     });
 
-    it("setGeometryMode updates geometry mode", () => {
+    it("setShowWireframe and setBoundaryOpacity update boundary display", () => {
       const store = useSimulationStore.getState();
 
-      store.setGeometryMode("solid");
-      expect(useSimulationStore.getState().geometryMode).toBe("solid");
+      store.setShowWireframe(true);
+      expect(useSimulationStore.getState().showWireframe).toBe(true);
 
-      store.setGeometryMode("transparent");
-      expect(useSimulationStore.getState().geometryMode).toBe("transparent");
+      store.setBoundaryOpacity(50);
+      expect(useSimulationStore.getState().boundaryOpacity).toBe(50);
+
+      // Test clamping
+      store.setBoundaryOpacity(150);
+      expect(useSimulationStore.getState().boundaryOpacity).toBe(100);
+
+      store.setBoundaryOpacity(-10);
+      expect(useSimulationStore.getState().boundaryOpacity).toBe(0);
     });
 
     it("setThreshold clamps to 0-1", () => {

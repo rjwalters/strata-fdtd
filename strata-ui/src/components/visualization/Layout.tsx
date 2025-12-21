@@ -23,7 +23,7 @@ export function Layout({ sidebar, main, bottom }: LayoutProps) {
         </main>
 
         {/* Bottom panel for time series */}
-        <div className="h-48 flex-shrink-0 border-t border-border bg-card p-4">
+        <div className="h-64 flex-shrink-0 border-t border-border bg-card p-4">
           {bottom}
         </div>
       </div>

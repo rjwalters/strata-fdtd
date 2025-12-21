@@ -29,7 +29,7 @@ import {
   applyPressureColormap,
   getSymmetricRange,
 } from "@/lib/colormap";
-import { createGeometryMesh, type GeometryMode } from "./GeometryOverlay";
+import { createGeometryMesh } from "./GeometryOverlay";
 import { createDemoGeometry, createDemoPressure, type DemoGeometryType } from "@/lib/demoGeometry";
 import {
   PerformanceTracker,
@@ -59,9 +59,9 @@ export interface OptimizedVoxelRendererProps {
   showGrid?: boolean;
   showAxes?: boolean;
   onReady?: () => void;
-  geometryMode?: GeometryMode;
+  showWireframe?: boolean;
+  boundaryOpacity?: number; // 0-100
   demoType?: DemoGeometryType;
-  geometryOpacity?: number;
   // Performance options
   enableDownsampling?: boolean;
   targetVoxels?: number;
@@ -89,9 +89,9 @@ export const OptimizedVoxelRenderer = forwardRef<
     showGrid = true,
     showAxes = true,
     onReady,
-    geometryMode = "wireframe",
+    showWireframe = false,
+    boundaryOpacity = 30,
     demoType = "helmholtz",
-    geometryOpacity = 0.3,
     enableDownsampling = true,
     targetVoxels = 262144, // 64³
     downsampleMethod = "average",
@@ -606,20 +606,19 @@ export const OptimizedVoxelRenderer = forwardRef<
       boundaryMeshRef.current = null;
     }
 
-    if (geometryMode !== "hidden") {
+    if (showWireframe || boundaryOpacity > 0) {
       const boundaryData = createDemoGeometry(demoType, shape);
       const boundaryGroup = createGeometryMesh(
         boundaryData,
         shape,
         resolution,
-        geometryMode,
-        undefined,
-        geometryOpacity
+        showWireframe,
+        boundaryOpacity
       );
       scene.add(boundaryGroup);
       boundaryMeshRef.current = boundaryGroup;
     }
-  }, [geometryMode, demoType, shape, resolution, geometryOpacity]);
+  }, [showWireframe, boundaryOpacity, demoType, shape, resolution]);
 
   // Memoize stats for display
   const stats = useMemo(() => {

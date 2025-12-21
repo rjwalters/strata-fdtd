@@ -1,10 +1,7 @@
 import { useEffect, useRef, useMemo, useCallback } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import {
-  createGeometryMesh,
-  type GeometryMode,
-} from "./GeometryOverlay";
+import { createGeometryMesh } from "./GeometryOverlay";
 import { createDemoGeometry, type DemoGeometryType } from "@/lib/demoGeometry";
 
 interface ThreeViewerProps {
@@ -18,12 +15,12 @@ interface ThreeViewerProps {
   shape?: [number, number, number] | null;
   /** Grid resolution in meters */
   resolution?: number;
-  /** Geometry visualization mode */
-  geometryMode?: GeometryMode;
+  /** Show boundary as wireframe */
+  showWireframe?: boolean;
+  /** Boundary opacity 0-100 (0=hidden, 100=solid) */
+  boundaryOpacity?: number;
   /** Geometry color */
   geometryColor?: THREE.Color;
-  /** Geometry opacity for transparent mode */
-  geometryOpacity?: number;
   /** Show grid helper */
   showGrid?: boolean;
   /** Show axes helper */
@@ -36,9 +33,9 @@ export function ThreeViewer({
   geometry: externalGeometry,
   shape: externalShape,
   resolution = 0.002, // 2mm default
-  geometryMode = "wireframe",
+  showWireframe = false,
+  boundaryOpacity = 30,
   geometryColor,
-  geometryOpacity = 0.3,
   showGrid = true,
   showAxes = true,
 }: ThreeViewerProps) {
@@ -93,9 +90,9 @@ export function ThreeViewer({
       currentGeometry,
       currentShape,
       resolution,
-      geometryMode,
-      geometryColor,
-      geometryOpacity
+      showWireframe,
+      boundaryOpacity,
+      geometryColor
     );
 
     geometryGroupRef.current = newGroup;
@@ -104,9 +101,9 @@ export function ThreeViewer({
     currentGeometry,
     currentShape,
     resolution,
-    geometryMode,
+    showWireframe,
+    boundaryOpacity,
     geometryColor,
-    geometryOpacity,
   ]);
 
   // Scene initialization

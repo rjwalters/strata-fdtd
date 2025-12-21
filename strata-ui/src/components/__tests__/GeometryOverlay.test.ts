@@ -8,7 +8,7 @@ import {
   generateBoundaryMesh,
   createGeometryMesh,
   computeGeometryStats,
-} from "../GeometryOverlay";
+} from "../visualization/GeometryOverlay";
 
 describe("generateBoundaryMesh", () => {
   it("generates no geometry for all-air grid", () => {
@@ -103,42 +103,42 @@ describe("generateBoundaryMesh", () => {
 });
 
 describe("createGeometryMesh", () => {
-  it("returns empty group for hidden mode", () => {
+  it("returns empty group when opacity is 0 and wireframe is false", () => {
     const shape: [number, number, number] = [5, 5, 5];
     const geometry = new Uint8Array(125).fill(0);
 
-    const group = createGeometryMesh(geometry, shape, 0.001, "hidden");
+    const group = createGeometryMesh(geometry, shape, 0.001, false, 0);
 
     expect(group.children.length).toBe(0);
   });
 
-  it("creates wireframe lines for wireframe mode", () => {
+  it("creates wireframe lines when showWireframe is true", () => {
     const shape: [number, number, number] = [5, 5, 5];
     const geometry = new Uint8Array(125).fill(0);
 
-    const group = createGeometryMesh(geometry, shape, 0.001, "wireframe");
+    const group = createGeometryMesh(geometry, shape, 0.001, true, 0);
 
     expect(group.children.length).toBe(1);
     expect(group.children[0]).toBeInstanceOf(THREE.LineSegments);
     expect(group.children[0].name).toBe("geometry-wireframe");
   });
 
-  it("creates mesh for solid mode", () => {
+  it("creates solid mesh when opacity is 100", () => {
     const shape: [number, number, number] = [5, 5, 5];
     const geometry = new Uint8Array(125).fill(0);
 
-    const group = createGeometryMesh(geometry, shape, 0.001, "solid");
+    const group = createGeometryMesh(geometry, shape, 0.001, false, 100);
 
     expect(group.children.length).toBe(1);
     expect(group.children[0]).toBeInstanceOf(THREE.Mesh);
     expect(group.children[0].name).toBe("geometry-solid");
   });
 
-  it("creates transparent mesh with edges for transparent mode", () => {
+  it("creates transparent mesh with edges for opacity between 0 and 100", () => {
     const shape: [number, number, number] = [5, 5, 5];
     const geometry = new Uint8Array(125).fill(0);
 
-    const group = createGeometryMesh(geometry, shape, 0.001, "transparent");
+    const group = createGeometryMesh(geometry, shape, 0.001, false, 50);
 
     // Should have both mesh and wireframe
     expect(group.children.length).toBe(2);
@@ -147,7 +147,7 @@ describe("createGeometryMesh", () => {
     expect(names).toContain("geometry-transparent-edges");
   });
 
-  it("respects custom color", () => {
+  it("respects custom color for solid mode", () => {
     const shape: [number, number, number] = [5, 5, 5];
     const geometry = new Uint8Array(125).fill(0);
     const customColor = new THREE.Color(0xff0000);
@@ -156,7 +156,8 @@ describe("createGeometryMesh", () => {
       geometry,
       shape,
       0.001,
-      "solid",
+      false,
+      100,
       customColor
     );
 
@@ -173,9 +174,8 @@ describe("createGeometryMesh", () => {
       geometry,
       shape,
       0.001,
-      "transparent",
-      undefined,
-      0.5
+      false,
+      50 // 50%
     );
 
     const mesh = group.children.find(
