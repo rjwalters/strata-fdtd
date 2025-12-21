@@ -43,6 +43,12 @@ export type DownsampleMethod = "nearest" | "average" | "max";
 /** Visualization mode */
 export type VisualizationMode = "voxels" | "flow_particles";
 
+/** View mode - 3D voxels or 2D slice */
+export type ViewMode = "3d" | "slice";
+
+/** Slice axis */
+export type SliceAxis = "x" | "y" | "z";
+
 /** Flow particle configuration */
 export interface FlowParticleConfig {
   /** Number of particles to render */
@@ -124,6 +130,11 @@ export interface SimulationState {
   sources: SourceData[];
   showSourceMarkers: boolean; // Show source markers in 3D view
 
+  // Slice view
+  viewMode: ViewMode;
+  sliceAxis: SliceAxis;
+  slicePosition: number; // 0-1 normalized position along axis
+
   // Loading state
   isLoading: boolean;
   loadingProgress: number;
@@ -192,6 +203,11 @@ export interface SimulationActions {
 
   // Source visibility
   setShowSourceMarkers: (show: boolean) => void;
+
+  // Slice view
+  setViewMode: (mode: ViewMode) => void;
+  setSliceAxis: (axis: SliceAxis) => void;
+  setSlicePosition: (position: number) => void;
 
   // Performance
   setEnableDownsampling: (enable: boolean) => void;
@@ -270,6 +286,11 @@ const DEFAULT_STATE: SimulationState = {
   // Sources
   sources: [],
   showSourceMarkers: true, // Show source markers by default
+
+  // Slice view
+  viewMode: "3d",
+  sliceAxis: "y",
+  slicePosition: 0.5,
 
   // Loading
   isLoading: false,
@@ -702,6 +723,17 @@ export const useSimulationStore = create<SimulationStore>()(
     setShowSourceMarkers: (show: boolean) => set({ showSourceMarkers: show }),
 
     // =========================================================================
+    // Slice View
+    // =========================================================================
+
+    setViewMode: (mode: ViewMode) => set({ viewMode: mode }),
+
+    setSliceAxis: (axis: SliceAxis) => set({ sliceAxis: axis }),
+
+    setSlicePosition: (position: number) =>
+      set({ slicePosition: Math.max(0, Math.min(1, position)) }),
+
+    // =========================================================================
     // Performance
     // =========================================================================
 
@@ -975,6 +1007,9 @@ export const selectTargetVoxels = (state: SimulationStore) => state.targetVoxels
 export const selectDownsampleMethod = (state: SimulationStore) => state.downsampleMethod;
 export const selectShowPerformanceMetrics = (state: SimulationStore) => state.showPerformanceMetrics;
 export const selectPerformanceMetrics = (state: SimulationStore) => state.performanceMetrics;
+export const selectViewMode = (state: SimulationStore) => state.viewMode;
+export const selectSliceAxis = (state: SimulationStore) => state.sliceAxis;
+export const selectSlicePosition = (state: SimulationStore) => state.slicePosition;
 
 /** @deprecated Use individual selectors with useSimulationStore instead */
 export const usePlaybackState = () =>

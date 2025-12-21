@@ -75,6 +75,12 @@ export type { SourceTimeSeries } from './components/visualization/TimeSeriesPlot
 export { VisualizationModePanel } from './components/visualization/VisualizationModePanel'
 export { VoxelRenderer } from './components/visualization/VoxelRenderer'
 export { WaterfallPlot } from './components/visualization/WaterfallPlot'
+export { SliceRenderer } from './components/visualization/SliceRenderer'
+export type { SliceRendererHandle, SliceRendererProps } from './components/visualization/SliceRenderer'
+export { SliceControlPanel } from './components/visualization/SliceControlPanel'
+export type { SliceControlPanelProps } from './components/visualization/SliceControlPanel'
+export { ViewModePanel } from './components/visualization/ViewModePanel'
+export type { ViewModePanelProps } from './components/visualization/ViewModePanel'
 
 // =============================================================================
 // Hooks
@@ -111,6 +117,8 @@ export type {
   VisualizationMode,
   FlowParticleConfig,
   SourceData,
+  ViewMode,
+  SliceAxis,
 } from './stores/simulationStore'
 
 // =============================================================================
@@ -148,6 +156,9 @@ export * from './lib/export'
 
 // Performance
 export * from './lib/performance'
+
+// Slice utilities
+export * from './lib/sliceUtils'
 
 // Demo geometry
 export * from './lib/demoGeometry'
