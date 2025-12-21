@@ -844,6 +844,10 @@ export default function ViewerPage({ onBack }: ViewerPageProps) {
               resolution={resolution}
               probeData={probeData}
               getViewState={getViewState}
+              isSliceMode={mainViewMode === "slice"}
+              sliceAxis={sliceAxis}
+              slicePosition={slicePosition}
+              setSlicePosition={setSlicePosition}
             />
           </Panel>
 
