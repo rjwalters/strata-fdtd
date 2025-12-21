@@ -26,6 +26,7 @@ from strata_fdtd.core.solver import (
     MembraneSource,
     Microphone,
     Probe,
+    RectangularMembraneSource,
     has_native_kernels,
 )
 from strata_fdtd.core.solver_gpu import (
@@ -68,6 +69,7 @@ __all__ = [
     "GaussianPulse",
     "MembraneSource",
     "CircularMembraneSource",
+    "RectangularMembraneSource",
     "Probe",
     "Microphone",
     "POLAR_PATTERNS",
