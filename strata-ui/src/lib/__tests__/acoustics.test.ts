@@ -11,6 +11,9 @@ import {
   computeCentreTime,
   computeAcousticMetrics,
   analyzeTransferFunction,
+  analyzeTransferFunctionAsync,
+  hasAcousticsWorkerSupport,
+  terminateAcousticsWorker,
 } from "../acoustics";
 import { realFFT } from "../fft";
 
@@ -428,5 +431,88 @@ describe("analyzeTransferFunction", () => {
 
     expect(result.metrics).toBeDefined();
     expect(typeof result.metrics.c80).toBe("number");
+  });
+});
+
+describe("analyzeTransferFunctionAsync", () => {
+  it("produces same results as synchronous version", async () => {
+    const n = 64;
+    const transferReal = new Float32Array(n);
+    const transferImag = new Float32Array(n);
+
+    // Simple flat transfer function
+    for (let i = 0; i < n; i++) {
+      transferReal[i] = 1;
+      transferImag[i] = 0;
+    }
+
+    const syncResult = analyzeTransferFunction(
+      transferReal,
+      transferImag,
+      1000,
+      "tukey"
+    );
+
+    const asyncResult = await analyzeTransferFunctionAsync(
+      transferReal,
+      transferImag,
+      1000,
+      "tukey"
+    );
+
+    // Check that async produces equivalent results
+    expect(asyncResult.impulseResponse).toBeDefined();
+    expect(asyncResult.impulseResponse.impulseResponse.length).toBe(
+      syncResult.impulseResponse.impulseResponse.length
+    );
+
+    expect(asyncResult.energyDecay).toBeDefined();
+    expect(asyncResult.energyDecay.decayCurve.length).toBe(
+      syncResult.energyDecay.decayCurve.length
+    );
+
+    expect(asyncResult.metrics).toBeDefined();
+    // Metrics should be identical (both may be NaN for synthetic test data)
+    // For NaN values, both should be NaN; for valid values, they should match
+    const metricsToCompare: (keyof typeof asyncResult.metrics)[] = [
+      "c80",
+      "c50",
+      "d50",
+      "d80",
+    ];
+    for (const key of metricsToCompare) {
+      const asyncVal = asyncResult.metrics[key];
+      const syncVal = syncResult.metrics[key];
+      if (Number.isNaN(asyncVal) && Number.isNaN(syncVal)) {
+        // Both NaN is expected for certain inputs
+        expect(true).toBe(true);
+      } else if (asyncVal !== null && syncVal !== null) {
+        expect(asyncVal).toBeCloseTo(syncVal as number, 5);
+      }
+    }
+  });
+
+  it("rejects invalid input (empty arrays)", async () => {
+    const transferReal = new Float32Array(0);
+    const transferImag = new Float32Array(0);
+
+    // Empty input is invalid (not power of 2), should reject
+    await expect(
+      analyzeTransferFunctionAsync(transferReal, transferImag, 1000, "tukey")
+    ).rejects.toThrow();
+  });
+});
+
+describe("hasAcousticsWorkerSupport", () => {
+  it("returns a boolean", () => {
+    const result = hasAcousticsWorkerSupport();
+    expect(typeof result).toBe("boolean");
+  });
+});
+
+describe("terminateAcousticsWorker", () => {
+  it("does not throw when called multiple times", () => {
+    expect(() => terminateAcousticsWorker()).not.toThrow();
+    expect(() => terminateAcousticsWorker()).not.toThrow();
   });
 });

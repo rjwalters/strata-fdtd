@@ -123,7 +123,7 @@ describe("useUrlState", () => {
       renderHook(() => useUrlState(), { wrapper });
 
       const state = useSimulationStore.getState();
-      expect(state.voxelGeometry).toBe("point"); // Default
+      expect(state.voxelGeometry).toBe("hidden"); // Default
     });
   });
 

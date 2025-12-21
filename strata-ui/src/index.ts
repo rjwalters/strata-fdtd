@@ -171,6 +171,10 @@ export {
   computeCentreTime,
   computeAcousticMetrics,
   analyzeTransferFunction,
+  // Async Web Worker support
+  analyzeTransferFunctionAsync,
+  hasAcousticsWorkerSupport,
+  terminateAcousticsWorker,
   type ImpulseResponseResult,
   type EnergyDecayResult,
   type AcousticMetrics,

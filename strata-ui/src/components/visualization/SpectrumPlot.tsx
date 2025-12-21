@@ -16,6 +16,13 @@ import {
 import { logBinDownsample, WORKER_THRESHOLD } from "@/lib/downsample";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
 export type PhaseViewMode = "phase" | "groupDelay";
@@ -187,6 +194,7 @@ export function SpectrumPlot({
   const [isComputing, setIsComputing] = useState(false);
   // Welch averaging options
   const [useAveraging, setUseAveraging] = useState(false);
+  const [segmentSize, setSegmentSize] = useState(4096);
   const [welchResult, setWelchResult] = useState<WelchPSDResult | null>(null);
   const [windowType, setWindowType] = useState<WindowType>('hanning');
   // Phase display options
@@ -222,7 +230,7 @@ export function SpectrumPlot({
       const frameId = requestAnimationFrame(() => {
         if (cancelled) return;
         try {
-          const result = welchPSD(data, sampleRate, { segmentSize: 4096, overlap: 0.5, window: windowType });
+          const result = welchPSD(data, sampleRate, { segmentSize, overlap: 0.5, window: windowType });
           if (!cancelled) {
             // Convert PSD to magnitude for display compatibility
             const magnitude = new Float32Array(result.psd.length);
@@ -283,7 +291,7 @@ export function SpectrumPlot({
     return () => {
       cancelled = true;
     };
-  }, [data, sampleRate, nfft, analysisMode, useAveraging, windowType]);
+  }, [data, sampleRate, nfft, analysisMode, useAveraging, segmentSize, windowType]);
 
   // Compute coherence (coherence mode only)
   useEffect(() => {
@@ -1456,44 +1464,61 @@ export function SpectrumPlot({
               Avg
             </Button>
             {useAveraging && (
-              <div className="flex gap-0.5 border-l border-border pl-1 ml-1">
-                <Button
-                  variant={windowType === 'hanning' ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs h-6 px-1.5"
-                  onClick={() => setWindowType('hanning')}
-                  title="Hanning window: General purpose, moderate side lobe suppression (-31 dB)"
+              <>
+                <Select
+                  value={String(segmentSize)}
+                  onValueChange={(value) => setSegmentSize(Number(value))}
                 >
-                  Han
-                </Button>
-                <Button
-                  variant={windowType === 'hamming' ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs h-6 px-1.5"
-                  onClick={() => setWindowType('hamming')}
-                  title="Hamming window: Better side lobe suppression (-43 dB)"
-                >
-                  Ham
-                </Button>
-                <Button
-                  variant={windowType === 'blackman' ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs h-6 px-1.5"
-                  onClick={() => setWindowType('blackman')}
-                  title="Blackman window: Best side lobe suppression (-58 dB), wider main lobe"
-                >
-                  Blk
-                </Button>
-                <Button
-                  variant={windowType === 'blackman-harris' ? "default" : "outline"}
-                  size="sm"
-                  className="text-xs h-6 px-1.5"
-                  onClick={() => setWindowType('blackman-harris')}
-                  title="Blackman-Harris window: Maximum dynamic range (-92 dB), widest main lobe"
-                >
-                  B-H
-                </Button>
-              </div>
+                  <SelectTrigger className="h-6 w-[90px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1024">1024</SelectItem>
+                    <SelectItem value="2048">2048</SelectItem>
+                    <SelectItem value="4096">4096</SelectItem>
+                    <SelectItem value="8192">8192</SelectItem>
+                    <SelectItem value="16384">16384</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-0.5 border-l border-border pl-1 ml-1">
+                  <Button
+                    variant={windowType === 'hanning' ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs h-6 px-1.5"
+                    onClick={() => setWindowType('hanning')}
+                    title="Hanning window: General purpose, moderate side lobe suppression (-31 dB)"
+                  >
+                    Han
+                  </Button>
+                  <Button
+                    variant={windowType === 'hamming' ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs h-6 px-1.5"
+                    onClick={() => setWindowType('hamming')}
+                    title="Hamming window: Better side lobe suppression (-43 dB)"
+                  >
+                    Ham
+                  </Button>
+                  <Button
+                    variant={windowType === 'blackman' ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs h-6 px-1.5"
+                    onClick={() => setWindowType('blackman')}
+                    title="Blackman window: Best side lobe suppression (-58 dB), wider main lobe"
+                  >
+                    Blk
+                  </Button>
+                  <Button
+                    variant={windowType === 'blackman-harris' ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs h-6 px-1.5"
+                    onClick={() => setWindowType('blackman-harris')}
+                    title="Blackman-Harris window: Maximum dynamic range (-92 dB), widest main lobe"
+                  >
+                    B-H
+                  </Button>
+                </div>
+              </>
             )}
             {isTransferMode && (
               <Button

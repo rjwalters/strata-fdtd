@@ -1,7 +1,8 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import * as d3 from "d3";
 import {
-  analyzeTransferFunction,
+  analyzeTransferFunctionAsync,
+  terminateAcousticsWorker,
   type AcousticMetrics,
   type ImpulseResponseResult,
   type EnergyDecayResult,
@@ -69,7 +70,7 @@ export function ImpulseResponseView({
   // Track brush state
   const isBrushingRef = useRef(false);
 
-  // Compute analysis when transfer function changes
+  // Compute analysis when transfer function changes (using Web Worker)
   useEffect(() => {
     if (transferReal.length === 0 || transferImag.length === 0) {
       setImpulseResponse(null);
@@ -79,34 +80,45 @@ export function ImpulseResponseView({
     }
 
     setIsComputing(true);
+    let cancelled = false;
 
-    // Use requestAnimationFrame to avoid blocking
-    const frameId = requestAnimationFrame(() => {
-      try {
-        const result = analyzeTransferFunction(
-          transferReal,
-          transferImag,
-          sampleRate,
-          windowType
-        );
-
+    // Use async Web Worker for computation
+    analyzeTransferFunctionAsync(
+      transferReal,
+      transferImag,
+      sampleRate,
+      windowType
+    )
+      .then((result) => {
+        if (cancelled) return;
         setImpulseResponse(result.impulseResponse);
         setEnergyDecay(result.energyDecay);
         setMetrics(result.metrics);
-      } catch (error) {
+      })
+      .catch((error) => {
+        if (cancelled) return;
         console.error("Impulse response analysis error:", error);
         setImpulseResponse(null);
         setEnergyDecay(null);
         setMetrics(null);
-      } finally {
-        setIsComputing(false);
-      }
-    });
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsComputing(false);
+        }
+      });
 
     return () => {
-      cancelAnimationFrame(frameId);
+      cancelled = true;
     };
   }, [transferReal, transferImag, sampleRate, windowType]);
+
+  // Cleanup worker on unmount
+  useEffect(() => {
+    return () => {
+      terminateAcousticsWorker();
+    };
+  }, []);
 
   // Track container size
   useEffect(() => {
