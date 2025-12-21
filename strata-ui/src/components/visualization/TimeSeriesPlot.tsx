@@ -91,7 +91,7 @@ export function TimeSeriesPlot({
     sampleRate,
   });
 
-  const probeNames = useMemo(() => Object.keys(probes), [probes]);
+  const probeNames = useMemo(() => (probes ? Object.keys(probes) : []), [probes]);
   const probeColors = useMemo(
     () => new Map(probeNames.map((name, i) => [name, COLORS[i % COLORS.length]])),
     [probeNames]
@@ -355,6 +355,11 @@ export function TimeSeriesPlot({
     // Downsample data for the current view
     // Uses cached data from Web Worker if available for large datasets
     const downsampleData = (probeName: string, data: Float32Array): [number, number][] => {
+      // Guard against invalid data
+      if (!data || data.length === 0) {
+        return [];
+      }
+
       // Check if we have pre-computed data from the worker
       const cached = downsampledCache.get(probeName);
       if (cached && cached.length > 0) {
@@ -364,6 +369,12 @@ export function TimeSeriesPlot({
       // Calculate sample range for current view
       const startSample = Math.max(0, Math.floor((xMin / 1000) * sampleRate));
       const endSample = Math.min(data.length, Math.ceil((xMax / 1000) * sampleRate));
+
+      // Guard against invalid range
+      if (startSample >= endSample) {
+        return [];
+      }
+
       const viewData = data.subarray(startSample, endSample);
 
       // Target points based on pixel width (2-4 points per pixel)
@@ -378,18 +389,28 @@ export function TimeSeriesPlot({
       }
 
       // Apply selected downsampling algorithm (sync for small datasets)
+      const timeOffset = (startSample / sampleRate) * 1000;
+
       if (downsampleAlgorithm === "minmax") {
         // Min-max preserves peaks better for waveforms
         const result = minMaxDownsample(viewData, targetPoints, sampleRate);
-        // Adjust time offset for the view
-        const timeOffset = (startSample / sampleRate) * 1000;
-        return result.map(([t, v]) => [t + timeOffset, v]);
+        if (!result || !Array.isArray(result)) return [];
+        // Filter out any invalid tuples and adjust time offset
+        return result
+          .filter((point): point is [number, number] =>
+            Array.isArray(point) && point.length === 2 &&
+            typeof point[0] === 'number' && typeof point[1] === 'number')
+          .map(([t, v]) => [t + timeOffset, v]);
       } else {
         // LTTB provides best visual fidelity
         const result = lttbDownsample(viewData, targetPoints, sampleRate);
-        // Adjust time offset for the view
-        const timeOffset = (startSample / sampleRate) * 1000;
-        return result.map(([t, v]) => [t + timeOffset, v]);
+        if (!result || !Array.isArray(result)) return [];
+        // Filter out any invalid tuples and adjust time offset
+        return result
+          .filter((point): point is [number, number] =>
+            Array.isArray(point) && point.length === 2 &&
+            typeof point[0] === 'number' && typeof point[1] === 'number')
+          .map(([t, v]) => [t + timeOffset, v]);
       }
     };
 
@@ -405,9 +426,11 @@ export function TimeSeriesPlot({
     // Draw lines for each visible probe
     for (const name of visibleProbes) {
       const probe = probes[name];
-      if (!probe) continue;
+      if (!probe || !probe.data) continue;
 
       const downsampledPoints = downsampleData(name, probe.data);
+      if (!downsampledPoints || downsampledPoints.length === 0) continue;
+
       const color = probeColors.get(name) ?? COLORS[0];
 
       if (useCanvas && ctx) {
