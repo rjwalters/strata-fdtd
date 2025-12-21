@@ -617,3 +617,154 @@ export function analyzeTransferFunction(
     metrics,
   };
 }
+
+// =============================================================================
+// Web Worker Support
+// =============================================================================
+
+import type {
+  AcousticsWorkerRequest,
+  AcousticsWorkerMessage,
+} from "../workers/acoustics.worker";
+
+let acousticsWorker: Worker | null = null;
+let requestId = 0;
+const pendingRequests = new Map<
+  number,
+  {
+    resolve: (value: {
+      impulseResponse: ImpulseResponseResult;
+      energyDecay: EnergyDecayResult;
+      metrics: AcousticMetrics;
+    }) => void;
+    reject: (error: Error) => void;
+  }
+>();
+
+/**
+ * Check if Web Workers are available in the current environment.
+ */
+export function hasAcousticsWorkerSupport(): boolean {
+  return typeof Worker !== "undefined";
+}
+
+/**
+ * Get or create the acoustics worker instance.
+ */
+function getAcousticsWorker(): Worker | null {
+  if (!hasAcousticsWorkerSupport()) {
+    return null;
+  }
+
+  if (!acousticsWorker) {
+    try {
+      acousticsWorker = new Worker(
+        new URL("../workers/acoustics.worker.ts", import.meta.url),
+        { type: "module" }
+      );
+
+      acousticsWorker.onmessage = (event: MessageEvent<AcousticsWorkerMessage>) => {
+        const message = event.data;
+        const pending = pendingRequests.get(message.id);
+
+        if (pending) {
+          pendingRequests.delete(message.id);
+
+          if (message.type === "error") {
+            pending.reject(new Error(message.error));
+          } else {
+            pending.resolve({
+              impulseResponse: message.impulseResponse,
+              energyDecay: message.energyDecay,
+              metrics: message.metrics,
+            });
+          }
+        }
+      };
+
+      acousticsWorker.onerror = (error) => {
+        console.error("Acoustics Worker error:", error);
+        // Reject all pending requests
+        for (const [id, pending] of pendingRequests) {
+          pending.reject(new Error("Worker error"));
+          pendingRequests.delete(id);
+        }
+        // Reset worker so it can be recreated
+        acousticsWorker = null;
+      };
+    } catch {
+      console.warn("Failed to create acoustics worker, falling back to main thread");
+      return null;
+    }
+  }
+
+  return acousticsWorker;
+}
+
+/**
+ * Analyze transfer function asynchronously using a Web Worker.
+ * Falls back to synchronous computation if workers are unavailable.
+ *
+ * @param transferReal - Real part of transfer function
+ * @param transferImag - Imaginary part of transfer function
+ * @param sampleRate - Sample rate in Hz
+ * @param windowType - Window to apply before IFFT
+ * @returns Promise resolving to impulse response, decay curve, and metrics
+ */
+export async function analyzeTransferFunctionAsync(
+  transferReal: Float32Array,
+  transferImag: Float32Array,
+  sampleRate: number,
+  windowType: WindowType = "tukey"
+): Promise<{
+  impulseResponse: ImpulseResponseResult;
+  energyDecay: EnergyDecayResult;
+  metrics: AcousticMetrics;
+}> {
+  const worker = getAcousticsWorker();
+
+  // Fallback to synchronous computation
+  if (!worker) {
+    return analyzeTransferFunction(transferReal, transferImag, sampleRate, windowType);
+  }
+
+  const id = requestId++;
+
+  return new Promise((resolve, reject) => {
+    pendingRequests.set(id, { resolve, reject });
+
+    const request: AcousticsWorkerRequest = {
+      type: "analyzeTransferFunction",
+      id,
+      transferReal,
+      transferImag,
+      sampleRate,
+      windowType,
+    };
+
+    // Transfer the data buffers if they are large enough to benefit
+    // Note: This transfers ownership, so we make copies
+    if (transferReal.length > 10000) {
+      const realCopy = new Float32Array(transferReal);
+      const imagCopy = new Float32Array(transferImag);
+      worker.postMessage(
+        { ...request, transferReal: realCopy, transferImag: imagCopy },
+        { transfer: [realCopy.buffer, imagCopy.buffer] }
+      );
+    } else {
+      worker.postMessage(request);
+    }
+  });
+}
+
+/**
+ * Terminate the acoustics worker and clean up resources.
+ * Call this when the worker is no longer needed.
+ */
+export function terminateAcousticsWorker(): void {
+  if (acousticsWorker) {
+    acousticsWorker.terminate();
+    acousticsWorker = null;
+    pendingRequests.clear();
+  }
+}
