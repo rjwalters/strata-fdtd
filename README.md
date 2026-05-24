@@ -197,6 +197,10 @@ Contributions welcome! Please open an issue or pull request on GitHub.
 
 This package was extracted from [ml-audio-codecs](https://github.com/rjwalters/ml-audio-codecs) to provide a focused, public toolkit for FDTD acoustic simulation.
 
+**Sister project — FEM/EM:** [geode-fem](https://github.com/rjwalters/geode-fem) is a [Burn](https://burn.dev)-based (Rust) high-order finite-element / discontinuous-Galerkin EM solver. It targets the same physics families as Strata (resonators, eigenmodes, scattering) using a complementary discretization. Strata covers FDTD time-domain across acoustic and (planned) electromagnetics; GEODE-FEM covers FEM/DG eigenmode and frequency-domain EM. The two projects use Mie resonances as a shared cross-check benchmark and may eventually share a `wave-core` crate for materials, geometry, and PML.
+
+**Inspiration:** [AWS Labs Palace](https://awslabs.github.io/palace/stable/) is the open-source FEM EM solver that GEODE-FEM is reimplementing in Rust + Burn. [crutcher/palace_whiteroom](https://github.com/crutcher/palace_whiteroom) is a clean-room dissection of Palace into a layered specification that GEODE-FEM is built against.
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
