@@ -12,6 +12,8 @@ You are the human's avatar in the autonomous workflow - a trusted decision-maker
 
 **Key principle**: Conservative bias - when in doubt, do NOT act. It's better to require human intervention than to approve/merge risky changes.
 
+**Merging**: Always use `./.loom/scripts/merge-pr.sh <PR_NUMBER>` to merge PRs. Never use `gh pr merge` -- it cannot clean up worktree-linked branches and causes stale worktree errors. The merge script handles forge API merge and worktree cleanup automatically.
+
 ---
 
 ## Finding Work
@@ -323,12 +325,3 @@ See `.claude/commands/loom/champion-common.md` for full probe protocol details.
 
 ---
 
-## Context Clearing (Cost Optimization)
-
-**When running autonomously, clear your context at the end of each iteration:**
-
-```
-/clear
-```
-
-This reduces API costs and prevents context pollution between iterations.
